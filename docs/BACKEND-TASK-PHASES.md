@@ -64,7 +64,7 @@ Phase 7: Hardening, Contract Parity & Failure Injection (Slice 12)
 ## 📋 Detailed Phase Breakdown
 
 ### Phase 1: Project Foundations & Infrastructure (Slice 0)
-- [ ] **Task 1.1: Project Directory Structure & Package Config**
+- [x] **Task 1.1: Project Directory Structure & Package Config**
   - Create directory structure:
     ```
     prescripto/
@@ -98,14 +98,14 @@ Phase 7: Hardening, Contract Parity & Failure Injection (Slice 12)
     ```
   - Create `pyproject.toml` and `requirements.txt` with locked versions.
   - Setup `.env.example` and Pydantic-based `prescripto/config/settings.py`.
-- [ ] **Task 1.2: Containerization (Docker Compose)**
+- [x] **Task 1.2: Containerization (Docker Compose)**
   - Create `docker-compose.yml` defining services:
     - `postgres`: PostgreSQL 16 with health check and initialization scripts.
     - `minio`: MinIO object storage with default bucket provisioning (`prescripto` and `prescripto-retention`).
     - `api`: FastAPI web server (`prescripto.api.main:app`).
     - `worker`: Analysis background worker (`prescripto.worker.main`).
     - `deletion_worker`: Deletion background worker (`prescripto.retention.worker`).
-- [ ] **Task 1.3: Database Models & Initial Alembic Migration (Fixing C-3)**
+- [x] **Task 1.3: Database Models & Initial Alembic Migration (Fixing C-3)**
   - Define SQLAlchemy 2.0 models in `prescripto/db/models/`.
   - Ensure `prescription_medications` includes `unit_*` and `instructions_*` fields (resolving PRD/Arch conflict C-3).
   - Include all database constraints:
@@ -114,13 +114,13 @@ Phase 7: Hardening, Contract Parity & Failure Injection (Slice 12)
     - Partial index `idx_analysis_jobs_claimable`.
     - GIN index on `medications(brand_name, generic_name)`.
   - Create Alembic migration `0001_initial_schema.py` with verified `upgrade()` and `downgrade()`.
-- [ ] **Task 1.4: Structured Zero-PHI Logging System**
+- [x] **Task 1.4: Structured Zero-PHI Logging System**
   - Implement custom logger in `prescripto/audit/logger.py`.
   - Whitelist filter that blocks prescription images, OCR text buffers, and patient names.
-- [ ] **Task 1.5: FastAPI App Skeleton & Health Checks**
+- [x] **Task 1.5: FastAPI App Skeleton & Health Checks**
   - Setup `prescripto/api/main.py` with standard error response envelope (`{"error": {"code", "message", "request_id"}}`).
   - Add `GET /api/v1/health` and `GET /api/v1/health/ready` (validating PostgreSQL and MinIO ping).
-- [ ] **Task 1.6: RS256 JWT Authentication & Blocklist**
+- [x] **Task 1.6: RS256 JWT Authentication & Blocklist**
   - Implement token issuance in `prescripto/auth/`.
   - Implement `POST /api/v1/auth/token` and `POST /api/v1/auth/refresh`.
   - Connect refresh token validation to `token_blocklist` with fail-closed behavior (`401 BLOCKLIST_UNAVAILABLE`).

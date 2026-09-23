@@ -1,0 +1,115 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: prescripto-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: prescripto_db
+      POSTGRES_USER: prescripto
+      POSTGRES_PASSWORD: prescripto_secret
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U prescripto -d prescripto_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  minio:
+    image: minio/minio:latest
+    container_name: prescripto-minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  createbuckets:
+    image: minio/mc:latest
+    container_name: prescripto-createbuckets
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      /usr/bin/mc alias set myminio http://minio:9000 minioadmin minioadmin;
+      /usr/bin/mc mb --ignore-existing myminio/prescripto;
+      /usr/bin/mc mb --ignore-existing myminio/prescripto-retention;
+      exit 0;
+      "
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: prescripto-api
+    restart: unless-stopped
+    command: uvicorn prescripto.api.main:app --host 0.0.0.0 --port 8000
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgresql://prescripto:prescripto_secret@postgres:5432/prescripto_db
+      - S3_ENDPOINT=http://minio:9000
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      createbuckets:
+        condition: service_completed_successfully
+
+  worker:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: prescripto-worker
+    restart: unless-stopped
+    command: python -m prescripto.worker.main
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgresql://prescripto:prescripto_secret@postgres:5432/prescripto_db
+      - S3_ENDPOINT=http://minio:9000
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+
+  deletion_worker:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    container_name: prescripto-deletion-worker
+    restart: unless-stopped
+    command: python -m prescripto.retention.worker
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=postgresql://prescripto:prescripto_secret@postgres:5432/prescripto_db
+      - S3_ENDPOINT=http://minio:9000
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
+  minio_data:
