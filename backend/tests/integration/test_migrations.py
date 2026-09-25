@@ -26,6 +26,7 @@ def test_alembic_upgrade_and_downgrade():
             alembic_ini = Path(__file__).parents[2] / "alembic.ini"
         alembic_cfg = Config(str(alembic_ini))
         alembic_cfg.set_main_option("sqlalchemy.url", sqlite_url)
+        alembic_cfg.set_main_option("script_location", str(alembic_ini.parent / "prescripto" / "db" / "migrations"))
 
         # 1. Test Upgrade
         command.upgrade(alembic_cfg, "head")

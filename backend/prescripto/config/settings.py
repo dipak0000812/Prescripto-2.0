@@ -54,6 +54,13 @@ class Settings(BaseSettings):
     RETENTION_DAYS: int = Field(default=30)
     MAX_UPLOAD_BYTES: int = Field(default=20971520)  # 20 MB
 
+    # Worker Engine Configuration (Phase 3 / Slice 2)
+    WORKER_ID: Optional[str] = Field(default=None)
+    WORKER_POLL_INTERVAL: float = Field(default=2.0)
+    WORKER_LEASE_SECONDS: int = Field(default=600)  # 10 minutes
+    WORKER_HEARTBEAT_SECONDS: int = Field(default=30)
+    WORKER_MAX_RETRIES: int = Field(default=3)
+
     @property
     def knowledge_providers_list(self) -> List[str]:
         return [p.strip() for p in self.ENABLED_KNOWLEDGE_PROVIDERS.split(",") if p.strip()]

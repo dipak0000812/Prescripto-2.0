@@ -154,21 +154,21 @@ Phase 7: Hardening, Contract Parity & Failure Injection (Slice 12)
 ---
 
 ### Phase 3: Fenced Job Queue & Worker Engine (Slice 2)
-- [ ] **Task 3.1: PostgreSQL Transactional Queue Poller**
-  - Implement `prescripto/worker/queue.py`.
+- [x] **Task 3.1: PostgreSQL Transactional Queue Poller**
+  - Implement `backend/prescripto/worker/queue.py`.
   - Claim query using `SELECT ... FOR UPDATE SKIP LOCKED` targeting `PENDING` and claimable `FAILED` rows.
   - Set `lease_owner`, increment `lease_token`, set `lease_expires_at = now() + 10m`.
-- [ ] **Task 3.2: Worker Lease Heartbeat Mechanism**
+- [x] **Task 3.2: Worker Lease Heartbeat Mechanism**
   - Background task that periodically (every 30s) updates `lease_expires_at` and `heartbeat_at`.
-- [ ] **Task 3.3: Atomic Generation Fencing & Stage Persistence**
-  - Implement `commit_stage_result()` in `prescripto/worker/fence.py`.
+- [x] **Task 3.3: Atomic Generation Fencing & Stage Persistence**
+  - Implement `commit_stage_result()` in `backend/prescripto/worker/fence.py`.
   - Validate `lease_token`, `lease_owner`, and `lease_expires_at > now()` in the same transaction.
   - Guard upsert against `analysis_stages.lease_token <= :token`.
   - Raise `WorkerFencedError` on fence collision or expired lease.
-- [ ] **Task 3.4: Worker Retry Lifecycle & Dead Letter Queue**
+- [x] **Task 3.4: Worker Retry Lifecycle & Dead Letter Queue**
   - Retry backoff schedule: 5s → 30s → 2m.
   - On `retry_count >= 3`, transition job to `DEAD` and trigger operator alert.
-- [ ] **Task 3.5: Worker Main Runner**
+- [x] **Task 3.5: Worker Main Runner**
   - Process coordinator running pipeline stages with lease check gates.
 
 ---
