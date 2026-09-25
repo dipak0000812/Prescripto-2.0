@@ -38,6 +38,7 @@ def test_alembic_upgrade_and_downgrade():
             assert "medications" in tables
             assert "risk_findings" in tables
             assert "token_blocklist" in tables
+            assert "idempotency_records" in tables
 
             # Verify C-3 fix columns in prescription_medications
             cols = [col["name"] for col in inspector.get_columns("prescription_medications")]

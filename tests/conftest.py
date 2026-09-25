@@ -12,6 +12,8 @@ from prescripto.db.session import get_db
 from prescripto.db.models.users import User
 from prescripto.db.models.enums import Role
 from prescripto.auth.crypto import hash_password
+from prescripto.storage.client import get_storage_client
+from prescripto.storage.exceptions import StorageObjectNotFoundException
 from prescripto.api.main import app
 
 # In-memory SQLite for fast testing
@@ -19,6 +21,42 @@ TEST_DATABASE_URL = "sqlite:///:memory:"
 
 engine = create_engine(TEST_DATABASE_URL, connect_args={"check_same_thread": False})
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+
+class InMemoryStorageClient:
+    """Mock storage client storing objects in-memory for testing."""
+    def __init__(self):
+        self.objects = {}
+
+    @staticmethod
+    def generate_prescription_key(document_id, extension):
+        clean_ext = extension.lstrip(".").lower()
+        return f"prescriptions/{document_id}/original.{clean_ext}"
+
+    def ensure_bucket_exists(self, bucket_name=None):
+        pass
+
+    def put_object(self, key, data, content_type, bucket_name=None):
+        self.objects[key] = (data, content_type)
+
+    def get_object(self, key, bucket_name=None):
+        if key not in self.objects:
+            raise StorageObjectNotFoundException(f"Object {key} not found")
+        return self.objects[key][0]
+
+    def delete_object(self, key, bucket_name=None):
+        self.objects.pop(key, None)
+
+    def object_exists(self, key, bucket_name=None):
+        return key in self.objects
+
+    def generate_presigned_url(self, key, expires_in=60, bucket_name=None):
+        return f"https://mock-storage.prescripto.local/{key}?expires={expires_in}&token=dummy"
+
+
+@pytest.fixture
+def mock_storage():
+    return InMemoryStorageClient()
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -42,7 +80,7 @@ def db_session():
 
 
 @pytest.fixture
-def client(db_session):
+def client(db_session, mock_storage):
     def override_get_db():
         try:
             yield db_session
@@ -50,9 +88,11 @@ def client(db_session):
             pass
 
     app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[get_storage_client] = lambda: mock_storage
     with TestClient(app) as test_client:
         yield test_client
     app.dependency_overrides.clear()
+
 
 
 @pytest.fixture

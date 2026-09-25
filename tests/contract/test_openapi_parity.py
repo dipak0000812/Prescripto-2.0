@@ -29,3 +29,17 @@ def test_phase1_openapi_contract_parity():
     # 5. Check /api/v1/health
     health_op = app_spec["paths"]["/api/v1/health"]["get"]
     assert health_op["operationId"] == "getHealth"
+
+    # 6. Check /api/v1/prescriptions (Phase 2)
+    assert "/api/v1/prescriptions" in app_spec["paths"]
+    prescriptions_post = app_spec["paths"]["/api/v1/prescriptions"]["post"]
+    assert prescriptions_post["operationId"] == "createPrescription"
+
+    prescriptions_get = app_spec["paths"]["/api/v1/prescriptions"]["get"]
+    assert prescriptions_get["operationId"] == "listPrescriptions"
+
+    # 7. Check /api/v1/prescriptions/{id} (Phase 2)
+    assert "/api/v1/prescriptions/{id}" in app_spec["paths"]
+    prescription_get = app_spec["paths"]["/api/v1/prescriptions/{id}"]["get"]
+    assert prescription_get["operationId"] == "getPrescription"
+
