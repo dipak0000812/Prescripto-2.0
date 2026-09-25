@@ -13,8 +13,10 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from prescripto.config.settings import settings
 from prescripto.audit.logger import configure_logging, get_logger
+from prescripto.application.exceptions import ApplicationException
 from prescripto.api.v1.routers.auth import router as auth_router
 from prescripto.api.v1.routers.health import router as health_router
+from prescripto.api.v1.routers.prescriptions import router as prescriptions_router
 
 # Configure zero-PHI logging on startup
 configure_logging(settings.LOG_LEVEL)
@@ -139,6 +141,31 @@ async def unhandled_exception_handler(request: Request, exc: Exception) -> JSONR
     )
 
 
+@app.exception_handler(ApplicationException)
+async def application_exception_handler(request: Request, exc: ApplicationException) -> JSONResponse:
+    """Formats domain and application exceptions into canonical ERROR-CONTRACT envelope."""
+    request_id = getattr(request.state, "request_id", uuid.uuid4())
+    logger.warning(
+        "application_exception_handled",
+        request_id=str(request_id),
+        error_code=exc.code,
+        status_code=exc.status_code,
+    )
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "error": {
+                "code": exc.code,
+                "message": exc.message,
+                "request_id": str(request_id),
+            }
+        },
+        headers={"X-Request-ID": str(request_id)},
+    )
+
+
 # Register API v1 Routers
 app.include_router(auth_router, prefix="/api/v1")
 app.include_router(health_router, prefix="/api/v1")
+app.include_router(prescriptions_router, prefix="/api/v1")
+

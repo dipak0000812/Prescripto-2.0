@@ -129,25 +129,25 @@ Phase 7: Hardening, Contract Parity & Failure Injection (Slice 12)
 ---
 
 ### Phase 2: Storage & Prescription Ingestion API (Slice 1)
-- [ ] **Task 2.1: MinIO/S3 Storage Service**
+- [x] **Task 2.1: MinIO/S3 Storage Service**
   - Implement `prescripto/storage/client.py` using `boto3`.
   - Secure bucket initialization, deterministic object keys.
   - Implement 60-second presigned URL generation (never persisted or logged).
-- [ ] **Task 2.2: Pure Domain Prescription Ingestion Models**
+- [x] **Task 2.2: Pure Domain Prescription Ingestion Models**
   - Implement `PrescriptionDocument`, `Analysis`, `DocumentStatus` in `prescripto/domain/`.
   - Zero framework imports, pure business logic.
-- [ ] **Task 2.3: IngestPrescription Application Use Case**
+- [x] **Task 2.3: IngestPrescription Application Use Case**
   - Implement `prescripto/application/use_cases/ingest_prescription.py`.
   - Validate image format (JPEG, PNG, WEBP, PDF) and max size (20MB).
   - Compute SHA-256 file checksum.
   - Handle idempotency:
     - Matching `Idempotency-Key` + matching hash → return existing `202` payload.
     - Matching `Idempotency-Key` + different hash → raise `409 IDEMPOTENCY_KEY_CONFLICT`.
-- [ ] **Task 2.4: Upload Endpoint (`POST /api/v1/prescriptions`)**
+- [x] **Task 2.4: Upload Endpoint (`POST /api/v1/prescriptions`)**
   - Accept `multipart/form-data` with `Idempotency-Key` header.
   - Atomic DB transaction: insert `prescription_documents`, `analyses`, and `analysis_jobs` (`PENDING`).
   - Return `202 Accepted` with `document_id` and `analysis_id` within < 3s.
-- [ ] **Task 2.5: Document Retrieval Endpoints**
+- [x] **Task 2.5: Document Retrieval Endpoints**
   - `GET /api/v1/prescriptions`: Paginated, caller-scoped.
   - `GET /api/v1/prescriptions/{id}`: Detailed metadata with ephemeral presigned `image_url`.
 

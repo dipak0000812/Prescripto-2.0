@@ -27,6 +27,7 @@ from prescripto.db.models.safety import RiskFinding
 from prescripto.db.models.review import Review
 from prescripto.db.models.retention import DeletionJob, TokenBlocklist
 from prescripto.db.models.audit import AuditEvent
+from prescripto.db.models.idempotency import IdempotencyRecord
 
 __all__ = [
     "Base",
@@ -46,6 +47,7 @@ __all__ = [
     "PipelineStageName",
     "User",
     "PrescriptionDocument",
+    "IdempotencyRecord",
     "ModelVersion",
     "CalibrationSnapshot",
     "KnowledgeSnapshot",
@@ -61,3 +63,4 @@ __all__ = [
     "TokenBlocklist",
     "AuditEvent",
 ]
+
