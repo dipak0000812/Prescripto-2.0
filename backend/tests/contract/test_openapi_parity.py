@@ -7,7 +7,13 @@ from prescripto.api.main import app
 
 def test_phase1_openapi_contract_parity():
     # 1. Load canonical OPENAPI.yaml
-    with open("OPENAPI.yaml", "r", encoding="utf-8") as f:
+    from pathlib import Path
+    openapi_path = Path("OPENAPI.yaml")
+    if not openapi_path.exists():
+        openapi_path = Path(__file__).parents[2] / "OPENAPI.yaml"
+    if not openapi_path.exists():
+        openapi_path = Path(__file__).parents[3] / "OPENAPI.yaml"
+    with open(openapi_path, "r", encoding="utf-8") as f:
         spec = yaml.safe_load(f)
 
     app_spec = app.openapi()

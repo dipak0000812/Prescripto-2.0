@@ -54,7 +54,7 @@ services:
 
   api:
     build:
-      context: .
+      context: ./backend
       dockerfile: docker/Dockerfile
     container_name: prescripto-api
     restart: unless-stopped
@@ -62,7 +62,7 @@ services:
     ports:
       - "8000:8000"
     env_file:
-      - .env
+      - ./backend/.env
     environment:
       - DATABASE_URL=postgresql://prescripto:prescripto_secret@postgres:5432/prescripto_db
       - S3_ENDPOINT=http://minio:9000
@@ -76,13 +76,13 @@ services:
 
   worker:
     build:
-      context: .
+      context: ./backend
       dockerfile: docker/Dockerfile
     container_name: prescripto-worker
     restart: unless-stopped
     command: python -m prescripto.worker.main
     env_file:
-      - .env
+      - ./backend/.env
     environment:
       - DATABASE_URL=postgresql://prescripto:prescripto_secret@postgres:5432/prescripto_db
       - S3_ENDPOINT=http://minio:9000
@@ -94,13 +94,13 @@ services:
 
   deletion_worker:
     build:
-      context: .
+      context: ./backend
       dockerfile: docker/Dockerfile
     container_name: prescripto-deletion-worker
     restart: unless-stopped
     command: python -m prescripto.retention.worker
     env_file:
-      - .env
+      - ./backend/.env
     environment:
       - DATABASE_URL=postgresql://prescripto:prescripto_secret@postgres:5432/prescripto_db
       - S3_ENDPOINT=http://minio:9000

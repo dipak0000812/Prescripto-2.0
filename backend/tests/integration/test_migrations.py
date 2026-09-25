@@ -20,7 +20,11 @@ def test_alembic_upgrade_and_downgrade():
         from prescripto.config.settings import settings
         settings.DATABASE_URL = sqlite_url
 
-        alembic_cfg = Config("alembic.ini")
+        from pathlib import Path
+        alembic_ini = Path("alembic.ini")
+        if not alembic_ini.exists():
+            alembic_ini = Path(__file__).parents[2] / "alembic.ini"
+        alembic_cfg = Config(str(alembic_ini))
         alembic_cfg.set_main_option("sqlalchemy.url", sqlite_url)
 
         # 1. Test Upgrade
