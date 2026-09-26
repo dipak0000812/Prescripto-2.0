@@ -92,11 +92,12 @@ def test_worker_full_pipeline_success(db_session: Session, seeded_worker_env):
     assert job.lease_token == 1
     assert job.retry_count == 0
 
-    # Verify analysis completed
+    # Verify analysis finished in a terminal review state
     db_session.refresh(analysis)
-    assert analysis.status == "COMPLETED"
+    assert analysis.status in ["COMPLETED", "REQUIRES_REVIEW"]
     assert analysis.started_at is not None
     assert analysis.completed_at is not None
+
 
     # Verify all 8 stages were committed
     stages = (

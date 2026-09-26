@@ -18,7 +18,10 @@ elif settings.DATABASE_URL.startswith("sqlite"):
         "connect_args": {"check_same_thread": False},
     })
 
+import json
+engine_kwargs["json_serializer"] = lambda obj: json.dumps(obj, default=str)
 engine = create_engine(settings.DATABASE_URL, **engine_kwargs)
+
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 

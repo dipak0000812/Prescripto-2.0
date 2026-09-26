@@ -69,3 +69,19 @@ class DeletionInProgressException(ApplicationException):
 class MalformedRequestException(ApplicationException):
     def __init__(self, message: str = "Malformed request payload") -> None:
         super().__init__(code="MALFORMED_REQUEST", message=message, status_code=400)
+
+
+class AnalysisNotReadyException(ApplicationException):
+    def __init__(self, message: str = "Analysis result is not ready or has failed") -> None:
+        super().__init__(code="ANALYSIS_NOT_READY", message=message, status_code=404)
+
+
+class AnalysisNotReviewableException(ApplicationException):
+    def __init__(self, message: str = "Analysis is not in a reviewable state") -> None:
+        super().__init__(code="ANALYSIS_NOT_REVIEWABLE", message=message, status_code=409)
+
+
+class ForbiddenResourceAccessException(ApplicationException):
+    def __init__(self, message: str = "Access to the requested resource is forbidden") -> None:
+        super().__init__(code="FORBIDDEN_RESOURCE_ACCESS", message=message, status_code=403)
+

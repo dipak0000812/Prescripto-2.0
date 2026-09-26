@@ -17,6 +17,7 @@ from prescripto.application.exceptions import ApplicationException
 from prescripto.api.v1.routers.auth import router as auth_router
 from prescripto.api.v1.routers.health import router as health_router
 from prescripto.api.v1.routers.prescriptions import router as prescriptions_router
+from prescripto.api.v1.routers.analyses import router as analyses_router
 
 # Configure zero-PHI logging on startup
 configure_logging(settings.LOG_LEVEL)
@@ -168,4 +169,5 @@ async def application_exception_handler(request: Request, exc: ApplicationExcept
 app.include_router(auth_router, prefix="/api/v1")
 app.include_router(health_router, prefix="/api/v1")
 app.include_router(prescriptions_router, prefix="/api/v1")
+app.include_router(analyses_router, prefix="/api/v1")
 

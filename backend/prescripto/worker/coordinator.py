@@ -44,7 +44,10 @@ class PipelineCoordinator:
         self.db = db
         self.claim = claim
         self.stages = stages or CANONICAL_STAGES
-        self.stage_handlers = stage_handlers or {}
+        from prescripto.pipeline.engine import DEFAULT_STAGE_HANDLERS
+        self.stage_handlers = dict(DEFAULT_STAGE_HANDLERS)
+        if stage_handlers:
+            self.stage_handlers.update(stage_handlers)
 
     def _default_stage_handler(
         self,

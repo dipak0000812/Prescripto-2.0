@@ -17,10 +17,17 @@ from prescripto.storage.exceptions import StorageObjectNotFoundException
 from prescripto.api.main import app
 
 # In-memory SQLite for fast testing
+import json
 TEST_DATABASE_URL = "sqlite:///:memory:"
 
-engine = create_engine(TEST_DATABASE_URL, connect_args={"check_same_thread": False})
+engine = create_engine(
+    TEST_DATABASE_URL,
+
+    connect_args={"check_same_thread": False},
+    json_serializer=lambda obj: json.dumps(obj, default=str),
+)
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
 
 
 class InMemoryStorageClient:
