@@ -174,18 +174,18 @@ Phase 7: Hardening, Contract Parity & Failure Injection (Slice 12)
 ---
 
 ### Phase 4: Medication Master & Safety Screening Engine (Slices 6 & 7)
-- [ ] **Task 4.1: Medication Master Seeding & Candidate Search**
+- [x] **Task 4.1: Medication Master Seeding & Candidate Search**
   - Script `scripts/seed_medications.py` to seed CDSCO approved formulations.
   - Exact and fuzzy search queries against `medications` table using PostgreSQL `tsvector` / trigrams.
   - Candidate generator returning `RESOLVED`, `AMBIGUOUS`, or `UNRESOLVED`.
-- [ ] **Task 4.2: Pure Domain Safety Engine**
+- [x] **Task 4.2: Pure Domain Safety Engine**
   - Implement `prescripto/domain/safety/` without any external I/O.
   - Define `SafetyCheckType` (`DUPLICATE_MEDICATION`, `EVIDENCE_LOOKUP`, `ADVERSE_EFFECT`).
   - Define `FindingStatus` (`CONFIRMED_BY_SOURCE`, `POTENTIAL`, `INSUFFICIENT_EVIDENCE`, `NOT_EVALUATED`, `REQUIRES_REVIEW`).
-- [ ] **Task 4.3: Duplicate Medication Detector**
+- [x] **Task 4.3: Duplicate Medication Detector**
   - Deterministic check comparing active ingredients and therapeutic classes among resolved drugs.
   - Generate `RiskFinding` records with full provenance.
-- [ ] **Task 4.4: Knowledge Providers & Capability Gates**
+- [x] **Task 4.4: Knowledge Providers & Capability Gates**
   - Abstract `KnowledgeProvider` base class.
   - Implement `OpenFDAProvider` (per-drug queries, no bulk batching to safeguard privacy).
   - Enforce `NOT_EVALUATED` guarantee with mandatory reason when provider cannot evaluate or times out.
@@ -193,7 +193,7 @@ Phase 7: Hardening, Contract Parity & Failure Injection (Slice 12)
 ---
 
 ### Phase 5: Report Assembly, Review Routing & Review API (Slice 8)
-- [ ] **Task 5.1: Report Assembly Stage & Review Trigger Evaluation**
+- [x] **Task 5.1: Report Assembly Stage & Review Trigger Evaluation**
   - Aggregate all stage outputs, medications, and findings.
   - Evaluate review triggers:
     - Any field with `AMBIGUOUS` state
@@ -201,12 +201,12 @@ Phase 7: Hardening, Contract Parity & Failure Injection (Slice 12)
     - Any risk finding with `REQUIRES_REVIEW` or `POTENTIAL`
   - Route analysis to `COMPLETED` or `REQUIRES_REVIEW`.
   - Ensure `coverage_disclaimer` is always populated.
-- [ ] **Task 5.2: Analysis Status & Result Endpoints**
+- [x] **Task 5.2: Analysis Status & Result Endpoints**
   - `GET /api/v1/analyses/{id}`: Poll status, stage progress, and timestamps.
   - `GET /api/v1/analyses/{id}/result`: Full structured report.
     - Return `404 ANALYSIS_NOT_READY` for incomplete/processing analyses.
     - Include `fields`, `states`, `findings`, and `not_evaluated[]`.
-- [ ] **Task 5.3: Review Submission Endpoint (`POST /api/v1/analyses/{id}/review`)**
+- [x] **Task 5.3: Review Submission Endpoint (`POST /api/v1/analyses/{id}/review`)**
   - Check role permissions (`REVIEWER` or `ADMIN`).
   - Accept review decisions (approve, flag, escalate) and optional field corrections.
   - Record entry in `reviews` table and transition analysis to `REVIEWED_COMPLETE` or `REVIEWED_ESCALATED`.
@@ -214,27 +214,28 @@ Phase 7: Hardening, Contract Parity & Failure Injection (Slice 12)
 ---
 
 ### Phase 6: DPDPA 2023 Verifiable Deletion & Audit (Slice 10)
-- [ ] **Task 6.1: Deletion Request Endpoint (`DELETE /api/v1/prescriptions/{id}`)**
+- [x] **Task 6.1: Deletion Request Endpoint (`DELETE /api/v1/prescriptions/{id}`)**
   - Mark document as `DELETION_REQUESTED`.
   - Insert job into `deletion_jobs` (`REQUESTED`).
-- [ ] **Task 6.2: Deletion Worker Process (`prescripto/retention/worker.py`)**
+- [x] **Task 6.2: Deletion Worker Process (`prescripto/retention/worker.py`)**
   - Execute multi-step erasure:
     1. `DB_TOMBSTONED`: Purge prescription-scoped rows (`analyses`, `medications`, `findings`) while preserving global `medications` master.
     2. `STORAGE_DELETING`: Purge original image and line crops from MinIO/S3.
     3. `VERIFYING`: Check DB and S3 confirm zero remaining records.
     4. `COMPLETE`: Generate signed deletion manifest.
-- [ ] **Task 6.3: Immutable Deletion Manifest Vault**
+- [x] **Task 6.3: Immutable Deletion Manifest Vault**
   - Write deletion manifest to `prescripto-retention` bucket.
   - Create restore verification script `scripts/apply_deletion_manifests.py`.
 
 ---
 
 ### Phase 7: Hardening, Contract Parity & Failure Injection (Slice 12)
-- [ ] **Task 7.1: Worker Fencing & Race Condition Test Suite**
+- [x] **Task 7.1: Worker Fencing & Race Condition Test Suite**
   - Test two workers attempting to commit with different lease tokens.
   - Test lease expiry fence rejection.
-- [ ] **Task 7.2: OpenAPI Contract Parity Tests**
+- [x] **Task 7.2: OpenAPI Contract Parity Tests**
   - Automated test verifying all endpoints and schemas match `OPENAPI.yaml`.
-- [ ] **Task 7.3: Failure Mode & Recovery Tests**
+- [x] **Task 7.3: Failure Mode & Recovery Tests**
   - Worker crash mid-pipeline and automatic recovery.
   - Database reconnect and MinIO transient outage handling.
+
