@@ -28,12 +28,15 @@ from prescripto.application.use_cases.get_prescriptions import (
     ListPrescriptionsUseCase,
     GetPrescriptionDetailUseCase,
 )
+from prescripto.application.use_cases.request_deletion import RequestDeletionUseCase
 from prescripto.application.exceptions import MissingIdempotencyKeyException
 from prescripto.api.v1.schemas.prescription import (
     UploadAccepted,
+    DeletionAccepted,
     PrescriptionList,
     PrescriptionDetail,
 )
+
 
 router = APIRouter(prefix="/prescriptions", tags=["Prescriptions"])
 
@@ -147,3 +150,25 @@ def get_prescription(
             for a in detail.analyses
         ],
     )
+
+
+@router.delete(
+    "/{id}",
+    response_model=DeletionAccepted,
+    status_code=status.HTTP_202_ACCEPTED,
+    summary="Delete a prescription document and all derived data",
+    operation_id="deletePrescription",
+)
+def delete_prescription(
+    id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> DeletionAccepted:
+    """
+    Initiates DPDPA 2023 verifiable deletion for a prescription document.
+    Enqueues an asynchronous DeletionJob and returns 202 Accepted with deletion_job_id.
+    """
+    use_case = RequestDeletionUseCase(db=db)
+    job_id = use_case.execute(document_id=id, caller=current_user)
+    return DeletionAccepted(deletion_job_id=job_id)
+

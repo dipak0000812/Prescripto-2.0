@@ -13,6 +13,11 @@ class UploadAccepted(BaseModel):
     prescription_id: uuid.UUID
 
 
+class DeletionAccepted(BaseModel):
+    deletion_job_id: uuid.UUID
+
+
+
 class PrescriptionSummary(BaseModel):
     prescription_id: uuid.UUID
     uploaded_at: datetime
