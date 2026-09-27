@@ -1,3 +1,5 @@
+import numpy as np
+from PIL import Image
 from paddleocr import PaddleOCR
 from .model_runtime import ModelRuntime
 
@@ -5,17 +7,21 @@ from .model_runtime import ModelRuntime
 class PPOCRAdapter(ModelRuntime):
     """
     PaddleOCR runs detection + recognition together internally (predict()).
-    To honor the ModelRuntime interface, detect_regions() runs the full
-    pipeline once and caches per-region results; recognize_line() then
-    returns the cached result for that region rather than re-running OCR.
+    Images are loaded via PIL first (handles mislabeled formats like GIF-as-.jpg)
+    then converted to RGB numpy arrays before passing to PaddleOCR.
     """
 
     def __init__(self, device: str = "gpu:0"):
         self._ocr = PaddleOCR(device=device)
         self._cache = {}
 
+    def _load_image(self, path: str) -> np.ndarray:
+        img = Image.open(path).convert("RGB")
+        return np.array(img)
+
     def detect_regions(self, image):
-        results = self._ocr.predict(image)
+        img_array = self._load_image(image)
+        results = self._ocr.predict(img_array)
         regions = []
         for result in results:
             for i, (text, score) in enumerate(zip(result["rec_texts"], result["rec_scores"])):
@@ -25,8 +31,6 @@ class PPOCRAdapter(ModelRuntime):
         return regions
 
     def recognize_line(self, image):
-        # image here is actually a region_id from detect_regions(),
-        # since recognition already happened during detection.
         if image not in self._cache:
             raise ValueError(f"Unknown region: {image}. Call detect_regions() first.")
         return self._cache[image]

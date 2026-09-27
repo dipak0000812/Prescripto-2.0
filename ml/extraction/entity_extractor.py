@@ -32,15 +32,15 @@ def extract_entities(text: str) -> dict:
         "duration": None,
     }
 
-    strength_match = re.search(r'(\d+)\s?mg', text, re.IGNORECASE)
+    strength_match = re.search(r'(\d+(?:\.\d+)?)\s?(mg|ing|ong|mcg)', text, re.IGNORECASE)
     if strength_match:
         entities["strength"] = f"{strength_match.group(1)}mg"
 
-    dosage_match = re.search(r'(\d+)\s?(tablet|capsule)', text, re.IGNORECASE)
+    dosage_match = re.search(r'(\d+)\s?(tablet|capsule|tab|cap|barlet|ta6|tupp|supp)', text, re.IGNORECASE)
     if dosage_match:
         entities["dosage"] = f"{dosage_match.group(1)} {dosage_match.group(2)}"
     else:
-        form_match = re.search(r'\b(tablet|capsule)\b', text, re.IGNORECASE)
+        form_match = re.search(r'\b(tablet|capsule|tab|cap|tupp|supp)\b', text, re.IGNORECASE)
         if form_match:
             entities["dosage"] = f"1 {form_match.group(1)} (inferred)"
 
@@ -48,6 +48,7 @@ def extract_entities(text: str) -> dict:
         r'once daily(?: at night| before breakfast)?',
         r'twice daily',
         r'three times daily',
+        r's\s?\d+\s?dd\s?\d+',   # Latin shorthand: "s 1 dd 1" = signa, dosage
     ]
     for pattern in freq_patterns:
         freq_match = re.search(pattern, text, re.IGNORECASE)
