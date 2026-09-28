@@ -143,21 +143,21 @@ class GetAnalysisResultUseCase:
                         reason=f.not_evaluated_reason or "PROVIDER_LACKS_CAPABILITY",
                     )
                 )
-            else:
-                findings_out.append(
-                    RiskFindingOut(
-                        finding_id=f.id,
-                        finding_status=f.finding_status,
-                        check_type=f.check_type,
-                        medication_ids=list(f.medication_ids or []),
-                        evidence_text=f.evidence_text,
-                        source_name=f.source_name,
-                        source_version=f.source_version,
-                        confidence_score=f.confidence_score,
-                        check_timestamp=f.check_timestamp,
-                        not_evaluated_reason=f.not_evaluated_reason,
-                    )
+
+            findings_out.append(
+                RiskFindingOut(
+                    finding_id=f.id,
+                    finding_status=f.finding_status,
+                    check_type=f.check_type,
+                    medication_ids=list(f.medication_ids or []),
+                    evidence_text=f.evidence_text,
+                    source_name=f.source_name,
+                    source_version=f.source_version,
+                    confidence_score=f.confidence_score,
+                    check_timestamp=f.check_timestamp,
+                    not_evaluated_reason=f.not_evaluated_reason,
                 )
+            )
 
         # 3. Model versions and knowledge snapshots
         model_versions = [f"pipeline:{analysis.pipeline_version}"]

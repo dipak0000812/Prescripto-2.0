@@ -67,8 +67,12 @@ def evaluate_review_triggers(
         # Check field states: name, strength, dose, unit, frequency, route, duration, instructions
         for field_name in ["name", "strength", "dose", "unit", "frequency", "route", "duration", "instructions"]:
             field_data = med.get(field_name) or {}
-            if isinstance(field_data, dict) and field_data.get("state") == "AMBIGUOUS":
-                reasons.append(f"AMBIGUOUS_FIELD: Field '{field_name}' in medication line {med.get('line_index', '?')} is ambiguous.")
+            if isinstance(field_data, dict):
+                state = field_data.get("state")
+                if state == "AMBIGUOUS":
+                    reasons.append(f"AMBIGUOUS_FIELD: Field '{field_name}' in medication line {med.get('line_index', '?')} is ambiguous.")
+                elif state == "UNREADABLE":
+                    reasons.append(f"UNREADABLE_FIELD: Field '{field_name}' in medication line {med.get('line_index', '?')} is unreadable.")
 
     # 2. Risk finding triggers
     for f in findings:
