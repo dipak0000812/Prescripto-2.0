@@ -1,0 +1,447 @@
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3225.jpg	Abasaglar
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P5068.jpg	nexe
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2412.jpg	Motigut
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2937.jpg	Algin
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1988.jpg	Cavinton
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4030.jpg	Injection
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3380.jpg	Xinc B
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3442.jpg	Capsule
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2664.jpg	Algin
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4882.jpg	renova
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4556.jpg	nacl
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4967.jpg	ceftriaxone
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1152.jpg	Dexter
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4923.jpg	xinc b
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P5281.jpg	nexe mups
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3826.jpg	Injection
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P5215.jpg	merrobe
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3259.jpg	Meropenem
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2124.jpg	Zodep
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2093.jpg	Fasid Plus
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2687.jpg	Ruchigold
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2238.jpg	Neuro-B
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4876.jpg	histacin
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3902.jpg	Tablet
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3355.jpg	Voltalin
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4083.jpg	Lumona
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3620.jpg	Injection
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3008.jpg	Anadol
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4581.jpg	xinc b
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1791.jpg	m-lucas
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3924.jpg	Roxadex
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4184.jpg	Hartman
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4464.jpg	tab
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1844.jpg	Empofi
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4607.jpg	inj
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4563.jpg	nebulization
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1528.jpg	Avolac
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4262.jpg	Drop
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2632.jpg	Paloven
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2765.jpg	Rolac
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4688.jpg	napa
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1941.jpg	Quridew
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4383.jpg	Tablet
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P5090.jpg	oxycol
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1732.jpg	Estes
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1230.jpg	ostalal Cex
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1533.jpg	Zolhivm 5
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4185.jpg	Triject
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2741.jpg	Povital
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4133.jpg	Lindac
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P5508.jpg	flux
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3768.jpg	Nebulization
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P5532.jpg	efodio
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1205.jpg	Dilalyof
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4012.jpg	Xinc B
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P5288.jpg	axim cv
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3198.jpg	Ceftriaxone
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1869.jpg	Doxoven
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3662.jpg	Vorifast
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4440.jpg	Fexofenadinee
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P5085.jpg	prompton
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4489.jpg	diet
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2746.jpg	Yonocab
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1127.jpg	uliv 150
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3560.jpg	Syrup
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1400.jpg	Tab. Anth
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P5463.jpg	myolax
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2182.jpg	Pain at calf
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P5029.jpg	betaloc
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2307.jpg	Zimax
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2556.jpg	Profinex
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4764.jpg	vasco
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P5022.jpg	tryptin
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P5441.jpg	supp
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P5438.jpg	beklo
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4614.jpg	ceevit
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3854.jpg	Injection
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P5362.jpg	nexe
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P5116.jpg	esmax
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2684.jpg	Povital
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3543.jpg	Actrapid
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4862.jpg	xinc b
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P5270.jpg	etorac
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2803.jpg	Spilac
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1967.jpg	halcorl
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4662.jpg	coral cal
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2011.jpg	Zovic Gold
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1451.jpg	Sefra
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3955.jpg	Tablet
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4203.jpg	Tablet
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2464.jpg	Tersilla-SR
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2131.jpg	Dexter
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3932.jpg	Torex
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2747.jpg	Esmax
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3605.jpg	Ceftriaxone
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4846.jpg	high
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4367.jpg	Omep
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P5253.jpg	myolax
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3186.jpg	Renova
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P5475.jpg	napa one
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2751.jpg	Flenex Dew
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3595.jpg	Arlin
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3381.jpg	Xinc B
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4075.jpg	Tablet
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4175.jpg	Tablet
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3257.jpg	Niobcard Rtd
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4234.jpg	Normal
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P5339.jpg	flamex
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P5161.jpg	lactomore
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4472.jpg	ecosprin
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3860.jpg	Syrup
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4622.jpg	diet
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2795.jpg	Efedio
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4263.jpg	Diet
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3410.jpg	Napa
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1696.jpg	Tab. Maxiwa
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2586.jpg	Rolac
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P5186.jpg	torax
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4459.jpg	Diet
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4788.jpg	histacin
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1675.jpg	Calcor-D
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3965.jpg	Omeprazole
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1628.jpg	Flugal
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2197.jpg	Dexter
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2780.jpg	Alcef
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2128.jpg	Lipicon
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3047.jpg	Lerozol
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2266.jpg	Rebe
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3954.jpg	Omeprazole
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1232.jpg	Movafllfj
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1856.jpg	Zollium
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P5407.jpg	relentus
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4791.jpg	diet
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1946.jpg	Tab Cordca
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1235.jpg	Biscor
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P5382.jpg	voltalin
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P5350.jpg	texit
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1751.jpg	Gerfon
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P5258.jpg	maxdol
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2107.jpg	Toradolin
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1992.jpg	Ecerhimu
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1120.jpg	Delfian
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4167.jpg	Injection
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4240.jpg	Omeprazole
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3776.jpg	Histacin
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3607.jpg	Ceftriaxone
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4970.jpg	emistat
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2831.jpg	Fexo
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2264.jpg	Geoton
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4377.jpg	Tablet
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1690.jpg	Calboral Dx
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4885.jpg	napa
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4852.jpg	emistat
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P5262.jpg	omidon
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1969.jpg	uliv 1
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3098.jpg	Dexa
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3890.jpg	Cefaclav
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2282.jpg	Fenix-V
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2087.jpg	Auolac
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3817.jpg	Napa
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4963.jpg	xinc b
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3484.jpg	Emistat
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P5231.jpg	liquid
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P5247.jpg	roclav
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4066.jpg	Tablet
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1640.jpg	Dekalin
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3571.jpg	Napa
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2957.jpg	Neuro-B
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1653.jpg	Esprazo
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3922.jpg	Rolac
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4291.jpg	Voltalin
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1900.jpg	Cildip
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P5173.jpg	esmax
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2525.jpg	Purisal
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3653.jpg	Diet
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1270.jpg	Nafro A plm
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4125.jpg	Omeprazole
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2802.jpg	Alcet
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4017.jpg	Histal
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P5531.jpg	torax
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4979.jpg	ceftriaxone
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3849.jpg	Albumin
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3011.jpg	Myolax
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1685.jpg	Esotid Mups(zx)
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2932.jpg	Beconal
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3181.jpg	Glasin
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1243.jpg	m-lucas 10
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4510.jpg	linatab
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4443.jpg	Thyrox
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P5565.jpg	domin
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4091.jpg	Capsule
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2096.jpg	Neuroxen
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3416.jpg	Actrapid
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1306.jpg	Tab. Neuro-B
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2255.jpg	Zimax
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1815.jpg	Bilan
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P5383.jpg	calboral
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1722.jpg	m-lucas 10
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1417.jpg	Beklo
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4536.jpg	renal
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P5421.jpg	afix
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2176.jpg	Nexe
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3681.jpg	Injection
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P5573.jpg	roclav
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2185.jpg	Metaomol
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3640.jpg	Injection
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3321.jpg	Voltalin
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2359.jpg	Rotinaf fote
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1132.jpg	Neemoxew
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4236.jpg	Fuclav
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1931.jpg	Auolac
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4183.jpg	Diet
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2075.jpg	Gavitfep
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1341.jpg	cap. Flugal
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4470.jpg	rtv
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3601.jpg	Topmate
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1678.jpg	Neuro-B
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4552.jpg	zinc b
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2809.jpg	Nexe
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2161.jpg	meur
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4562.jpg	avolu
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2070.jpg	Kallonl Dx
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3851.jpg	Lasix
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P5493.jpg	algin
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2334.jpg	Desolon
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2643.jpg	Ceevit
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P5103.jpg	corox
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2416.jpg	Napa
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1276.jpg	Tomdolin
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P5183.jpg	fuclav
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2072.jpg	Eslilex
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4907.jpg	xinc b
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4350.jpg	Fexofenadinee
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3985.jpg	Rolac
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4893.jpg	emistat
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4077.jpg	Capsule
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3316.jpg	Ceftriaxone
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1214.jpg	E-vit
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3673.jpg	Injection
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4299.jpg	Napa
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1369.jpg	Tab. Don-A
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P5039.jpg	coral
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P5315.jpg	pase
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2561.jpg	Vergon
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2764.jpg	Nexe
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P5107.jpg	emistat
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2812.jpg	Nexe
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4307.jpg	Cortan
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2270.jpg	X-ray C/S
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3371.jpg	Ceftriaxone
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2798.jpg	Nexe
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4286.jpg	Ketorolac
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3172.jpg	Biltant
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P5206.jpg	cabetool
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4224.jpg	Fuclav
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4839.jpg	nalbun-1
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3165.jpg	Svcset
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4759.jpg	emistat
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P5512.jpg	fixgut
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1739.jpg	BEKLO
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1378.jpg	Neuroxen
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4485.jpg	tab
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P5177.jpg	axon
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2918.jpg	Calcor-D
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P5571.jpg	ponsal
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3501.jpg	Injection
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3075.jpg	Algin
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4092.jpg	Omeprazole
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1604.jpg	Relaxo
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2959.jpg	Microcef
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2850.jpg	Algin
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4027.jpg	Diet
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4335.jpg	Napa
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1262.jpg	Devixil
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3102.jpg	Metro
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2485.jpg	Doxicap
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3927.jpg	Rolac
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1775.jpg	Comficid
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2910.jpg	Allyglot
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3627.jpg	Diet
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4513.jpg	omira
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P5398.jpg	esmax
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2263.jpg	Neuro-B
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4388.jpg	Napa
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1724.jpg	Rivyox
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4698.jpg	napa
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3046.jpg	Neuro-B
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1313.jpg	cap. Dexilend
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4047.jpg	DDR
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3443.jpg	Omeprazole
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1882.jpg	Zymef-Pro
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P5334.jpg	Macrobac
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4371.jpg	Capsule
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1318.jpg	Tab. Menoral
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4626.jpg	inj
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2849.jpg	Remmo
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3893.jpg	Sergel
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2823.jpg	Almex tab
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4590.jpg	p/c
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1970.jpg	Detfacf
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P5213.jpg	nexe
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3276.jpg	Algin
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1814.jpg	Fensiv
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P5529.jpg	liquid
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4115.jpg	Tablet
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4812.jpg	reset
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2752.jpg	Flexibac
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4573.jpg	nalbun
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4697.jpg	Ceftriaxone
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2407.jpg	Nexe mups
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2969.jpg	Amilin
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4879.jpg	windel plus
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4420.jpg	Diet
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P5499.jpg	nexe
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4859.jpg	nalbun-1
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4561.jpg	syp
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3114.jpg	Fexofenadine
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1779.jpg	Zymef Pro
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4864.jpg	meropenem
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1825.jpg	Prnzofress
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2398.jpg	Voltalin
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3791.jpg	Injection
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P5145.jpg	nexe mups
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2422.jpg	Filofer
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3353.jpg	Fexo
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4418.jpg	Fexofenadinee
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3154.jpg	Fenadin
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2645.jpg	Ambrox
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2779.jpg	Texit
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P5517.jpg	diet
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P5535.jpg	voltalin
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4743.jpg	diet
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3809.jpg	Syrup
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4176.jpg	Trevox
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2713.jpg	Xamic
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3845.jpg	Capsule
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3741.jpg	Nasal
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4273.jpg	Actrapid
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4430.jpg	Tablet
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2838.jpg	Solon
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2175.jpg	Indever
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4358.jpg	Tablet
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2794.jpg	Voltalin
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2873.jpg	Torax
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P5307.jpg	nexe mups
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1679.jpg	zerup
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3906.jpg	Tablet
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1979.jpg	Emetid
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2600.jpg	Cap. zif
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1322.jpg	Tab. Etorx
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1986.jpg	Napa
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1618.jpg	Arth An
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2144.jpg	Trevox
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4956.jpg	supp
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3806.jpg	Injection
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2686.jpg	Kinate
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3889.jpg	Rolac
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3847.jpg	Tablet
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1920.jpg	Nufw
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4761.jpg	napa
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3570.jpg	Injection
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4220.jpg	Omeprazole
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1316.jpg	Tab. Geofoenil
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4215.jpg	Fexo
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3394.jpg	Nutridex
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4677.jpg	omeprazole
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1507.jpg	Neurolin
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2611.jpg	Merven-SR
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3811.jpg	Omeprazole
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3143.jpg	Tmiptin
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3684.jpg	CRP
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1180.jpg	Wfolil plm
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P5000.jpg	linax plus
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3178.jpg	Ace power
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1608.jpg	Norium
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1495.jpg	Calboral Dx
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P5109.jpg	tajenta
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2192.jpg	Etorix
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1994.jpg	Cefotil Plus
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1453.jpg	Dexter
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2132.jpg	B126
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2391.jpg	Microcef
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4914.jpg	5% dns
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4458.jpg	Injection
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2111.jpg	Novotrif
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3097.jpg	Metronidazole
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P5413.jpg	phylopen
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1277.jpg	Neuvoxew
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2616.jpg	Rozita
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4959.jpg	5% dns
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3729.jpg	Emistat
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4577.jpg	supp
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2137.jpg	mecol
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4189.jpg	Injection
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P5059.jpg	normanal
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2701.jpg	Ceevit
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3071.jpg	Montene
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4268.jpg	Tablet
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1150.jpg	Cildnp
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P5130.jpg	nexe
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1891.jpg	Fenafir
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3672.jpg	Diet
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2594.jpg	Clonapex
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2479.jpg	Nexe
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3728.jpg	Vancomycin
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3940.jpg	Tablet
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3157.jpg	Napa
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1357.jpg	Bisoren
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3177.jpg	Alcet
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3479.jpg	Emistat
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1716.jpg	Tab. Calcor-D
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3551.jpg	Tablet
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4004.jpg	Napa
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1762.jpg	calboral
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P5006.jpg	diabetic
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4672.jpg	protein
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4318.jpg	Capsule
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2644.jpg	Bilan
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2383.jpg	Beklo 10
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3015.jpg	Fenix-V
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4121.jpg	Ceftriaxone
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3850.jpg	Nacl
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1305.jpg	Tab. Beklo
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2922.jpg	Nucef-cv
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2091.jpg	Ceevit
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3863.jpg	Meropenem
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3163.jpg	Minnate
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3674.jpg	Meropenem
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2198.jpg	vigorex
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1590.jpg	Neuroxen
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4020.jpg	Tablet
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P5233.jpg	phylopen
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4501.jpg	tryptin
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2300.jpg	Calcor-D
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3549.jpg	Anadol
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P3507.jpg	Meropenem
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1885.jpg	Pama Serg
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P2801.jpg	Flux
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1246.jpg	Dexter
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4035.jpg	Napa
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4287.jpg	Capsule
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4560.jpg	dicaltrol
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P5542.jpg	texit
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1582.jpg	Maxrin
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4208.jpg	Diet
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P4888.jpg	windel plus
+C:\Users\Admin\Desktop\prescription_project\data\RxHandBD-ML\RxHandBD-ML\Train_Set\P1976.jpg	Asynta max
