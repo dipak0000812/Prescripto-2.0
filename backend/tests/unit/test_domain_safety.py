@@ -67,11 +67,35 @@ def test_domain_risk_finding_confidence_bounds():
         )
 
 
-def test_detect_duplicate_medications_overlapping_active_ingredients():
+def test_detect_duplicate_medications_same_canonical_identity_is_potential():
     analysis_id = uuid.uuid4()
     line1_id = uuid.uuid4()
     line2_id = uuid.uuid4()
 
+    med1 = CanonicalMedication(
+        id=uuid.uuid4(),
+        brand_name="Calpol 650",
+        generic_name="Paracetamol",
+        active_ingredients=["Paracetamol"],
+        strength="650mg",
+    )
+    resolved_lines = [
+        (line1_id, MedicationResolutionResult(extracted_text="Calpol", resolution_status=ResolutionStatus.RESOLVED, resolved_medication=med1)),
+        (line2_id, MedicationResolutionResult(extracted_text="Calpol", resolution_status=ResolutionStatus.RESOLVED, resolved_medication=med1)),
+    ]
+
+    findings = detect_duplicate_medications(analysis_id, resolved_lines)
+    assert len(findings) == 1
+    f = findings[0]
+    assert f.check_type == SafetyCheckType.DUPLICATE_MEDICATION
+    assert f.finding_status == FindingStatus.POTENTIAL
+    assert set(f.medication_ids) == {line1_id, line2_id}
+    assert f.confidence_score is None
+    assert "reviewer confirmation" in f.evidence_text
+
+
+def test_different_products_with_same_ingredient_are_not_duplicate_findings():
+    analysis_id = uuid.uuid4()
     med1 = CanonicalMedication(
         id=uuid.uuid4(),
         brand_name="Calpol 650",
@@ -86,19 +110,12 @@ def test_detect_duplicate_medications_overlapping_active_ingredients():
         active_ingredients=["Paracetamol"],
         strength="650mg",
     )
-
     resolved_lines = [
-        (line1_id, MedicationResolutionResult(extracted_text="Calpol", resolution_status=ResolutionStatus.RESOLVED, resolved_medication=med1)),
-        (line2_id, MedicationResolutionResult(extracted_text="Dolo", resolution_status=ResolutionStatus.RESOLVED, resolved_medication=med2)),
+        (uuid.uuid4(), MedicationResolutionResult("Calpol", ResolutionStatus.RESOLVED, med1)),
+        (uuid.uuid4(), MedicationResolutionResult("Dolo", ResolutionStatus.RESOLVED, med2)),
     ]
 
-    findings = detect_duplicate_medications(analysis_id, resolved_lines)
-    assert len(findings) == 1
-    f = findings[0]
-    assert f.check_type == SafetyCheckType.DUPLICATE_MEDICATION
-    assert f.finding_status == FindingStatus.CONFIRMED_BY_SOURCE
-    assert set(f.medication_ids) == {line1_id, line2_id}
-    assert "Paracetamol" in f.evidence_text
+    assert detect_duplicate_medications(analysis_id, resolved_lines) == []
 
 
 def test_detect_duplicate_medications_unresolved_guarantee():

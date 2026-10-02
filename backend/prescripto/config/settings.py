@@ -42,6 +42,7 @@ class Settings(BaseSettings):
     # Machine Learning & OCR Configuration
     OCR_MODEL_NAME: str = Field(default="trocr-handwritten-v1")
     OCR_MODEL_VERSION: str = Field(default="1.0.0")
+    OCR_DEVICE: str = Field(default="cpu")
     MODEL_CACHE_DIR: str = Field(default="/tmp/prescripto_models")
 
     # Feature & Safety Flags

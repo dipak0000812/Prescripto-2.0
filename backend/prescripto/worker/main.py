@@ -17,6 +17,8 @@ from prescripto.worker.queue import QueuePoller, JobClaim
 from prescripto.worker.heartbeat import HeartbeatManager
 from prescripto.worker.coordinator import PipelineCoordinator
 from prescripto.worker.exceptions import WorkerFencedError
+from prescripto.ml.paddle_runtime import PaddleOCRRuntime
+from prescripto.storage.client import get_storage_client
 
 configure_logging(settings.LOG_LEVEL)
 logger = get_logger("prescripto.worker")
@@ -35,6 +37,8 @@ class WorkerRunner:
         lease_seconds: Optional[int] = None,
         heartbeat_seconds: Optional[int] = None,
         close_session: bool = True,
+        storage_client: Optional[object] = None,
+        ocr_runtime: Optional[object] = None,
     ) -> None:
         self.session_factory = session_factory
         self.worker_id = worker_id or settings.WORKER_ID or f"worker-{os.getpid()}-{uuid.uuid4().hex[:6]}"
@@ -42,6 +46,8 @@ class WorkerRunner:
         self.lease_seconds = lease_seconds if lease_seconds is not None else settings.WORKER_LEASE_SECONDS
         self.heartbeat_seconds = heartbeat_seconds if heartbeat_seconds is not None else settings.WORKER_HEARTBEAT_SECONDS
         self.close_session = close_session
+        self.storage_client = storage_client or get_storage_client()
+        self.ocr_runtime = ocr_runtime or PaddleOCRRuntime(device=settings.OCR_DEVICE)
         self._running = False
 
     def run_once(self) -> bool:
@@ -78,7 +84,12 @@ class WorkerRunner:
                 lease_duration_seconds=self.lease_seconds,
                 close_session=self.close_session,
             ) as hb:
-                coordinator = PipelineCoordinator(db=db, claim=claim)
+                coordinator = PipelineCoordinator(
+                    db=db,
+                    claim=claim,
+                    storage_client=self.storage_client,
+                    ocr_runtime=self.ocr_runtime,
+                )
                 coordinator.execute(heartbeat=hb)
 
             logger.info(

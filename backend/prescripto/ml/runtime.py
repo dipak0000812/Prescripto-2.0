@@ -15,6 +15,7 @@ from prescripto.ml.models import (
 )
 from prescripto.ml.calibration import TemperatureScalingCalibrator
 from prescripto.domain.uncertainty.models import FieldState
+from prescripto.ml.paddle_runtime import OCRLine
 
 
 class ModelRuntime(ABC):
@@ -108,3 +109,16 @@ class MockModelRuntime(ModelRuntime):
             model_version_id=self.model_version_id,
             latency_ms=latency_ms,
         )
+
+    def recognize_document(self, image_bytes: bytes) -> List[OCRLine]:
+        """Deterministic test/demo output; never used as the production runtime."""
+        if not image_bytes:
+            raise ValueError("Mock OCR requires non-empty image bytes")
+        return [
+            OCRLine(
+                line_index=0,
+                text="Augmentin 625 Duo 1 tab BD after food 5 days",
+                raw_score=0.96,
+                box=(40.0, 120.0, 620.0, 160.0),
+            )
+        ]

@@ -2,9 +2,11 @@
 Integration tests for Worker Engine, Pipeline Coordinator, and End-to-End Execution.
 """
 import uuid
+from io import BytesIO
 from datetime import timedelta
 import pytest
 from sqlalchemy.orm import Session
+from PIL import Image
 
 from prescripto.db.base import utc_now
 from prescripto.db.models.document import PrescriptionDocument
@@ -14,6 +16,7 @@ from prescripto.worker.main import WorkerRunner
 from prescripto.worker.coordinator import CANONICAL_STAGES
 from prescripto.worker.exceptions import WorkerFencedError
 from prescripto.worker.fence import commit_stage_result
+from prescripto.ml.runtime import MockModelRuntime
 
 
 @pytest.fixture
@@ -66,12 +69,28 @@ def seeded_worker_env(db_session: Session):
     return {"doc": doc, "analysis": analysis, "job": job}
 
 
+class TestStorage:
+    def __init__(self, image_bytes: bytes):
+        self.image_bytes = image_bytes
+
+    def get_object(self, key: str) -> bytes:
+        return self.image_bytes
+
+
+def test_image_bytes() -> bytes:
+    stream = BytesIO()
+    Image.new("RGB", (800, 800), "white").save(stream, format="PNG")
+    return stream.getvalue()
+
+
 from prescripto.worker.queue import QueuePoller
 
 def test_worker_full_pipeline_success(db_session: Session, seeded_worker_env):
     analysis = seeded_worker_env["analysis"]
     job = seeded_worker_env["job"]
 
+    image_bytes = test_image_bytes()
+    seeded_worker_env["doc"].file_hash_sha256 = __import__("hashlib").sha256(image_bytes).hexdigest()
     session_factory = lambda: db_session
 
     runner = WorkerRunner(
@@ -81,6 +100,8 @@ def test_worker_full_pipeline_success(db_session: Session, seeded_worker_env):
         lease_seconds=600,
         heartbeat_seconds=60,
         close_session=False,
+        storage_client=TestStorage(image_bytes),
+        ocr_runtime=MockModelRuntime(model_version_id=analysis.model_snapshot_id),
     )
 
     processed = runner.run_once()
@@ -134,11 +155,15 @@ def test_worker_fencing_race_condition(db_session: Session, seeded_worker_env):
     db_session.commit()
 
     # Worker B claims expired job with token 2
+    image_bytes = test_image_bytes()
+    seeded_worker_env["doc"].file_hash_sha256 = __import__("hashlib").sha256(image_bytes).hexdigest()
     session_factory = lambda: db_session
     runner_b = WorkerRunner(
         session_factory=session_factory,
         worker_id="worker-B",
         close_session=False,
+        storage_client=TestStorage(image_bytes),
+        ocr_runtime=MockModelRuntime(model_version_id=analysis.model_snapshot_id),
     )
     processed_b = runner_b.run_once()
     assert processed_b is True
