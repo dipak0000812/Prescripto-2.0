@@ -8,6 +8,7 @@ from io import BytesIO
 from typing import Dict, Any, List, Optional
 from sqlalchemy.orm import Session
 
+from prescripto.db.base import utc_now
 from prescripto.db.models.analysis import Analysis
 from prescripto.db.models.document import PrescriptionDocument
 from prescripto.db.models.medication import PrescriptionMedication, MedicationCandidate
@@ -16,11 +17,18 @@ from prescripto.domain.medication.models import ResolutionStatus
 from prescripto.domain.safety.duplicate import detect_duplicate_medications
 from prescripto.domain.review.models import evaluate_review_triggers
 from prescripto.application.services.medication_search import MedicationSearchService
-from prescripto.domain.medication.models import MatchingStrategy, VerificationStatus
-from prescripto.domain.medication.models import MedicationResolutionResult
+from prescripto.domain.medication.models import (
+    MatchingStrategy,
+    VerificationStatus,
+    MedicationResolutionResult,
+)
 from prescripto.ml.extraction import extract_prescription_fields
-from prescripto.ml.paddle_runtime import PaddleOCRRuntime
 from prescripto.storage.client import get_storage_client
+
+
+
+
+
 
 
 def handle_ingestion(
@@ -69,12 +77,14 @@ def handle_quality_check(
         from PIL import Image
 
         with Image.open(BytesIO(image_bytes)) as image:
-            image.verify()
             width, height = image.size
+            gray = image.convert("L")
+            extrema = gray.getextrema()
+            is_blank = (extrema[1] - extrema[0] < 5)
     except Exception as error:
         raise ValueError("Uploaded image cannot be decoded") from error
 
-    is_poor_quality = width < 400 or height < 400
+    is_poor_quality = width < 400 or height < 400 or is_blank
     context["quality_failed"] = is_poor_quality
 
     return {
@@ -82,8 +92,9 @@ def handle_quality_check(
         "status": "COMPLETED",
         "width": width,
         "height": height,
+        "is_blank": is_blank,
         "quality_passed": not is_poor_quality,
-        "check_method": "decode_and_minimum_dimensions",
+        "check_method": "decode_dimensions_and_contrast",
     }
 
 

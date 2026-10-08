@@ -9,7 +9,6 @@ from prescripto.application.use_cases.ingest_prescription import (
 from prescripto.application.exceptions import (
     UnsupportedMediaTypeException,
     FileTooLargeException,
-    PdfActiveContentRejectedException,
     MalformedRequestException,
 )
 
@@ -42,11 +41,17 @@ def test_magic_bytes_detection_tiff_big_endian():
     assert ext == "tiff"
 
 
-def test_magic_bytes_detection_clean_pdf():
-    raw_pdf = b"%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj"
-    mime, ext = detect_file_format_and_validate(raw_pdf)
-    assert mime == "application/pdf"
-    assert ext == "pdf"
+@pytest.mark.parametrize(
+    "pdf_bytes",
+    [
+        b"%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj",
+        b"%PDF-1.4\n<< /S /JavaScript /JS (app.alert('pwned');) >>",
+        b"%PDF-1.4\n<< /S /Launch /F (cmd.exe) >>",
+    ],
+)
+def test_pdf_uploads_rejected_as_unsupported(pdf_bytes):
+    with pytest.raises(UnsupportedMediaTypeException):
+        detect_file_format_and_validate(pdf_bytes)
 
 
 def test_magic_bytes_detection_unsupported():
@@ -64,15 +69,3 @@ def test_oversized_file_rejected():
     oversized = b"\xFF\xD8\xFF" + b"\x00" * (20 * 1024 * 1024 + 1)
     with pytest.raises(FileTooLargeException):
         detect_file_format_and_validate(oversized)
-
-
-def test_pdf_active_content_javascript_rejected():
-    dangerous_pdf = b"%PDF-1.4\n<< /S /JavaScript /JS (app.alert('pwned');) >>"
-    with pytest.raises(PdfActiveContentRejectedException):
-        detect_file_format_and_validate(dangerous_pdf)
-
-
-def test_pdf_active_content_launch_rejected():
-    dangerous_pdf = b"%PDF-1.4\n<< /S /Launch /F (cmd.exe) >>"
-    with pytest.raises(PdfActiveContentRejectedException):
-        detect_file_format_and_validate(dangerous_pdf)

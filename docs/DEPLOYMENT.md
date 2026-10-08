@@ -7,9 +7,10 @@ One Docker image, three entrypoints, five compose services.
 ```
 api              uvicorn prescripto.api.main:app --host 0.0.0.0 --port 8000
 worker           python -m prescripto.worker.main
-deletion_worker  python -m prescripto.retention.worker
+deletion_worker  python -m prescripto.retention.worker   # code exists; not yet in compose
 postgres         postgres:16
 minio            MinIO (dev) → S3 (prod, config-only change)
+ml-service       uvicorn app.main:app --host 0.0.0.0 --port 8001  # separate image
 ```
 
 One image because all three share domain types, ORM models, and schemas — separate images create version-coordination overhead with no isolation benefit at this scale. Three processes because their failure modes and latency profiles differ: a worker OOM during OCR must not take the API down.
@@ -51,14 +52,14 @@ LOG_LEVEL, ENVIRONMENT
 
 ## Worker startup sequence
 
-Refuses to start if any step fails. All four are safety gates, not health checks:
+**Specified startup sequence** — the following gates are architecturally required; the schema exists but startup enforcement is not yet wired in `worker/main.py`:
 
 1. `OCR_MODEL_NAME:OCR_MODEL_VERSION` exists in `model_versions`
-2. That row has a non-NULL `calibration_snapshot_id`
+2. That row has a linked `calibration_snapshots` row
 3. Downloaded artifact's SHA-256 matches `checkpoint_sha256`
 4. Model loads without error
 
-An uncalibrated model produces confidence scores that route the wrong cases to review. Starting anyway would be worse than not starting.
+Until these gates are wired, the worker boots with `MockModelRuntime` (or `RemoteMLClient` when `ML_RUNTIME_MODE=remote`) without validating model/calibration registration.
 
 ## Migrations
 

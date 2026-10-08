@@ -7,7 +7,7 @@
 [![React](https://img.shields.io/badge/React-20232A?logo=react&logoColor=61DAFB)](https://react.dev/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-EE4C2C?logo=pytorch&logoColor=white)](https://pytorch.org/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
-![Status](https://img.shields.io/badge/status-pre--implementation-yellow)
+![Status](https://img.shields.io/badge/status-backend%20implemented-blue)
 
 Prescripto AI 2.0 extracts structured medication data from prescription images, resolves each drug to a canonical identity, screens the result against licensed safety sources, and presents a provenance-backed report to a qualified human reviewer.
 
@@ -48,7 +48,7 @@ The harder problem is that a verification system built carelessly is worse than 
 
 ## Approach
 
-Prescripto is currently a documentation-only research prototype specification. The locked V1 goal is transcription, structured extraction, normalization candidates, and qualified human review. It does not yet have a runnable implementation or validated model.
+The locked V1 goal is transcription, structured extraction, normalization candidates, and qualified human review. Backend implementation is partially complete and runnable (see [Current Status](#current-status)). No OCR model has been empirically validated yet; the worker defaults to a mock runtime.
 
 Prescripto treats this as a pipeline problem with one governing rule:
 
@@ -73,11 +73,16 @@ Documentation-first. Architecture is written and reviewed before implementation 
 |---|---|
 | Product/architecture decision baseline | ✅ Updated 2026-10-02 |
 | OCR pipeline and evaluation protocol | ✅ Specified; not empirically validated |
-| Tier B evaluation dataset | 🔲 Not collected; blocks model selection and calibration |
-| Legal/licensing review for data collection and CDSCO-derived master | 🔲 Outstanding |
-| Implementation and machine-readable OpenAPI | 🔲 Not started |
+| Backend API + worker (FastAPI, PostgreSQL, MinIO, job queue, fencing) | ✅ Implemented and tested |
+| ML service (FastAPI, PP-OCRv6 adapter, `POST /v1/ocr/recognize`) | ✅ Implemented; PaddleOCR dependency optional |
+| Machine-readable OpenAPI schema (`OPENAPI.yaml`) | ✅ Present (hand-maintained; not yet auto-generated from code) |
+| Frontend (React + Vite) | 🔲 Not started |
+| OCR model selection + Tier B evaluation | 🔲 Blocked — no labeled dataset yet |
+| Calibration startup gate (refuse to start without calibration snapshot) | 🔲 Schema exists; startup enforcement not wired |
+| Legal/licensing review for CDSCO data collection | 🔲 Outstanding |
+| `mypy --strict` + ruff + contract CI gates | 🔲 CI runs pytest + pyflakes only |
 
-No production code exists. Setup instructions below describe the target system.
+The backend API and worker are runnable today with Docker Compose. See [Current Status](#current-status) for how to start them.
 
 ---
 
@@ -104,7 +109,7 @@ graph TD
     style M fill:#4dabf7,stroke:#1864ab,color:#fff
 ```
 
-Single deployable, three processes (`api`, `worker`, `deletion_worker`) from one image. No Redis, Kafka, Kubernetes, vector database, or microservices — each is deferred behind a measured trigger documented in the architecture, and none has fired.
+Two images, five compose services (`api`, `worker`, `postgres`, `minio`, `ml-service`). The backend image runs `api` and `worker`; the ML image runs the independent OCR microservice on port 8001. `deletion_worker` is implemented but not yet added as a separate compose service. No Redis, Kafka, Kubernetes, vector database — each is deferred behind a measured trigger documented in the architecture, and none has fired.
 
 ## Pipeline Flow
 
@@ -204,7 +209,7 @@ Every source's license is verified at its primary source before use. Reputation 
 | **RxNorm** | Public terminology | Not queried at runtime in V1; US-centric and not the identity authority |
 | **openFDA** | Public US data | Not queried at runtime; labels/FAERS do not establish Indian-market coverage or adverse-event causality |
 | **SIDER 4.1** | CC BY-NC-SA 4.0 | Not used in V1; licensing and mapping constraints remain |
-| **CDSCO** | Indian regulatory data | Candidate master source only after written reuse/legal clearance |
+| **CDSCO** | Indian regulatory data | A small hand-crafted formulation list (10 sample entries) labelled `CDSCO_REGULATORY` is seeded in `scripts/seed_medications.py` for development. **Official CDSCO data has not been ingested; written legal/reuse clearance is outstanding.** |
 | **DrugBank** | Academic tier is non-clinical use only | ❌ Not used at runtime — the free tier doesn't clearly cover a clinical-decision-support use case |
 | **MIMIC-IV** | PhysioNet credentialed | ❌ Not a dependency — contains no prescription images, wrong data type for this problem |
 
@@ -228,14 +233,85 @@ The machine-readable OpenAPI document, threat model, and test strategy are not p
 
 ---
 
+## Current Status
+
+What runs today:
+
+```
+docker compose up          # starts api, worker, postgres, minio, ml-service
+cd backend && pip install -e ".[dev]"
+python -m pytest -q        # 109 passed, 6 skipped (Postgres-only on SQLite)
+```
+
+The API is reachable at `http://localhost:8000`. Auth, prescription upload, async analysis pipeline (mock OCR by default), medication normalization, duplicate detection, and review routing are all functional. Set `ML_RUNTIME_MODE=remote` to call the real PaddleOCR service (requires `paddleocr` installed in the ml-service container).
+
+What is not yet runnable:
+- **Frontend** — no `web/` or `frontend/` directory exists.
+- **Real OCR model** — PaddleOCR weights are downloaded at first use; worker defaults to `MockModelRuntime`.
+- **Calibration startup gate** — `CalibrationSnapshot` table exists in schema but the worker does not validate it at boot.
+- **Rate limiting** — described in `SECURITY.md` but not yet implemented in the API.
+
+### Planned (not implemented)
+
+The following items are specified in the architecture documents but are not yet wired in code:
+
+| Item | Where specified | Gap |
+|---|---|---|
+| Frontend (React 18 + Vite) | `README.md`, `CI-CD.md` | No code |
+| Calibration startup gate | `DEPLOYMENT.md §52-61`, `ML-ARCHITECTURE.md §37` | Schema exists; startup check not wired |
+| Rate limiting on auth + upload | `SECURITY.md §65-67` | Not implemented |
+| `mypy --strict` + ruff + contract CI gates | `CI-CD.md` | CI runs pytest + pyflakes only |
+| `deletion_worker` compose service | `DEPLOYMENT.md` | Code exists; not added to `docker-compose.yml` |
+
 ## Local Setup
 
-There is no runnable setup yet. The API, UI, Docker configuration, migrations, model registry, and OpenAPI schema must be implemented before setup instructions can be verified.
+```bash
+# 1. Copy env template and fill in JWT keys
+cp backend/.env.example backend/.env
+python backend/scripts/generate_keys.py   # writes JWT_PRIVATE_KEY / JWT_PUBLIC_KEY
+
+# 2. Start all services
+docker compose up -d
+
+# 3. Run migrations
+docker compose exec api alembic upgrade head
+
+# 4. Seed sample medications
+docker compose exec api python scripts/seed_medications.py
+
+# 5. Create an operator user
+docker compose exec api python scripts/create_user.py
+```
+
+The API docs are served at `http://localhost:8000/docs`.
 
 ## Project Structure
 
 ```
-Only `README.md`, `OPENAPI.yaml`, and files under `docs/` currently exist. The future code layout is described in [`Architecture.md`](docs/Architecture.md); it should not be mistaken for implemented files.
+backed/
+  prescripto/
+    api/           FastAPI routes and schemas
+    worker/        Job queue, heartbeat, coordinator, pipeline driver
+    pipeline/      Stage handlers (engine.py)
+    domain/        Pure-Python domain models (medication, safety, review, uncertainty)
+    application/   Use cases and application services
+    db/            ORM models, Alembic migrations
+    ml/            Backend ML interface (MockModelRuntime, RemoteMLClient)
+    knowledge/     OpenFDA + local safety providers
+    storage/       MinIO/S3 client
+    audit/         PHI-safe structured logging
+    config/        Pydantic settings
+  scripts/         Seeds, key generation, user creation
+  tests/           Unit + integration (pytest, SQLite + PostgreSQL)
+ml/
+  app/             Standalone ML FastAPI service (PP-OCRv6, extraction)
+docs/              19 specification documents
+research/          CER/WER evaluation scripts (not production)
+OPENAPI.yaml       Hand-maintained API schema (full endpoint coverage)
+docker-compose.yml Starts api + worker + postgres + minio + ml-service
+```
+
+The canonical architecture description is in [`Architecture.md`](docs/Architecture.md).
 
 ---
 

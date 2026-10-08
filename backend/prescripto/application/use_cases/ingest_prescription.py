@@ -26,22 +26,11 @@ from prescripto.application.exceptions import (
     IdempotencyKeyConflictException,
     UnsupportedMediaTypeException,
     FileTooLargeException,
-    PdfActiveContentRejectedException,
     StorageUnavailableException,
     MalformedRequestException,
 )
 
 logger = get_logger("prescripto.application.ingest")
-
-PDF_ACTIVE_CONTENT_PATTERNS = [
-    b"/JavaScript",
-    b"/JS",
-    b"/Launch",
-    b"/EmbeddedFiles",
-    b"/RichMedia",
-    b"/SubmitForm",
-    b"/ImportData",
-]
 
 
 def detect_file_format_and_validate(file_bytes: bytes) -> Tuple[str, str]:
@@ -65,16 +54,12 @@ def detect_file_format_and_validate(file_bytes: bytes) -> Tuple[str, str]:
     elif file_bytes.startswith(b"II*\x00") or file_bytes.startswith(b"MM\x00*"):
         return "image/tiff", "tiff"
     elif file_bytes.startswith(b"%PDF-"):
-        # Scan for dangerous active scripts or launch commands
-        for pattern in PDF_ACTIVE_CONTENT_PATTERNS:
-            if pattern in file_bytes:
-                raise PdfActiveContentRejectedException(
-                    "PDF rejected: contains active or executable content"
-                )
-        return "application/pdf", "pdf"
+        raise UnsupportedMediaTypeException(
+            "PDF uploads are not supported. Upload a JPEG, PNG or TIFF image."
+        )
     else:
         raise UnsupportedMediaTypeException(
-            "Unsupported file format: magic bytes do not match JPEG, PNG, TIFF, or PDF"
+            "Unsupported file format: magic bytes do not match JPEG, PNG or TIFF"
         )
 
 

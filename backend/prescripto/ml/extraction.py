@@ -6,7 +6,6 @@ from typing import Any
 
 from prescripto.domain.uncertainty.models import FieldState
 
-
 PATTERNS: dict[str, re.Pattern[str]] = {
     "strength": re.compile(r"\b\d+(?:\.\d+)?\s?(?:mg|mcg|g|ml|%)\b", re.IGNORECASE),
     "dose": re.compile(

@@ -1,0 +1,6 @@
+# T0.2: Normalize line endings — all text files use LF, binaries are untouched.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.zip binary

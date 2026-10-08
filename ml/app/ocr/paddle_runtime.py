@@ -1,4 +1,11 @@
-"""PaddleOCR adapter for uploaded prescription images."""
+"""
+PaddleOCR adapter for uploaded prescription images.
+
+Verbatim copy of backend/prescripto/ml/paddle_runtime.py.
+Only change: no import of prescripto.* packages.  Algorithm unchanged.
+
+Runs the PaddleOCR page pipeline and groups word boxes into reading lines by y-centre.
+"""
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -28,7 +35,7 @@ class PaddleOCRRuntime:
                 from paddleocr import PaddleOCR
             except ImportError as error:
                 raise RuntimeError(
-                    "OCR runtime dependencies are missing; install the 'ocr' extra."
+                    "OCR runtime dependencies are missing; install paddleocr."
                 ) from error
 
             self._ocr = PaddleOCR(
@@ -113,7 +120,7 @@ class PaddleOCRRuntime:
             import numpy as np
             from PIL import Image
         except ImportError as error:
-            raise RuntimeError("Pillow and NumPy are required by the OCR extra") from error
+            raise RuntimeError("Pillow and NumPy are required by the OCR runtime") from error
 
         with Image.open(BytesIO(image_bytes)) as source:
             image = np.asarray(source.convert("RGB"))

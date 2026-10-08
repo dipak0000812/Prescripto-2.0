@@ -5,7 +5,7 @@ Drops any field not explicitly on the permitted whitelist to guarantee zero PHI 
 """
 import logging
 import sys
-from typing import Any, Dict, MutableMapping
+from typing import Any, MutableMapping
 import structlog
 
 # Strictly permitted keys in operational logs per docs/SECURITY.md
@@ -18,11 +18,15 @@ PERMITTED_LOG_KEYS = {
     "request_id",
     "analysis_id",
     "document_id",
+    "job_id",
+    "worker_id",
+    "lease_token",
     "pipeline_stage",
     "model_version_id",
     "status",
     "duration_ms",
     "error_code",
+    "error_type",
     "actor_id",
     "http_method",
     "http_path",
@@ -30,14 +34,22 @@ PERMITTED_LOG_KEYS = {
 }
 
 
+# Structlog internal metadata required by ProcessorFormatter
+STRUCTLOG_INTERNAL_KEYS = {"_record", "_from_structlog"}
+
+
 def phi_whitelist_filter(
     logger: logging.Logger, method_name: str, event_dict: MutableMapping[str, Any]
 ) -> MutableMapping[str, Any]:
     """
     Strips any key not in PERMITTED_LOG_KEYS to prevent accidental PHI logging.
+    Preserves only exact structlog internal pipeline metadata (_record, _from_structlog).
     Increments a metric counter or records stripped count if unlisted fields are detected.
     """
-    keys_to_remove = [k for k in event_dict.keys() if k not in PERMITTED_LOG_KEYS]
+    keys_to_remove = [
+        k for k in event_dict.keys()
+        if k not in PERMITTED_LOG_KEYS and k not in STRUCTLOG_INTERNAL_KEYS
+    ]
     if keys_to_remove:
         event_dict["_dropped_unwhitelisted_keys_count"] = len(keys_to_remove)
         for k in keys_to_remove:

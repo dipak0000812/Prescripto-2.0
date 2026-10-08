@@ -10,12 +10,24 @@ from prescripto.db.base import utc_now
 from prescripto.db.models.document import PrescriptionDocument
 from prescripto.db.models.analysis import Analysis, AnalysisJob, AnalysisStage
 from prescripto.db.models.registry import ModelVersion
+from prescripto.db.models.users import User
 from prescripto.worker.fence import commit_stage_result
 from prescripto.worker.exceptions import WorkerFencedError
 
 
 @pytest.fixture
 def sample_analysis_job(db_session: Session):
+    user = User(
+        id=uuid.uuid4(),
+        username=f"fe_{uuid.uuid4().hex[:8]}",
+        email=f"fe_{uuid.uuid4().hex[:8]}@example.com",
+        hashed_password="test_password_hash",
+        role="OPERATOR",
+        is_active=True,
+    )
+    db_session.add(user)
+    db_session.flush()
+
     model = ModelVersion(
         id=uuid.uuid4(),
         model_name="test-model",
@@ -30,7 +42,7 @@ def sample_analysis_job(db_session: Session):
 
     doc = PrescriptionDocument(
         id=uuid.uuid4(),
-        uploader_id=uuid.uuid4(),
+        uploader_id=user.id,
         storage_key="test/original.jpg",
         file_hash_sha256="abc123hash",
         mime_type="image/jpeg",

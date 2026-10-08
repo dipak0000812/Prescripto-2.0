@@ -28,7 +28,8 @@ def commit_stage_result(
     Persists stage output guarded by generation token and active lease validation.
     
     1. Validates that the worker holds the currently valid, non-expired lease
-       in the exact same transaction (FOR SHARE on PostgreSQL).
+       in the exact same transaction (plain read early-abort check; authoritative
+       row lock is in mark_job_succeeded).
     2. Guards against writes where a newer worker generation already committed
        (analysis_stages.lease_token <= lease_token).
     3. Raises WorkerFencedError on lease expiration or token supersession.
@@ -36,17 +37,17 @@ def commit_stage_result(
     now = utc_now()
 
     # Step 1: Validate active lease ownership
-    job_query = db.query(AnalysisJob).filter(
-        AnalysisJob.analysis_id == analysis_id,
-        AnalysisJob.lease_token == lease_token,
-        AnalysisJob.lease_owner == lease_owner,
-        AnalysisJob.status == "RUNNING",
+    # Plain read: early-abort check only; the authoritative fence is the row lock in mark_job_succeeded.
+    job = (
+        db.query(AnalysisJob)
+        .filter(
+            AnalysisJob.analysis_id == analysis_id,
+            AnalysisJob.lease_token == lease_token,
+            AnalysisJob.lease_owner == lease_owner,
+            AnalysisJob.status == "RUNNING",
+        )
+        .first()
     )
-
-    if db.bind and db.bind.dialect.name == "postgresql":
-        job_query = job_query.with_for_update(read=True)
-
-    job = job_query.first()
 
     if not job:
         logger.warning(

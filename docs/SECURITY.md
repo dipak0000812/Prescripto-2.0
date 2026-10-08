@@ -40,7 +40,7 @@ Ordered — each step runs only if the prior passed:
 
 1. **Magic bytes** determine type. Client-supplied `Content-Type` and file extension are advisory and ignored for decisions.
 2. Size ≤ 20 MB, enforced at API and DB.
-3. PDFs: reject on embedded JavaScript (`PDF_ACTIVE_CONTENT_REJECTED`).
+3. PDFs: rejected as unsupported (`UNSUPPORTED_MEDIA_TYPE`). Only JPEG, PNG, and TIFF images are supported.
 4. Images decoded into numpy arrays before persistence — decoded as data, never executed.
 5. Storage key is a server-generated UUID path. Client filenames never reach the filesystem — this is the whole path-traversal class, closed by construction.
 
@@ -52,7 +52,7 @@ TLS on every hop: client↔API, API↔storage, API↔PostgreSQL, worker↔openFD
 
 Whitelist, not blacklist. A structlog processor drops any field not on the permitted list and increments a warning metric.
 
-**Permitted:** `request_id`, `analysis_id`, `document_id`, `pipeline_stage`, `model_version_id`, `status`, `duration_ms`, `error_code`, `actor_id`.
+**Permitted:** `request_id`, `analysis_id`, `document_id`, `job_id`, `worker_id`, `lease_token`, `pipeline_stage`, `model_version_id`, `status`, `duration_ms`, `error_code`, `error_type`, `actor_id`.
 
 **Never logged:** image bytes, OCR text, medication names, dosages, patient_ref, presigned URLs, tokens, stack traces in production responses.
 
@@ -64,7 +64,7 @@ Pydantic `BaseSettings` from environment only. Not hardcoded, not baked into ima
 
 ## Rate limiting
 
-Per-user limits on `POST /auth/token` (brute-force) and `POST /prescriptions` (storage exhaustion). **Not yet specified numerically** — limits set from measured normal usage rather than invented now.
+Per-user limits on `POST /auth/token` (brute-force) and `POST /prescriptions` (storage exhaustion). **Not yet implemented** — no rate-limiting middleware exists in the API. Limits will be set from measured normal usage rather than invented now.
 
 openFDA is called **one drug name per query**, never a query encoding the full medication list. A combined query would leak a patient's complete medication profile to a third party in a single request; individual lookups leak only that a drug was queried, by someone, at some time.
 
