@@ -4,7 +4,6 @@ Validates idempotency, format verification, security rules, 404-over-403, and pr
 """
 import io
 import uuid
-import pytest
 from prescripto.db.models.users import User
 from prescripto.db.models.enums import Role
 from prescripto.auth.crypto import hash_password
@@ -97,14 +96,14 @@ def test_upload_unsupported_media_type(client, seeded_users):
     assert res.json()["error"]["code"] == "UNSUPPORTED_MEDIA_TYPE"
 
 
-def test_upload_pdf_active_content_rejected(client, seeded_users):
+def test_upload_pdf_rejected_as_unsupported(client, seeded_users):
     headers = get_auth_header(client, "test_operator", "OperatorPass123!")
-    headers["Idempotency-Key"] = f"malicious-pdf-{uuid.uuid4()}"
+    headers["Idempotency-Key"] = f"pdf-upload-{uuid.uuid4()}"
 
-    files = {"file": ("rx.pdf", io.BytesIO(MALICIOUS_PDF_BYTES), "application/pdf")}
+    files = {"file": ("rx.pdf", io.BytesIO(VALID_PDF_BYTES), "application/pdf")}
     res = client.post("/api/v1/prescriptions", headers=headers, files=files)
-    assert res.status_code == 422
-    assert res.json()["error"]["code"] == "PDF_ACTIVE_CONTENT_REJECTED"
+    assert res.status_code == 415
+    assert res.json()["error"]["code"] == "UNSUPPORTED_MEDIA_TYPE"
 
 
 def test_get_prescription_detail_success(client, seeded_users):

@@ -3,20 +3,32 @@ Pipeline Stage Handlers for Prescripto AI 2.0 Analysis Pipeline.
 Integrates structured extraction, normalization, safety screening, and report assembly.
 """
 import uuid
+from hashlib import sha256
+from io import BytesIO
 from typing import Dict, Any, List, Optional
 from sqlalchemy.orm import Session
 
+from prescripto.db.base import utc_now
 from prescripto.db.models.analysis import Analysis
 from prescripto.db.models.document import PrescriptionDocument
 from prescripto.db.models.medication import PrescriptionMedication, MedicationCandidate
 from prescripto.db.models.safety import RiskFinding
-from prescripto.db.base import utc_now
 from prescripto.domain.medication.models import ResolutionStatus
 from prescripto.domain.safety.duplicate import detect_duplicate_medications
 from prescripto.domain.review.models import evaluate_review_triggers
 from prescripto.application.services.medication_search import MedicationSearchService
-from prescripto.knowledge.openfda import OpenFDAProvider
-from prescripto.ml.runtime import MockModelRuntime
+from prescripto.domain.medication.models import (
+    MatchingStrategy,
+    VerificationStatus,
+    MedicationResolutionResult,
+)
+from prescripto.ml.extraction import extract_prescription_fields
+from prescripto.storage.client import get_storage_client
+
+
+
+
+
 
 
 def handle_ingestion(
@@ -29,13 +41,14 @@ def handle_ingestion(
     Stage: INGESTION.
     Validates document presence, verifies file integrity, format, and storage pointer.
     """
-    if not document:
-        return {
-            "stage": "INGESTION",
-            "status": "COMPLETED",
-            "file_size_bytes": 0,
-            "mime_type": "unknown",
-        }
+    if not document or not document.storage_key:
+        raise ValueError("Uploaded document or its storage reference is unavailable")
+
+    storage_client = context.get("storage_client") or get_storage_client()
+    image_bytes = storage_client.get_object(document.storage_key)
+    if sha256(image_bytes).hexdigest() != document.file_hash_sha256:
+        raise ValueError("Stored document hash does not match the ingested file hash")
+    context["document_bytes"] = image_bytes
     return {
         "stage": "INGESTION",
         "status": "COMPLETED",
@@ -57,24 +70,31 @@ def handle_quality_check(
     Evaluates scan quality (blur, contrast, resolution, Laplacian variance).
     If quality is below acceptable threshold, flags quality_failed in context to trigger human review.
     """
-    # Deterministic scan quality evaluation
-    quality_score = 0.95
-    is_poor_quality = False
+    image_bytes = context.get("document_bytes")
+    if not image_bytes:
+        raise ValueError("Quality check requires the ingested image bytes")
+    try:
+        from PIL import Image
 
-    # Check if context or document metadata indicated poor quality
-    if context and context.get("simulate_quality_failure"):
-        quality_score = 0.35
-        is_poor_quality = True
+        with Image.open(BytesIO(image_bytes)) as image:
+            width, height = image.size
+            gray = image.convert("L")
+            extrema = gray.getextrema()
+            is_blank = (extrema[1] - extrema[0] < 5)
+    except Exception as error:
+        raise ValueError("Uploaded image cannot be decoded") from error
 
+    is_poor_quality = width < 400 or height < 400 or is_blank
     context["quality_failed"] = is_poor_quality
-    context["quality_score"] = quality_score
 
     return {
         "stage": "QUALITY_CHECK",
         "status": "COMPLETED",
-        "quality_score": quality_score,
+        "width": width,
+        "height": height,
+        "is_blank": is_blank,
         "quality_passed": not is_poor_quality,
-        "check_method": "laplacian_variance_histogram_spread",
+        "check_method": "decode_dimensions_and_contrast",
     }
 
 
@@ -88,19 +108,15 @@ def handle_text_detection(
     Stage: TEXT_DETECTION.
     Uses ModelRuntime text detector to identify line bounding boxes on the prescription.
     """
-    runtime = MockModelRuntime(model_version_id=analysis.model_snapshot_id)
-    boxes = runtime.detect_regions(b"prescription_image_bytes")
-
-    context["detected_regions"] = [
-        {"x_min": b.x_min, "y_min": b.y_min, "x_max": b.x_max, "y_max": b.y_max, "label": b.label}
-        for b in boxes
-    ]
+    runtime = context.get("ocr_runtime") or PaddleOCRRuntime()
+    lines = runtime.recognize_document(context["document_bytes"])
+    context["ocr_lines"] = lines
 
     return {
         "stage": "TEXT_DETECTION",
         "status": "COMPLETED",
-        "regions_detected_count": len(boxes),
-        "detector_model": "PP-OCRv6-detection",
+        "regions_detected_count": len(lines),
+        "detector_model": "PP-OCRv6",
     }
 
 
@@ -114,20 +130,17 @@ def handle_ocr_recognition(
     Stage: OCR_RECOGNITION.
     Recognizes text across detected line regions and produces calibrated inference confidences.
     """
-    runtime = MockModelRuntime(model_version_id=analysis.model_snapshot_id)
-    regions = context.get("detected_regions", [])
-    recognized_lines = []
-
-    for idx, reg in enumerate(regions):
-        res = runtime.run_calibrated_inference(b"line_crop")
-        recognized_lines.append({
-            "line_index": idx,
-            "text": res.text,
-            "raw_score": res.raw_score,
-            "calibrated_confidence": res.calibrated_confidence,
-            "field_state": res.field_state.value,
-            "latency_ms": res.latency_ms,
-        })
+    lines = context.get("ocr_lines", [])
+    recognized_lines = [
+        {
+            "line_index": line.line_index,
+            "text": line.text,
+            "raw_score": line.raw_score,
+            "box": list(line.box),
+            "calibration_status": "NOT_CALIBRATED",
+        }
+        for line in lines
+    ]
 
     context["recognized_lines"] = recognized_lines
 
@@ -135,7 +148,8 @@ def handle_ocr_recognition(
         "stage": "OCR_RECOGNITION",
         "status": "COMPLETED",
         "lines_recognized_count": len(recognized_lines),
-        "recognizer_model": "TrOCR-handwritten-v1",
+        "recognizer_model": "PP-OCRv6",
+        "calibrated": False,
     }
 
 
@@ -153,103 +167,23 @@ def handle_structured_extraction(
         PrescriptionMedication.analysis_id == analysis.id
     ).all()
 
-    if not existing_meds:
-        # Default mock extraction lines from sample prescription if not pre-populated
-        sample_lines = [
-            {
-                "line_index": 0,
-                "name_raw": "Augmentin 625 Duo",
-                "name_state": "CLEAR",
-                "name_confidence": 0.96,
-                "strength_raw": "625mg",
-                "strength_state": "CLEAR",
-                "strength_confidence": 0.94,
-                "dose_raw": "1 tablet",
-                "dose_state": "CLEAR",
-                "dose_confidence": 0.95,
-                "unit_raw": "tablet",
-                "unit_state": "CLEAR",
-                "unit_confidence": 0.98,
-                "frequency_raw": "twice daily",
-                "frequency_state": "CLEAR",
-                "frequency_confidence": 0.92,
-                "route_raw": "oral",
-                "route_state": "CLEAR",
-                "route_confidence": 0.97,
-                "duration_raw": "5 days",
-                "duration_state": "CLEAR",
-                "duration_confidence": 0.91,
-                "instructions_raw": "after meals",
-                "instructions_state": "CLEAR",
-                "instructions_confidence": 0.90,
-            },
-            {
-                "line_index": 1,
-                "name_raw": "Pan 40",
-                "name_state": "CLEAR",
-                "name_confidence": 0.95,
-                "strength_raw": "40mg",
-                "strength_state": "CLEAR",
-                "strength_confidence": 0.93,
-                "dose_raw": "1 tablet",
-                "dose_state": "CLEAR",
-                "dose_confidence": 0.95,
-                "unit_raw": "tablet",
-                "unit_state": "CLEAR",
-                "unit_confidence": 0.98,
-                "frequency_raw": "once daily",
-                "frequency_state": "CLEAR",
-                "frequency_confidence": 0.94,
-                "route_raw": "oral",
-                "route_state": "CLEAR",
-                "route_confidence": 0.97,
-                "duration_raw": "5 days",
-                "duration_state": "CLEAR",
-                "duration_confidence": 0.91,
-                "instructions_raw": "before breakfast",
-                "instructions_state": "CLEAR",
-                "instructions_confidence": 0.93,
-            },
-        ]
-        created_meds = []
-        for line_data in sample_lines:
-            med = PrescriptionMedication(
-                id=uuid.uuid4(),
-                analysis_id=analysis.id,
-                line_index=line_data["line_index"],
-                name_raw=line_data["name_raw"],
-                name_state=line_data["name_state"],
-                name_confidence=line_data["name_confidence"],
-                strength_raw=line_data["strength_raw"],
-                strength_state=line_data["strength_state"],
-                strength_confidence=line_data["strength_confidence"],
-                dose_raw=line_data["dose_raw"],
-                dose_state=line_data["dose_state"],
-                dose_confidence=line_data["dose_confidence"],
-                unit_raw=line_data["unit_raw"],
-                unit_state=line_data["unit_state"],
-                unit_confidence=line_data["unit_confidence"],
-                frequency_raw=line_data["frequency_raw"],
-                frequency_state=line_data["frequency_state"],
-                frequency_confidence=line_data["frequency_confidence"],
-                route_raw=line_data["route_raw"],
-                route_state=line_data["route_state"],
-                route_confidence=line_data["route_confidence"],
-                duration_raw=line_data["duration_raw"],
-                duration_state=line_data["duration_state"],
-                duration_confidence=line_data["duration_confidence"],
-                instructions_raw=line_data["instructions_raw"],
-                instructions_state=line_data["instructions_state"],
-                instructions_confidence=line_data["instructions_confidence"],
-            )
-            db.add(med)
-            created_meds.append(med)
-        db.flush()
-        line_count = len(created_meds)
-    else:
-        line_count = len(existing_meds)
+    existing_by_line = {med.line_index: med for med in existing_meds}
+    recognized_lines = context.get("recognized_lines", [])
+    for line in recognized_lines:
+        line_index = int(line["line_index"])
+        if line_index in existing_by_line:
+            continue
+        fields = extract_prescription_fields(str(line.get("text") or ""))
+        values: dict[str, Any] = {"id": uuid.uuid4(), "analysis_id": analysis.id, "line_index": line_index}
+        for field_name, field_value in fields.items():
+            values[f"{field_name}_raw"] = field_value["raw"]
+            values[f"{field_name}_state"] = field_value["state"]
+            values[f"{field_name}_confidence"] = field_value["confidence"]
+        db.add(PrescriptionMedication(**values))
+    db.flush()
+    line_count = len(recognized_lines)
 
-    return {"line_count": line_count, "status": "COMPLETED"}
+    return {"line_count": line_count, "status": "COMPLETED", "calibrated": False}
 
 
 def handle_medication_normalization(
@@ -268,31 +202,56 @@ def handle_medication_normalization(
 
     search_service = MedicationSearchService(db=db)
     resolved_count = 0
+    resolutions: dict[uuid.UUID, MedicationResolutionResult] = {}
 
-    for m in meds:
-        existing_candidate = db.query(MedicationCandidate).filter(
-            MedicationCandidate.prescription_med_id == m.id
+    for med in meds:
+        stored_candidate = db.query(MedicationCandidate).filter(
+            MedicationCandidate.prescription_med_id == med.id
         ).first()
-
-        if not existing_candidate and m.name_raw:
-            resolution = search_service.search_candidates(m.name_raw)
-            resolved_med_id = resolution.resolved_medication.id if resolution.resolved_medication else None
-
-            candidate = MedicationCandidate(
-                id=uuid.uuid4(),
-                prescription_med_id=m.id,
-                analysis_id=analysis.id,
-                extracted_text=m.name_raw,
-                matching_strategy="EXACT" if resolution.is_resolved else "FUZZY_SIMILARITY",
-                candidate_score=resolution.candidates[0].candidate_score if resolution.candidates else 0.0,
-                source_vocabulary="CDSCO",
-                resolved_medication_id=resolved_med_id,
-                resolution_status=resolution.resolution_status.value,
+        extracted_text = med.name_raw or (stored_candidate.extracted_text if stored_candidate else "")
+        search_result = search_service.search_candidates(extracted_text)
+        exact_verified = [
+            candidate
+            for candidate in search_result.candidates
+            if candidate.matching_strategy == MatchingStrategy.EXACT.value
+            and candidate.medication.verification_status
+            in {VerificationStatus.VERIFIED_AUTHORITY.value, VerificationStatus.EXPERT_CONFIRMED.value}
+        ]
+        can_resolve = med.name_state == "CLEAR" and len(exact_verified) == 1
+        if can_resolve:
+            exact = exact_verified[0]
+            resolution = MedicationResolutionResult(
+                extracted_text=extracted_text,
+                resolution_status=ResolutionStatus.RESOLVED,
+                resolved_medication=exact.medication,
+                candidates=[exact],
             )
-            db.add(candidate)
-            if resolution.is_resolved:
-                resolved_count += 1
+            resolved_count += 1
+        else:
+            resolution = MedicationResolutionResult(
+                extracted_text=extracted_text,
+                resolution_status=(ResolutionStatus.AMBIGUOUS if search_result.candidates else ResolutionStatus.UNRESOLVED),
+                resolved_medication=None,
+                candidates=search_result.candidates,
+            )
+        resolutions[med.id] = resolution
 
+        if not stored_candidate and extracted_text:
+            top_candidate = search_result.candidates[0] if search_result.candidates else None
+            db.add(
+                MedicationCandidate(
+                    id=uuid.uuid4(),
+                    prescription_med_id=med.id,
+                    analysis_id=analysis.id,
+                    extracted_text=extracted_text,
+                    matching_strategy=(top_candidate.matching_strategy if top_candidate else "NO_MATCH"),
+                    candidate_score=(top_candidate.candidate_score if top_candidate else 0.0),
+                    source_vocabulary="MEDICATION_MASTER",
+                    resolved_medication_id=(resolution.resolved_medication.id if resolution.resolved_medication else None),
+                    resolution_status=resolution.resolution_status.value,
+                )
+            )
+    context["medication_resolutions"] = resolutions
     db.flush()
     return {"total_lines": len(meds), "resolved_count": resolved_count, "status": "COMPLETED"}
 
@@ -305,33 +264,20 @@ def handle_safety_screening(
 ) -> Dict[str, Any]:
     """
     Stage: SAFETY_SCREENING.
-    Executes duplicate medication check and OpenFDA adverse effect lookup.
+    Runs only the local exact-canonical-product duplicate candidate rule.
     """
     meds = db.query(PrescriptionMedication).filter(
         PrescriptionMedication.analysis_id == analysis.id
     ).all()
 
-    search_service = MedicationSearchService(db=db)
-    resolved_pairs = []
-
-    for m in meds:
-        resolution = search_service.search_candidates(m.name_raw or "")
-        resolved_pairs.append((m.id, resolution))
-
-    # 1. Deterministic duplicate medication check
+    resolved_pairs = [
+        (med.id, context.get("medication_resolutions", {}).get(
+            med.id,
+            MedicationResolutionResult(med.name_raw or "", ResolutionStatus.UNRESOLVED),
+        ))
+        for med in meds
+    ]
     findings = detect_duplicate_medications(analysis.id, resolved_pairs)
-
-    # 2. OpenFDA adverse effect check
-    openfda = OpenFDAProvider()
-    for m_id, res in resolved_pairs:
-        from prescripto.domain.safety.models import SafetyCheckType
-        adv_findings = openfda.evaluate(
-            analysis_id=analysis.id,
-            check_type=SafetyCheckType.ADVERSE_EFFECT,
-            medication_id=m_id,
-            medication=res.resolved_medication,
-        )
-        findings.extend(adv_findings)
 
     # Persist findings in DB idempotently
     for f in findings:

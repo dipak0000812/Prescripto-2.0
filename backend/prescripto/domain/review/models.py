@@ -56,6 +56,9 @@ def evaluate_review_triggers(
     if quality_failed:
         reasons.append("QUALITY_TOO_LOW: Document scan quality triggered human review threshold.")
 
+    if not medications:
+        reasons.append("NO_MEDICATIONS_FOUND: No medication lines could be identified from the uploaded document.")
+
     # 1. Medication line & field state triggers
     for med in medications:
         res_status = med.get("resolution_status")

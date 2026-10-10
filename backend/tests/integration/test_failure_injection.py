@@ -5,6 +5,7 @@ Failure Injection and Resilience Integration Tests (Phase 7 / Slice 12):
 - Retry exponential backoff schedule (5s -> 30s -> 120s)
 - Transient storage failure simulation
 """
+import hashlib
 import uuid
 from datetime import timedelta
 import pytest
@@ -14,13 +15,28 @@ from prescripto.db.base import utc_now
 from prescripto.db.models.document import PrescriptionDocument
 from prescripto.db.models.analysis import Analysis, AnalysisJob
 from prescripto.db.models.registry import ModelVersion
+from prescripto.db.models.users import User
 from prescripto.worker.queue import QueuePoller
 from prescripto.worker.main import WorkerRunner
 from prescripto.worker.exceptions import WorkerFencedError
+# T1.3: Reuse fakes from test_worker_engine — do not copy-paste them.
+from tests.integration.test_worker_engine import make_image_bytes, FakeStorage
+from prescripto.ml.runtime import MockModelRuntime
 
 
 @pytest.fixture
 def failure_test_job(db_session: Session):
+    user = User(
+        id=uuid.uuid4(),
+        username=f"fi_{uuid.uuid4().hex[:8]}",
+        email=f"fi_{uuid.uuid4().hex[:8]}@example.com",
+        hashed_password="test_password_hash",
+        role="OPERATOR",
+        is_active=True,
+    )
+    db_session.add(user)
+    db_session.flush()
+
     model = ModelVersion(
         id=uuid.uuid4(),
         model_name="fail-test-model",
@@ -34,7 +50,7 @@ def failure_test_job(db_session: Session):
 
     doc = PrescriptionDocument(
         id=uuid.uuid4(),
-        uploader_id=uuid.uuid4(),
+        uploader_id=user.id,
         storage_key="test/fail.jpg",
         file_hash_sha256="fail123",
         mime_type="image/jpeg",
@@ -124,6 +140,8 @@ def test_retry_backoff_schedule(db_session: Session, failure_test_job):
 
 def test_worker_crashed_mid_pipeline_reclaimed_after_expiry(db_session: Session, failure_test_job):
     job = failure_test_job["job"]
+    doc = failure_test_job["doc"]
+    analysis = failure_test_job["analysis"]
 
     # Worker A claimed job, lease token 1
     job.status = "RUNNING"
@@ -145,11 +163,20 @@ def test_worker_crashed_mid_pipeline_reclaimed_after_expiry(db_session: Session,
     job.backoff_until = utc_now() - timedelta(seconds=1)
     db_session.commit()
 
+    # T1.3: Build a real-enough image and wire the document's hash to match,
+    # so INGESTION does not fail on the hash check. Inject FakeStorage and
+    # MockModelRuntime so no network calls are made.
+    image_bytes = make_image_bytes()
+    doc.file_hash_sha256 = hashlib.sha256(image_bytes).hexdigest()
+    db_session.commit()
+
     # Worker B claims and succeeds
     runner_b = WorkerRunner(
         session_factory=lambda: db_session,
         worker_id="worker-B",
         close_session=False,
+        storage_client=FakeStorage(image_bytes),
+        ocr_runtime=MockModelRuntime(model_version_id=analysis.model_snapshot_id),
     )
     processed = runner_b.run_once()
     assert processed is True

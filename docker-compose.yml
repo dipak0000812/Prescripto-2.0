@@ -52,6 +52,20 @@ services:
       exit 0;
       "
 
+  migrate:
+    build:
+      context: ./backend
+      dockerfile: docker/Dockerfile
+    container_name: prescripto-migrate
+    command: alembic upgrade head
+    env_file:
+      - ./backend/.env
+    environment:
+      - DATABASE_URL=postgresql+psycopg2://prescripto:prescripto_secret@postgres:5432/prescripto_db
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   api:
     build:
       context: ./backend
@@ -64,7 +78,7 @@ services:
     env_file:
       - ./backend/.env
     environment:
-      - DATABASE_URL=postgresql://prescripto:prescripto_secret@postgres:5432/prescripto_db
+      - DATABASE_URL=postgresql+psycopg2://prescripto:prescripto_secret@postgres:5432/prescripto_db
       - S3_ENDPOINT=http://minio:9000
     depends_on:
       postgres:
@@ -73,6 +87,23 @@ services:
         condition: service_healthy
       createbuckets:
         condition: service_completed_successfully
+      migrate:
+        condition: service_completed_successfully
+
+  ml-service:
+    build:
+      context: ./ml
+      dockerfile: Dockerfile
+    container_name: prescripto-ml
+    restart: unless-stopped
+    ports:
+      - "8001:8001"
+    environment:
+      - ML_PORT=8001
+      - ML_DEVICE=cpu
+      - ML_MODEL_NAME=PP-OCRv6
+      - ML_MODEL_VERSION=6.0.0
+      - LOG_LEVEL=INFO
 
   worker:
     build:
@@ -84,13 +115,16 @@ services:
     env_file:
       - ./backend/.env
     environment:
-      - DATABASE_URL=postgresql://prescripto:prescripto_secret@postgres:5432/prescripto_db
+      - DATABASE_URL=postgresql+psycopg2://prescripto:prescripto_secret@postgres:5432/prescripto_db
       - S3_ENDPOINT=http://minio:9000
+      - ML_SERVICE_URL=http://ml-service:8001
     depends_on:
       postgres:
         condition: service_healthy
       minio:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
 
   deletion_worker:
     build:
@@ -102,13 +136,15 @@ services:
     env_file:
       - ./backend/.env
     environment:
-      - DATABASE_URL=postgresql://prescripto:prescripto_secret@postgres:5432/prescripto_db
+      - DATABASE_URL=postgresql+psycopg2://prescripto:prescripto_secret@postgres:5432/prescripto_db
       - S3_ENDPOINT=http://minio:9000
     depends_on:
       postgres:
         condition: service_healthy
       minio:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
 
 volumes:
   postgres_data:

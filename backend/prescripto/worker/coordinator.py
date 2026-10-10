@@ -40,12 +40,16 @@ class PipelineCoordinator:
         claim: JobClaim,
         stages: Optional[List[str]] = None,
         stage_handlers: Optional[Dict[str, Callable[[Session, Analysis, PrescriptionDocument, Dict[str, Any]], Dict[str, Any]]]] = None,
+        storage_client: Optional[Any] = None,
+        ocr_runtime: Optional[Any] = None,
     ) -> None:
         self.db = db
         self.claim = claim
         self.stages = stages or CANONICAL_STAGES
         from prescripto.pipeline.engine import DEFAULT_STAGE_HANDLERS
         self.stage_handlers = dict(DEFAULT_STAGE_HANDLERS)
+        self.storage_client = storage_client
+        self.ocr_runtime = ocr_runtime
         if stage_handlers:
             self.stage_handlers.update(stage_handlers)
 
@@ -82,6 +86,8 @@ class PipelineCoordinator:
             "analysis_id": str(analysis.id),
             "document_id": str(analysis.document_id),
             "stages": {},
+            "storage_client": self.storage_client,
+            "ocr_runtime": self.ocr_runtime,
         }
 
         for stage_name in self.stages:

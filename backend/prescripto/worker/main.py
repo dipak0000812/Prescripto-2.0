@@ -17,9 +17,31 @@ from prescripto.worker.queue import QueuePoller, JobClaim
 from prescripto.worker.heartbeat import HeartbeatManager
 from prescripto.worker.coordinator import PipelineCoordinator
 from prescripto.worker.exceptions import WorkerFencedError
+from prescripto.ml.runtime import MockModelRuntime, RemoteMLClient
+from prescripto.storage.client import get_storage_client
 
 configure_logging(settings.LOG_LEVEL)
 logger = get_logger("prescripto.worker")
+
+
+def _build_ocr_runtime(ocr_runtime_override: object | None) -> object:
+    """
+    Factory: returns the OCR runtime to use for this worker process.
+
+    Priority:
+      1. Caller-supplied override (used in tests — always MockModelRuntime).
+      2. ML_RUNTIME_MODE == "remote"  → RemoteMLClient at ML_SERVICE_URL.
+      3. ML_RUNTIME_MODE == "mock"    → MockModelRuntime (default).
+
+    PaddleOCRRuntime is NOT instantiated in the worker process; it lives
+    exclusively in the ML service container.
+    """
+    if ocr_runtime_override is not None:
+        return ocr_runtime_override
+    if settings.ML_RUNTIME_MODE == "remote":
+        return RemoteMLClient(ml_service_url=settings.ML_SERVICE_URL)
+    return MockModelRuntime()
+
 
 
 class WorkerRunner:
@@ -35,6 +57,8 @@ class WorkerRunner:
         lease_seconds: Optional[int] = None,
         heartbeat_seconds: Optional[int] = None,
         close_session: bool = True,
+        storage_client: Optional[object] = None,
+        ocr_runtime: Optional[object] = None,
     ) -> None:
         self.session_factory = session_factory
         self.worker_id = worker_id or settings.WORKER_ID or f"worker-{os.getpid()}-{uuid.uuid4().hex[:6]}"
@@ -42,6 +66,8 @@ class WorkerRunner:
         self.lease_seconds = lease_seconds if lease_seconds is not None else settings.WORKER_LEASE_SECONDS
         self.heartbeat_seconds = heartbeat_seconds if heartbeat_seconds is not None else settings.WORKER_HEARTBEAT_SECONDS
         self.close_session = close_session
+        self.storage_client = storage_client or get_storage_client()
+        self.ocr_runtime = _build_ocr_runtime(ocr_runtime)
         self._running = False
 
     def run_once(self) -> bool:
@@ -78,7 +104,12 @@ class WorkerRunner:
                 lease_duration_seconds=self.lease_seconds,
                 close_session=self.close_session,
             ) as hb:
-                coordinator = PipelineCoordinator(db=db, claim=claim)
+                coordinator = PipelineCoordinator(
+                    db=db,
+                    claim=claim,
+                    storage_client=self.storage_client,
+                    ocr_runtime=self.ocr_runtime,
+                )
                 coordinator.execute(heartbeat=hb)
 
             logger.info(
@@ -93,8 +124,9 @@ class WorkerRunner:
             logger.warning(
                 "worker_fenced_execution_halted",
                 job_id=str(claim.job_id) if claim else None,
-                error=str(fence_err),
+                error_type=type(fence_err).__name__,
             )
+            db.rollback()
             if claim:
                 # Per docs/ERROR-CONTRACT.md: do NOT increment retry_count
                 QueuePoller.release_fenced_job(db=db, job_id=claim.job_id, worker_id=self.worker_id)
@@ -104,8 +136,9 @@ class WorkerRunner:
             logger.error(
                 "job_execution_failed",
                 job_id=str(claim.job_id) if claim else None,
-                error=str(e),
+                error_type=type(e).__name__,
             )
+            db.rollback()
             if claim:
                 QueuePoller.mark_job_failed(
                     db=db,
@@ -139,7 +172,7 @@ class WorkerRunner:
                 logger.info("worker_interrupted_by_user")
                 break
             except Exception as e:
-                logger.error("worker_loop_exception", error=str(e))
+                logger.error("worker_loop_exception", error_type=type(e).__name__)
                 time.sleep(self.poll_interval)
 
         logger.info("worker_stopped", worker_id=self.worker_id)

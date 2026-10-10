@@ -19,7 +19,10 @@ class IdempotencyRecord(Base):
     )
     key: Mapped[str] = mapped_column(String(255), nullable=False)
     user_id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
     )
     file_hash_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
     prescription_id: Mapped[uuid.UUID] = mapped_column(

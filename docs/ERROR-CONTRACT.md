@@ -32,7 +32,6 @@ Two distinct error surfaces. Conflating them is the mistake this document exists
 | `IDEMPOTENCY_KEY_CONFLICT` | 409 | Same key, different `file_hash_sha256` |
 | `ANALYSIS_NOT_REVIEWABLE` | 409 | Review submitted against a non-reviewable state |
 | `DELETION_IN_PROGRESS` | 409 | Operation on a document being deleted |
-| `PDF_ACTIVE_CONTENT_REJECTED` | 422 | Embedded JavaScript detected |
 | `INTERNAL_ERROR` | 500 | Unhandled — logged with request_id, no detail leaked |
 | `STORAGE_UNAVAILABLE` | 503 | Object storage down at upload |
 

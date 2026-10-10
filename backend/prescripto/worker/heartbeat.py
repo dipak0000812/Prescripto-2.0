@@ -62,7 +62,7 @@ class HeartbeatManager:
                 )
             return success
         except Exception as e:
-            logger.error("heartbeat_error", error=str(e))
+            logger.error("heartbeat_error", error_type=type(e).__name__)
             return False
         finally:
             if self.close_session:

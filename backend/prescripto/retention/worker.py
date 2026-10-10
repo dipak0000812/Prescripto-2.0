@@ -68,7 +68,7 @@ def process_deletion_job(
 
     if analysis_ids:
         # 1. Purge medication candidates & lines
-        cand_count = db.query(MedicationCandidate).filter(
+        db.query(MedicationCandidate).filter(
             MedicationCandidate.analysis_id.in_(analysis_ids)
         ).delete(synchronize_session=False)
 
@@ -118,7 +118,7 @@ def process_deletion_job(
         try:
             storage_client.delete_object(original_storage_key, bucket_name=settings.S3_BUCKET)
         except Exception as exc:
-            logger.warning("storage_deletion_object_warning", error=str(exc))
+            logger.warning("storage_deletion_object_warning", error_type=type(exc).__name__)
 
     # --- Phase 3: VERIFYING ---
     job.status = "VERIFYING"
@@ -175,7 +175,7 @@ def process_deletion_job(
         )
         job.manifest_written = True
     except Exception as exc:
-        logger.error("retention_manifest_write_failed", error=str(exc))
+        logger.error("retention_manifest_write_failed", error_type=type(exc).__name__)
         # Keep job going, still complete status
         job.manifest_written = False
 

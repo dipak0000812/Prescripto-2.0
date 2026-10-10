@@ -2,12 +2,16 @@
 Model Runtime Abstraction.
 Strictly implements docs/Architecture.md §11 ModelRuntime interface.
 Isolates perception models (TrOCR, PP-OCRv6) behind a clean abstraction.
+
+RemoteMLClient added here so the worker can delegate OCR to the independent
+ML service over HTTP without changing any pipeline stage logic.
 """
 from abc import ABC, abstractmethod
 import time
 import uuid
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
+from dataclasses import dataclass
 from prescripto.ml.models import (
     BoundingBox,
     RawRecognitionResult,
@@ -17,7 +21,16 @@ from prescripto.ml.calibration import TemperatureScalingCalibrator
 from prescripto.domain.uncertainty.models import FieldState
 
 
+@dataclass(frozen=True)
+class OCRLine:
+    line_index: int
+    text: str
+    raw_score: Optional[float]
+    box: tuple[float, float, float, float]
+
+
 class ModelRuntime(ABC):
+
     """
     Abstract Model Runtime Interface isolating perception model execution.
     Startup gates validate: registered version, calibration snapshot, and checkpoint sha256.
@@ -108,3 +121,84 @@ class MockModelRuntime(ModelRuntime):
             model_version_id=self.model_version_id,
             latency_ms=latency_ms,
         )
+
+    def recognize_document(self, image_bytes: bytes) -> List[OCRLine]:
+        """Deterministic test/demo output; never used as the production runtime."""
+        if not image_bytes:
+            raise ValueError("Mock OCR requires non-empty image bytes")
+        return [
+            OCRLine(
+                line_index=0,
+                text="Augmentin 625 Duo 1 tab BD after food 5 days",
+                raw_score=0.96,
+                box=(40.0, 120.0, 620.0, 160.0),
+            )
+        ]
+
+
+class RemoteMLClient:
+    """
+    HTTP client that calls the independent ML service to obtain OCR results.
+
+    Implements the same recognize_document(image_bytes) -> List[OCRLine]
+    interface as PaddleOCRRuntime and MockModelRuntime so the worker and
+    pipeline coordinator require zero changes when switching runtime modes.
+
+    Activated when settings.ML_RUNTIME_MODE == "remote".
+    Backend tests should always use MockModelRuntime — this client requires
+    the ML service to be running at settings.ML_SERVICE_URL.
+    """
+
+    def __init__(self, ml_service_url: str, timeout: float = 120.0) -> None:
+        self._url = ml_service_url.rstrip("/")
+        self._timeout = timeout
+
+    def recognize_document(self, image_bytes: bytes) -> List[OCRLine]:
+        """
+        POST image_bytes to POST /v1/ocr/recognize on the ML service.
+        Returns List[OCRLine] in the same structure as PaddleOCRRuntime.
+
+        Raises RuntimeError if the ML service returns a non-200 status or
+        if the response cannot be parsed.
+        """
+        try:
+            import httpx
+        except ImportError as error:
+            raise RuntimeError(
+                "httpx is required for RemoteMLClient; install it with: pip install httpx"
+            ) from error
+
+        endpoint = f"{self._url}/v1/ocr/recognize"
+        try:
+            response = httpx.post(
+                endpoint,
+                files={"file": ("image", image_bytes, "application/octet-stream")},
+                timeout=self._timeout,
+            )
+        except httpx.RequestError as exc:
+            raise RuntimeError(
+                f"ML service request failed ({endpoint}): {type(exc).__name__}"
+            ) from exc
+
+        if response.status_code != 200:
+            raise RuntimeError(
+                f"ML service returned HTTP {response.status_code}: {response.text[:200]}"
+            )
+
+        try:
+            payload: Dict[str, Any] = response.json()
+        except Exception as exc:
+            raise RuntimeError("ML service returned non-JSON response") from exc
+
+        lines: List[OCRLine] = []
+        for raw in payload.get("lines", []):
+            box_list = raw.get("box", [0.0, 0.0, 0.0, 0.0])
+            lines.append(
+                OCRLine(
+                    line_index=int(raw["line_index"]),
+                    text=str(raw.get("text", "")),
+                    raw_score=raw.get("raw_score"),
+                    box=tuple(float(v) for v in box_list),  # type: ignore[arg-type]
+                )
+            )
+        return lines

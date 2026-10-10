@@ -30,7 +30,7 @@ class IdempotencyKeyConflictException(ApplicationException):
 class UnsupportedMediaTypeException(ApplicationException):
     def __init__(
         self,
-        message: str = "Uploaded file magic bytes do not match supported formats (JPEG, PNG, TIFF, PDF)",
+        message: str = "Uploaded file magic bytes do not match supported formats (JPEG, PNG, TIFF)",
     ) -> None:
         super().__init__(code="UNSUPPORTED_MEDIA_TYPE", message=message, status_code=415)
 
@@ -38,14 +38,6 @@ class UnsupportedMediaTypeException(ApplicationException):
 class FileTooLargeException(ApplicationException):
     def __init__(self, message: str = "Uploaded file exceeds maximum limit of 20MB") -> None:
         super().__init__(code="FILE_TOO_LARGE", message=message, status_code=413)
-
-
-class PdfActiveContentRejectedException(ApplicationException):
-    def __init__(
-        self,
-        message: str = "PDF contains active or executable content (e.g. JavaScript, Launch action)",
-    ) -> None:
-        super().__init__(code="PDF_ACTIVE_CONTENT_REJECTED", message=message, status_code=422)
 
 
 class StorageUnavailableException(ApplicationException):

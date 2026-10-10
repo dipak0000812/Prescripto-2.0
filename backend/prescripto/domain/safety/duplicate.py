@@ -4,7 +4,7 @@ Zero external framework dependencies or external I/O.
 Performs deterministic duplicate therapy and active ingredient overlap detection.
 """
 import uuid
-from typing import List, Dict, Set, Tuple
+from typing import List, Set, Tuple
 from prescripto.domain.safety.models import (
     DomainRiskFinding,
     SafetyCheckType,
@@ -19,11 +19,12 @@ def detect_duplicate_medications(
     resolved_lines: List[Tuple[uuid.UUID, MedicationResolutionResult]],
 ) -> List[DomainRiskFinding]:
     """
-    Analyzes normalized prescription medication lines for duplicate active ingredients or brand therapies.
+    Flags repeated instances of the same canonical medication identity for reviewer attention.
     Each item in resolved_lines is a tuple of (prescription_medication_id, MedicationResolutionResult).
 
     - If a line is UNRESOLVED or AMBIGUOUS, generates a NOT_EVALUATED finding with appropriate reason.
-    - If multiple lines share active ingredient(s) or canonical drug identity, generates DUPLICATE_MEDICATION finding.
+    - Different products with a shared ingredient are not treated as the same prescribed product.
+    - An identical canonical medication on multiple lines produces a POTENTIAL candidate, not a clinical conclusion.
     """
     findings: List[DomainRiskFinding] = []
 
@@ -62,7 +63,7 @@ def detect_duplicate_medications(
                 )
             )
 
-    # 2. Second pass: Pairwise duplicate active ingredients and identity checks for resolved lines
+    # 2. Compare only exact canonical identities; ingredient overlap is not enough.
     resolved_items = [
         (line_id, res.resolved_medication)
         for line_id, res in resolved_lines
@@ -80,29 +81,8 @@ def detect_duplicate_medications(
             if pair_key in seen_pairs:
                 continue
 
-            # Compare active ingredients (normalized lowercase)
-            ing1 = {ing.strip().lower() for ing in med1.active_ingredients if ing.strip()}
-            ing2 = {ing.strip().lower() for ing in med2.active_ingredients if ing.strip()}
-
-            overlapping = ing1.intersection(ing2)
-            same_drug = med1.id == med2.id or (
-                med1.generic_name.strip().lower() == med2.generic_name.strip().lower()
-                and med1.brand_name.strip().lower() == med2.brand_name.strip().lower()
-            )
-
-            if overlapping or same_drug:
+            if med1.id == med2.id:
                 seen_pairs.add(pair_key)
-                if overlapping:
-                    overlap_str = ", ".join(sorted(overlapping))
-                    evidence = (
-                        f"Duplicate active ingredient(s) [{overlap_str}] detected between "
-                        f"'{med1.brand_name}' ({med1.generic_name}) and '{med2.brand_name}' ({med2.generic_name})."
-                    )
-                else:
-                    evidence = (
-                        f"Duplicate medication prescribed: '{med1.brand_name}' ({med1.generic_name}) appears multiple times."
-                    )
-
                 finding_key = f"dup_med_{pair_key[0]}_{pair_key[1]}"
                 findings.append(
                     DomainRiskFinding(
@@ -110,12 +90,12 @@ def detect_duplicate_medications(
                         analysis_id=analysis_id,
                         check_type=SafetyCheckType.DUPLICATE_MEDICATION,
                         finding_key=finding_key,
-                        finding_status=FindingStatus.CONFIRMED_BY_SOURCE,
+                        finding_status=FindingStatus.POTENTIAL,
                         medication_ids=[id1, id2],
-                        evidence_text=evidence,
+                        evidence_text="The same canonical product identity appears on multiple prescription lines; reviewer confirmation is required.",
                         source_name="PRESCRIPTO_DETERMINISTIC_RULES",
                         source_version="1.0.0",
-                        confidence_score=1.0,
+                        confidence_score=None,
                     )
                 )
 

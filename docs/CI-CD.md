@@ -5,15 +5,18 @@
 Single repo, no submodules.
 
 ```
-prescripto/          backend + ML (see Arch §6)
-web/                 React/Vite client, OpenAPI-generated types
-docs/                all engineering documentation
-scripts/             seeds, benchmarks, manifest re-application
-tests/               unit · integration · contract · failure · security
-migrations/          Alembic
-docker/              Dockerfile, compose files
-.github/workflows/   CI
+backend/         FastAPI app, worker, domain, pipeline, tests
+ml/              Standalone ML FastAPI service (PP-OCRv6)
+research/        CER/WER evaluation scripts (not production)
+docs/            Engineering documentation
+.github/         CI workflow (pytest + pyflakes, SQLite + PostgreSQL)
+OPENAPI.yaml     Hand-maintained API schema
+docker-compose.yml
 ```
+
+> [!NOTE]
+> The old layout (`prescripto/`, `web/`, `tests/`, `migrations/`, `docker/`) was the planned structure.
+> Actual layout above reflects what was built.
 
 Frontend and backend in one repo because the OpenAPI contract couples them — split repos make contract drift possible between merges, which is exactly the failure this architecture is built to prevent.
 
@@ -29,15 +32,22 @@ Conventional Commits: `type(scope): subject`. Scopes: `api`, `domain`, `pipeline
 
 ## PR gates
 
-Every PR, blocking:
+Currently implemented in `.github/workflows/ci.yml`:
+
+| Check | Tool | Fails on |
+|---|---|---|
+| Unit + integration tests | pytest (SQLite + PostgreSQL jobs) | Any failure |
+| Import hygiene | pyflakes | Any import error |
+
+### Planned CI gates (not yet implemented)
+
+The following are specified in this document but not yet in the workflow:
 
 | Check | Tool | Fails on |
 |---|---|---|
 | Format | `ruff format --check` | Any diff |
 | Lint | `ruff check` | Any error |
 | Types | `mypy --strict` on `domain/`, standard elsewhere | Any error |
-| Unit tests | pytest | Any failure |
-| Integration | pytest + testcontainers | Any failure |
 | Contract | Response ↔ `/openapi.json` | Any divergence |
 | Failure injection | pytest | Any failure |
 | Security tests | pytest | Any failure |

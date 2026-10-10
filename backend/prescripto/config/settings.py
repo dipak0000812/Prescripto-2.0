@@ -20,10 +20,13 @@ class Settings(BaseSettings):
 
     # Database
     DATABASE_URL: str = Field(
-        default="postgresql://prescripto:prescripto_secret@localhost:5432/prescripto_db"
+        default="postgresql+psycopg2://prescripto:prescripto_secret@localhost:5432/prescripto_db"
     )
     DB_POOL_SIZE: int = Field(default=10)
     DB_MAX_OVERFLOW: int = Field(default=20)
+
+    # CORS Configuration
+    CORS_ORIGINS: str = Field(default="http://localhost:3000,http://127.0.0.1:3000")
 
     # Object Storage (MinIO / S3)
     S3_ENDPOINT: str = Field(default="http://localhost:9000")
@@ -42,7 +45,15 @@ class Settings(BaseSettings):
     # Machine Learning & OCR Configuration
     OCR_MODEL_NAME: str = Field(default="trocr-handwritten-v1")
     OCR_MODEL_VERSION: str = Field(default="1.0.0")
+    OCR_DEVICE: str = Field(default="cpu")
     MODEL_CACHE_DIR: str = Field(default="/tmp/prescripto_models")
+
+    # ML Service integration
+    # ML_RUNTIME_MODE controls which ModelRuntime the worker instantiates:
+    #   "mock"   — MockModelRuntime (default; hermetic; no external service needed)
+    #   "remote" — RemoteMLClient (calls the ML service at ML_SERVICE_URL)
+    ML_RUNTIME_MODE: str = Field(default="mock")
+    ML_SERVICE_URL: str = Field(default="http://localhost:8001")
 
     # Feature & Safety Flags
     LLM_ENABLED: bool = Field(default=False)
@@ -64,6 +75,12 @@ class Settings(BaseSettings):
     @property
     def knowledge_providers_list(self) -> List[str]:
         return [p.strip() for p in self.ENABLED_KNOWLEDGE_PROVIDERS.split(",") if p.strip()]
+
+    @property
+    def cors_origins_list(self) -> List[str]:
+        if not self.CORS_ORIGINS or self.CORS_ORIGINS.strip() == "*":
+            return ["*"]
+        return [o.strip() for o in self.CORS_ORIGINS.split(",") if o.strip()]
 
     @field_validator("OCR_MODEL_VERSION")
     @classmethod

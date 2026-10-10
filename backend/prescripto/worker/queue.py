@@ -256,16 +256,15 @@ class QueuePoller:
         Transitions job to SUCCEEDED and updates Analysis to COMPLETED or REQUIRES_REVIEW.
         """
         now = utc_now()
-        job = (
-            db.query(AnalysisJob)
-            .filter(
-                AnalysisJob.id == job_id,
-                AnalysisJob.lease_token == lease_token,
-                AnalysisJob.lease_owner == worker_id,
-                AnalysisJob.status == "RUNNING",
-            )
-            .first()
+        job_query = db.query(AnalysisJob).filter(
+            AnalysisJob.id == job_id,
+            AnalysisJob.lease_token == lease_token,
+            AnalysisJob.lease_owner == worker_id,
+            AnalysisJob.status == "RUNNING",
         )
+        if db.bind and db.bind.dialect.name == "postgresql":
+            job_query = job_query.with_for_update()
+        job = job_query.first()
 
         lease_exp = ensure_utc(job.lease_expires_at) if job else None
         if not job or (lease_exp and lease_exp < now):

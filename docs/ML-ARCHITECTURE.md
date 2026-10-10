@@ -6,9 +6,9 @@ ML system design and the boundary between learned and deterministic components. 
 
 | Stage | Learned? | Why |
 |---|---|---|
-| Quality check | No | Laplacian variance, histogram spread — deterministic, debuggable |
+| Quality check | No | Minimum dimension (≥400 px each side) + blank detection (pixel range ≤5 in grayscale). Laplacian variance and histogram spread are not yet implemented. |
 | Text detection | **Yes** | PP-OCRv6 detector |
-| Recognition | **Yes** | The one genuinely hard perception problem |
+| Recognition | **Yes** | PP-OCRv6 single-pass predict; word boxes grouped into reading lines by y-centre median tolerance |
 | Structured extraction | No | Regex + abbreviation lexicon |
 | Normalization | No | Fuzzy/phonetic string matching against the Master |
 | Safety screening | No | Deterministic rules over canonical entities |
@@ -34,7 +34,7 @@ raw_score (model-native, incomparable across architectures)
 
 Raw scores are not probabilities. A TrOCR beam-search score and a PP-OCR CTC confidence of "0.85" mean different things, and neither means "85% likely correct." Thresholding raw scores directly produces a system whose review routing is arbitrary — and arbitrary routing silently breaks the human-in-the-loop guarantee that the entire safety argument rests on.
 
-So: **no model runs without a calibration snapshot.** Enforced at worker startup, not by convention.
+So: **no model runs without a calibration snapshot.** This gate is specified at worker startup — the `CalibrationSnapshot` table and `review_threshold` column exist in the schema, but the startup enforcement is not yet wired in `worker/main.py`. See [README Current Status](../README.md#planned-not-implemented) for tracking.
 
 ### What is never done
 
@@ -68,7 +68,7 @@ Frozen, generic, and it **raises** rather than returning a degraded value. A bug
 
 `ModelRuntime` (Arch §11) isolates model choice behind `detect_regions` / `recognize_line` / `model_version_id`. Swapping a model is a config change plus a worker restart — which is exactly what E1 needs, since model selection is unresolved until Tier B exists.
 
-Startup validation refuses to boot on: unregistered model version, missing calibration snapshot, checkpoint hash mismatch, or load failure. Four gates, all safety-relevant, none skippable.
+Worker startup validation is **specified** to refuse boot on: unregistered model version, missing calibration snapshot, checkpoint hash mismatch, or load failure. The schema and `ModelVersion`/`CalibrationSnapshot` tables exist. **Startup enforcement is not yet wired** — see Planned items in `README.md`.
 
 ## VLM verification — deferred, and why
 

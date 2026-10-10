@@ -11,6 +11,7 @@ from prescripto.db.base import utc_now, ensure_utc
 from prescripto.db.models.document import PrescriptionDocument
 from prescripto.db.models.analysis import Analysis, AnalysisJob
 from prescripto.db.models.registry import ModelVersion
+from prescripto.db.models.users import User
 from prescripto.worker.queue import JobClaim
 from prescripto.worker.heartbeat import HeartbeatManager
 from prescripto.worker.exceptions import WorkerFencedError
@@ -18,6 +19,17 @@ from prescripto.worker.exceptions import WorkerFencedError
 
 @pytest.fixture
 def heartbeat_claim(db_session: Session):
+    user = User(
+        id=uuid.uuid4(),
+        username=f"hb_{uuid.uuid4().hex[:8]}",
+        email=f"hb_{uuid.uuid4().hex[:8]}@example.com",
+        hashed_password="test_password_hash",
+        role="OPERATOR",
+        is_active=True,
+    )
+    db_session.add(user)
+    db_session.flush()
+
     model = ModelVersion(
         id=uuid.uuid4(),
         model_name="test-model",
@@ -32,7 +44,7 @@ def heartbeat_claim(db_session: Session):
 
     doc = PrescriptionDocument(
         id=uuid.uuid4(),
-        uploader_id=uuid.uuid4(),
+        uploader_id=user.id,
         storage_key="test/doc.jpg",
         file_hash_sha256="hash123",
         mime_type="image/jpeg",

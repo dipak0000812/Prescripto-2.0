@@ -28,6 +28,7 @@ dependencies = [
     "structlog>=24.2.0",
     "httpx>=0.27.0",
     "pyyaml>=6.0.1",
+    "Pillow>=10.0.0",
 ]
 
 [project.optional-dependencies]
@@ -37,6 +38,10 @@ dev = [
     "mypy>=1.10.0",
     "types-pyyaml>=6.0.12",
     "types-boto3>=1.34.0",
+]
+ocr = [
+    "paddleocr>=2.7.3",
+    "paddlepaddle>=2.6.0; sys_platform != 'darwin' or platform_machine != 'arm64'",
 ]
 
 [tool.setuptools.packages.find]
