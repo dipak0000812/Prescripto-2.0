@@ -12,6 +12,7 @@ pydantic>=2.8.0
 pydantic-settings>=2.4.0
 pillow>=10.4.0
 numpy>=1.26.4
+python-multipart>=0.0.9
 # PaddlePaddle + PaddleOCR: install separately per platform (CPU or GPU)
 # See: https://www.paddlepaddle.org.cn/install/quick
 # paddlepaddle>=2.6.1
