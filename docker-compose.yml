@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   postgres:
     image: postgres:16-alpine
@@ -10,7 +8,7 @@ services:
       POSTGRES_USER: prescripto
       POSTGRES_PASSWORD: prescripto_secret
     ports:
-      - "5432:5432"
+      - "5435:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -20,7 +18,7 @@ services:
       retries: 5
 
   minio:
-    image: minio/minio:latest
+    image: cgr.dev/chainguard/minio:latest
     container_name: prescripto-minio
     restart: unless-stopped
     command: server /data --console-address ":9001"
@@ -32,25 +30,22 @@ services:
       - "9001:9001"
     volumes:
       - minio_data:/data
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
 
   createbuckets:
-    image: minio/mc:latest
+    build:
+      context: ./backend
+      dockerfile: docker/Dockerfile
     container_name: prescripto-createbuckets
     depends_on:
-      minio:
-        condition: service_healthy
-    entrypoint: >
-      /bin/sh -c "
-      /usr/bin/mc alias set myminio http://minio:9000 minioadmin minioadmin;
-      /usr/bin/mc mb --ignore-existing myminio/prescripto;
-      /usr/bin/mc mb --ignore-existing myminio/prescripto-retention;
-      exit 0;
-      "
+      - minio
+    env_file:
+      - ./backend/.env
+    volumes:
+      - ./backend/scripts/init_buckets.py:/app/scripts/init_buckets.py:ro
+    environment:
+      - PYTHONPATH=/app
+      - S3_ENDPOINT=http://minio:9000
+    command: python scripts/init_buckets.py
 
   migrate:
     build:
@@ -61,6 +56,7 @@ services:
     env_file:
       - ./backend/.env
     environment:
+      - PYTHONPATH=/app
       - DATABASE_URL=postgresql+psycopg2://prescripto:prescripto_secret@postgres:5432/prescripto_db
     depends_on:
       postgres:
@@ -78,13 +74,14 @@ services:
     env_file:
       - ./backend/.env
     environment:
+      - PYTHONPATH=/app
       - DATABASE_URL=postgresql+psycopg2://prescripto:prescripto_secret@postgres:5432/prescripto_db
       - S3_ENDPOINT=http://minio:9000
     depends_on:
       postgres:
         condition: service_healthy
       minio:
-        condition: service_healthy
+        condition: service_started
       createbuckets:
         condition: service_completed_successfully
       migrate:
@@ -96,9 +93,11 @@ services:
       dockerfile: Dockerfile
     container_name: prescripto-ml
     restart: unless-stopped
+    command: sh -c "pip install --no-cache-dir python-multipart && ln -sfn /service /service/ml && uvicorn ml.app.main:app --host 0.0.0.0 --port 8001"
     ports:
       - "8001:8001"
     environment:
+      - PYTHONPATH=/service
       - ML_PORT=8001
       - ML_DEVICE=cpu
       - ML_MODEL_NAME=PP-OCRv6
@@ -115,6 +114,7 @@ services:
     env_file:
       - ./backend/.env
     environment:
+      - PYTHONPATH=/app
       - DATABASE_URL=postgresql+psycopg2://prescripto:prescripto_secret@postgres:5432/prescripto_db
       - S3_ENDPOINT=http://minio:9000
       - ML_SERVICE_URL=http://ml-service:8001
@@ -122,7 +122,7 @@ services:
       postgres:
         condition: service_healthy
       minio:
-        condition: service_healthy
+        condition: service_started
       migrate:
         condition: service_completed_successfully
 
@@ -136,13 +136,14 @@ services:
     env_file:
       - ./backend/.env
     environment:
+      - PYTHONPATH=/app
       - DATABASE_URL=postgresql+psycopg2://prescripto:prescripto_secret@postgres:5432/prescripto_db
       - S3_ENDPOINT=http://minio:9000
     depends_on:
       postgres:
         condition: service_healthy
       minio:
-        condition: service_healthy
+        condition: service_started
       migrate:
         condition: service_completed_successfully
 
