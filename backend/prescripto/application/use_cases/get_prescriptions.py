@@ -14,6 +14,7 @@ from prescripto.db.models.analysis import Analysis
 from prescripto.db.models.users import User
 from prescripto.db.models.enums import Role
 from prescripto.domain.prescription.models import DocumentStatus
+from prescripto.db.models.patient import Patient
 from prescripto.application.dtos.prescription import (
     PrescriptionSummaryDTO,
     AnalysisSummaryDTO,
@@ -60,12 +61,23 @@ class ListPrescriptionsUseCase:
                 .order_by(desc(Analysis.created_at))
                 .first()
             )
+            patient_name = None
+            if doc.patient_ref:
+                p = self.db.query(Patient).filter(
+                    (Patient.patient_id == doc.patient_ref) | (Patient.phone_number == doc.patient_ref)
+                ).first()
+                if p:
+                    patient_name = p.name
+
             items.append(
                 PrescriptionSummaryDTO(
                     prescription_id=doc.id,
                     uploaded_at=doc.uploaded_at,
                     status=doc.status,
                     latest_analysis_status=latest_analysis.status if latest_analysis else None,
+                    latest_analysis_id=latest_analysis.id if latest_analysis else None,
+                    patient_ref=doc.patient_ref,
+                    patient_name=patient_name,
                 )
             )
 

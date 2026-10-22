@@ -19,6 +19,7 @@ from prescripto.db.models.enums import (
     PipelineStageName,
 )
 from prescripto.db.models.users import User
+from prescripto.db.models.patient import Patient
 from prescripto.db.models.document import PrescriptionDocument
 from prescripto.db.models.registry import ModelVersion, CalibrationSnapshot, KnowledgeSnapshot
 from prescripto.db.models.analysis import Analysis, AnalysisJob, AnalysisStage
@@ -46,6 +47,7 @@ __all__ = [
     "LicenseMode",
     "PipelineStageName",
     "User",
+    "Patient",
     "PrescriptionDocument",
     "IdempotencyRecord",
     "ModelVersion",

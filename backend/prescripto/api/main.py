@@ -18,6 +18,7 @@ from prescripto.api.v1.routers.auth import router as auth_router
 from prescripto.api.v1.routers.health import router as health_router
 from prescripto.api.v1.routers.prescriptions import router as prescriptions_router
 from prescripto.api.v1.routers.analyses import router as analyses_router
+from prescripto.api.v1.routers.patients import router as patients_router
 
 # Configure zero-PHI logging on startup
 configure_logging(settings.LOG_LEVEL)
@@ -171,4 +172,43 @@ app.include_router(auth_router, prefix="/api/v1")
 app.include_router(health_router, prefix="/api/v1")
 app.include_router(prescriptions_router, prefix="/api/v1")
 app.include_router(analyses_router, prefix="/api/v1")
+app.include_router(patients_router, prefix="/api/v1")
+
+
+@app.get("/api/v1/storage/{key:path}", tags=["Storage"], include_in_schema=False)
+def get_storage_file(key: str) -> Response:
+    """Serves locally stored prescription images when local storage fallback is used."""
+    import mimetypes
+    from prescripto.storage.client import get_storage_client
+    sc = get_storage_client()
+    try:
+        content = sc.get_object(key)
+        media_type, _ = mimetypes.guess_type(key)
+        return Response(content=content, media_type=media_type or "application/octet-stream")
+    except Exception:
+        return JSONResponse(
+            status_code=404,
+            content={"error": {"code": "RESOURCE_NOT_FOUND", "message": f"Object {key} not found", "request_id": str(uuid.uuid4())}},
+        )
+
+
+import threading
+
+def _run_worker_daemon():
+    try:
+        from prescripto.worker.main import WorkerRunner
+        runner = WorkerRunner(poll_interval=1.0)
+        runner.start()
+    except Exception as e:
+        logger.warning("background_worker_daemon_stopped", error=str(e))
+
+
+@app.on_event("startup")
+def startup_event():
+    # Only spawn worker thread if not in test suite environment
+    import os
+    if os.environ.get("PYTEST_CURRENT_TEST") is None:
+        t = threading.Thread(target=_run_worker_daemon, daemon=True)
+        t.start()
+
 

@@ -80,8 +80,10 @@ def main():
     print("  -> Logged in successfully. Bearer token acquired.")
 
     # 2. Upload prescription
-    print("\n[Step 2] Uploading prescription image (/app/sample_rx.png)...")
-    upload_res = upload_prescription(operator_token, "/app/sample_rx.png")
+    import os
+    image_path = sys.argv[1] if len(sys.argv) > 1 else ("sample_prescription.png" if os.path.exists("sample_prescription.png") else "/app/sample_rx.png")
+    print(f"\n[Step 2] Uploading prescription image ({image_path})...")
+    upload_res = upload_prescription(operator_token, image_path)
     analysis_id = upload_res["analysis_id"]
     prescription_id = upload_res["prescription_id"]
     print(f"  -> Upload Accepted (202): analysis_id={analysis_id}, prescription_id={prescription_id}")

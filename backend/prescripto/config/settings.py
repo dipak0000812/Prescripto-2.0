@@ -50,13 +50,16 @@ class Settings(BaseSettings):
 
     # ML Service integration
     # ML_RUNTIME_MODE controls which ModelRuntime the worker instantiates:
-    #   "mock"   — MockModelRuntime (default; hermetic; no external service needed)
-    #   "remote" — RemoteMLClient (calls the ML service at ML_SERVICE_URL)
-    ML_RUNTIME_MODE: str = Field(default="mock")
+    #   "rapidocr" — RapidOCRRuntime (default; real OCR via ONNX PaddleOCR on CPU)
+    #   "mock"     — MockModelRuntime (hermetic testing; no external service needed)
+    #   "remote"   — RemoteMLClient (calls the ML service at ML_SERVICE_URL)
+    ML_RUNTIME_MODE: str = Field(default="rapidocr")
     ML_SERVICE_URL: str = Field(default="http://localhost:8001")
 
     # Feature & Safety Flags
     LLM_ENABLED: bool = Field(default=False)
+    GEMINI_API_KEY: Optional[str] = Field(default=None)
+    OPENAI_API_KEY: Optional[str] = Field(default=None)
     ENABLED_KNOWLEDGE_PROVIDERS: str = Field(default="openfda,cdsco")
     LICENSE_MODE_ALLOWED: str = Field(default="COMMERCIAL_PERMISSIVE")
     OPENFDA_API_KEY: Optional[str] = Field(default=None)

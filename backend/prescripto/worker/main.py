@@ -18,6 +18,7 @@ from prescripto.worker.heartbeat import HeartbeatManager
 from prescripto.worker.coordinator import PipelineCoordinator
 from prescripto.worker.exceptions import WorkerFencedError
 from prescripto.ml.runtime import MockModelRuntime, RemoteMLClient
+from prescripto.ml.rapid_runtime import RapidOCRRuntime
 from prescripto.storage.client import get_storage_client
 
 configure_logging(settings.LOG_LEVEL)
@@ -31,16 +32,17 @@ def _build_ocr_runtime(ocr_runtime_override: object | None) -> object:
     Priority:
       1. Caller-supplied override (used in tests — always MockModelRuntime).
       2. ML_RUNTIME_MODE == "remote"  → RemoteMLClient at ML_SERVICE_URL.
-      3. ML_RUNTIME_MODE == "mock"    → MockModelRuntime (default).
-
-    PaddleOCRRuntime is NOT instantiated in the worker process; it lives
-    exclusively in the ML service container.
+      3. ML_RUNTIME_MODE == "mock"    → MockModelRuntime (hermetic testing).
+      4. ML_RUNTIME_MODE == "rapidocr" or default → RapidOCRRuntime (real OCR).
     """
     if ocr_runtime_override is not None:
         return ocr_runtime_override
     if settings.ML_RUNTIME_MODE == "remote":
         return RemoteMLClient(ml_service_url=settings.ML_SERVICE_URL)
-    return MockModelRuntime()
+    if settings.ML_RUNTIME_MODE == "mock":
+        return MockModelRuntime()
+    # Default: use real OCR via RapidOCR (ONNX PaddleOCR on CPU)
+    return RapidOCRRuntime()
 
 
 

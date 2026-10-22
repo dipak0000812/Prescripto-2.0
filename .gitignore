@@ -37,8 +37,15 @@ ENV/
 htmlcov/
 .mypy_cache/
 
+# Local DB & Storage
+*.db
+prescripto.db
+prescripto_storage/
+node_modules/
+
 # OS / Editor
 .DS_Store
 Thumbs.db
 .vscode/
 .idea/
+

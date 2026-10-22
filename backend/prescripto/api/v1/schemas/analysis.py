@@ -102,3 +102,18 @@ class ReviewRecord(BaseModel):
     overall_status: str
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class MedicationUpdateItem(BaseModel):
+    line_index: int
+    name: Optional[str] = None
+    strength: Optional[str] = None
+    dose: Optional[str] = None
+    frequency: Optional[str] = None
+    route: Optional[str] = None
+    duration: Optional[str] = None
+    instructions: Optional[str] = None
+
+
+class MedicationUpdateRequest(BaseModel):
+    medications: List[MedicationUpdateItem]

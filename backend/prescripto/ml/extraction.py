@@ -56,7 +56,17 @@ def extract_prescription_fields(text: str) -> dict[str, dict[str, Any]]:
 
     field_spans = [match.start() for match in matches.values() if match]
     name_end = min(field_spans) if field_spans else len(line)
-    name_value = line[:name_end].strip(" ,;:-") or None
+    raw_name = line[:name_end].strip(" ,;:-") or None
+    if raw_name:
+        # Strip leading numbers/bullets/prefixes like "1. ", "2) ", "Rx: ", "• "
+        name_value = re.sub(
+            r"^(?:\d+\s*[\.\)\-:]+|\*|#\d+|[•\-\+]|Rx:?)\s*",
+            "",
+            raw_name,
+            flags=re.IGNORECASE,
+        ).strip(" ,;:-") or raw_name
+    else:
+        name_value = None
 
     dose_value = value_by_name["dose"]
     unit_value = None

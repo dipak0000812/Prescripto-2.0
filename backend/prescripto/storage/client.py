@@ -56,6 +56,10 @@ class StorageClient:
                 config=config,
             )
 
+        self._is_mock_s3 = s3_client is not None
+        from pathlib import Path
+        self._local_dir = Path("prescripto_storage")
+
     @staticmethod
     def generate_prescription_key(document_id: Union[uuid.UUID, str], extension: str) -> str:
         """
@@ -85,12 +89,21 @@ class StorageClient:
                         )
                     logger.info("storage_bucket_created", status="SUCCESS")
                 except Exception as create_err:
+                    if not self._is_mock_s3:
+                        (self._local_dir / bucket).mkdir(parents=True, exist_ok=True)
+                        return
                     logger.error("storage_bucket_create_failed", error_code="STORAGE_UNAVAILABLE")
                     raise StorageUnavailableException(f"Failed to create bucket {bucket}: {create_err}") from create_err
             else:
+                if not self._is_mock_s3:
+                    (self._local_dir / bucket).mkdir(parents=True, exist_ok=True)
+                    return
                 logger.error("storage_bucket_head_failed", error_code="STORAGE_UNAVAILABLE")
                 raise StorageUnavailableException(f"Failed to reach storage bucket {bucket}: {e}") from e
         except (BotoCoreError, Exception) as e:
+            if not self._is_mock_s3:
+                (self._local_dir / bucket).mkdir(parents=True, exist_ok=True)
+                return
             logger.error("storage_connection_failed", error_code="STORAGE_UNAVAILABLE")
             raise StorageUnavailableException(f"Storage connection failed: {e}") from e
 
@@ -111,7 +124,13 @@ class StorageClient:
                 ContentType=content_type,
             )
             logger.info("storage_put_success", status="SUCCESS")
-        except (BotoCoreError, ClientError) as e:
+        except (BotoCoreError, ClientError, Exception) as e:
+            if not self._is_mock_s3:
+                target_path = self._local_dir / bucket / key
+                target_path.parent.mkdir(parents=True, exist_ok=True)
+                target_path.write_bytes(data)
+                logger.info("storage_put_local_success", status="SUCCESS", key=key)
+                return
             logger.error("storage_put_failed", error_code="STORAGE_UNAVAILABLE")
             raise StorageUnavailableException(f"Failed to write object to storage: {e}") from e
 
@@ -124,10 +143,21 @@ class StorageClient:
         except ClientError as e:
             error_code = e.response.get("Error", {}).get("Code")
             if error_code in ("NoSuchKey", "404"):
+                local_path = self._local_dir / bucket / key
+                if local_path.is_file():
+                    return local_path.read_bytes()
                 raise StorageObjectNotFoundException(f"Object {key} not found") from e
+            if not self._is_mock_s3:
+                local_path = self._local_dir / bucket / key
+                if local_path.is_file():
+                    return local_path.read_bytes()
             logger.error("storage_get_failed", error_code="STORAGE_UNAVAILABLE")
             raise StorageUnavailableException(f"Storage get error: {e}") from e
-        except BotoCoreError as e:
+        except (BotoCoreError, Exception) as e:
+            if not self._is_mock_s3:
+                local_path = self._local_dir / bucket / key
+                if local_path.is_file():
+                    return local_path.read_bytes()
             logger.error("storage_get_failed", error_code="STORAGE_UNAVAILABLE")
             raise StorageUnavailableException(f"Storage connection error: {e}") from e
 
@@ -137,7 +167,13 @@ class StorageClient:
         try:
             self._client.delete_object(Bucket=bucket, Key=key)
             logger.info("storage_delete_success", status="SUCCESS")
-        except (BotoCoreError, ClientError) as e:
+        except (BotoCoreError, ClientError, Exception) as e:
+            if not self._is_mock_s3:
+                local_path = self._local_dir / bucket / key
+                if local_path.is_file():
+                    local_path.unlink()
+                logger.info("storage_delete_local_success", status="SUCCESS")
+                return
             logger.error("storage_delete_failed", error_code="STORAGE_UNAVAILABLE")
             raise StorageUnavailableException(f"Storage delete error: {e}") from e
 
@@ -151,8 +187,12 @@ class StorageClient:
             error_code = e.response.get("Error", {}).get("Code")
             if error_code in ("404", "NoSuchKey"):
                 return False
+            if not self._is_mock_s3:
+                return (self._local_dir / bucket / key).is_file()
             raise StorageUnavailableException(f"Storage check error: {e}") from e
-        except BotoCoreError as e:
+        except (BotoCoreError, Exception) as e:
+            if not self._is_mock_s3:
+                return (self._local_dir / bucket / key).is_file()
             raise StorageUnavailableException(f"Storage connection error: {e}") from e
 
     def generate_presigned_url(
@@ -173,7 +213,9 @@ class StorageClient:
                 ExpiresIn=expires_in,
             )
             return url
-        except (BotoCoreError, ClientError) as e:
+        except (BotoCoreError, ClientError, Exception) as e:
+            if not self._is_mock_s3:
+                return f"/api/v1/storage/{key}"
             logger.error("presigned_url_generation_failed", error_code="STORAGE_UNAVAILABLE")
             raise StorageUnavailableException(f"Failed to generate presigned URL: {e}") from e
 

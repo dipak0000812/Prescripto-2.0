@@ -79,7 +79,7 @@ def evaluate_review_triggers(
 
     # 2. Risk finding triggers
     for f in findings:
-        if f.finding_status == FindingStatus.REQUIRES_REVIEW:
+        if f.finding_status in (FindingStatus.REQUIRES_REVIEW, FindingStatus.CONFIRMED_BY_SOURCE):
             reasons.append(f"FINDING_REQUIRES_REVIEW: Safety finding '{f.finding_key}' requires clinical evaluation.")
         elif f.finding_status == FindingStatus.POTENTIAL:
             reasons.append(f"POTENTIAL_RISK: Safety finding '{f.finding_key}' detected potential adverse condition.")

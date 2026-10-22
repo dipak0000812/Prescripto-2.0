@@ -23,6 +23,9 @@ class PrescriptionSummary(BaseModel):
     uploaded_at: datetime
     status: str
     latest_analysis_status: Optional[str] = None
+    latest_analysis_id: Optional[uuid.UUID] = None
+    patient_ref: Optional[str] = None
+    patient_name: Optional[str] = None
 
 
 class PrescriptionList(BaseModel):

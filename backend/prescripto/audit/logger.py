@@ -10,6 +10,8 @@ import structlog
 
 # Strictly permitted keys in operational logs per docs/SECURITY.md
 PERMITTED_LOG_KEYS = {
+    "_record",
+    "_dropped_unwhitelisted_keys_count",
     "event",
     "level",
     "timestamp",

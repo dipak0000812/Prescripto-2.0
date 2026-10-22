@@ -13,8 +13,11 @@ from prescripto.db.models.analysis import Analysis
 from prescripto.db.models.document import PrescriptionDocument
 from prescripto.db.models.medication import PrescriptionMedication, MedicationCandidate
 from prescripto.db.models.safety import RiskFinding
+from prescripto.db.models.patient import Patient
 from prescripto.domain.medication.models import ResolutionStatus
 from prescripto.domain.safety.duplicate import detect_duplicate_medications
+from prescripto.domain.safety.allergy import detect_allergy_contraindications
+from prescripto.domain.safety.dosage import detect_dosage_safety_warnings
 from prescripto.domain.review.models import evaluate_review_triggers
 from prescripto.application.services.medication_search import MedicationSearchService
 from prescripto.domain.medication.models import (
@@ -108,7 +111,14 @@ def handle_text_detection(
     Stage: TEXT_DETECTION.
     Uses ModelRuntime text detector to identify line bounding boxes on the prescription.
     """
-    runtime = context.get("ocr_runtime") or PaddleOCRRuntime()
+    runtime = context.get("ocr_runtime")
+    if runtime is None:
+        try:
+            from prescripto.ml.rapid_runtime import RapidOCRRuntime
+            runtime = RapidOCRRuntime()
+        except Exception:
+            from prescripto.ml.runtime import MockModelRuntime
+            runtime = MockModelRuntime()
     lines = runtime.recognize_document(context["document_bytes"])
     context["ocr_lines"] = lines
 
@@ -116,7 +126,7 @@ def handle_text_detection(
         "stage": "TEXT_DETECTION",
         "status": "COMPLETED",
         "regions_detected_count": len(lines),
-        "detector_model": "PP-OCRv6",
+        "detector_model": "RapidOCR",
     }
 
 
@@ -236,8 +246,14 @@ def handle_medication_normalization(
             )
         resolutions[med.id] = resolution
 
-        if not stored_candidate and extracted_text:
-            top_candidate = search_result.candidates[0] if search_result.candidates else None
+        top_candidate = search_result.candidates[0] if search_result.candidates else None
+        if stored_candidate:
+            stored_candidate.extracted_text = extracted_text
+            stored_candidate.matching_strategy = (top_candidate.matching_strategy if top_candidate else "NO_MATCH")
+            stored_candidate.candidate_score = (top_candidate.candidate_score if top_candidate else 0.0)
+            stored_candidate.resolved_medication_id = (resolution.resolved_medication.id if resolution.resolved_medication else None)
+            stored_candidate.resolution_status = resolution.resolution_status.value
+        elif extracted_text:
             db.add(
                 MedicationCandidate(
                     id=uuid.uuid4(),
@@ -264,12 +280,23 @@ def handle_safety_screening(
 ) -> Dict[str, Any]:
     """
     Stage: SAFETY_SCREENING.
-    Runs only the local exact-canonical-product duplicate candidate rule.
+    Runs comprehensive clinical safety checks:
+    1. Exact canonical product duplicate detection.
+    2. Patient allergy contraindication screening against clinical history.
+    3. Maximum recommended single-dose and cumulative dosage threshold evaluation.
     """
     meds = db.query(PrescriptionMedication).filter(
         PrescriptionMedication.analysis_id == analysis.id
     ).all()
 
+    # Load document if not provided in args
+    doc = document
+    if not doc and analysis.document_id:
+        doc = db.query(PrescriptionDocument).filter(
+            PrescriptionDocument.id == analysis.document_id
+        ).first()
+
+    # 1. Duplicate detection
     resolved_pairs = [
         (med.id, context.get("medication_resolutions", {}).get(
             med.id,
@@ -277,7 +304,37 @@ def handle_safety_screening(
         ))
         for med in meds
     ]
-    findings = detect_duplicate_medications(analysis.id, resolved_pairs)
+    findings = list(detect_duplicate_medications(analysis.id, resolved_pairs))
+
+    # 2. Patient Allergy Contraindication Screening
+    patient_allergies: Optional[str] = None
+    if doc and doc.patient_ref:
+        patient = db.query(Patient).filter(
+            (Patient.patient_id == doc.patient_ref) | 
+            (Patient.phone_number == doc.patient_ref)
+        ).first()
+        if patient and patient.allergies:
+            patient_allergies = patient.allergies
+
+    med_allergy_inputs = []
+    med_dosage_inputs = []
+    for med in meds:
+        res = context.get("medication_resolutions", {}).get(med.id)
+        canonical = res.resolved_medication if res and res.resolution_status == ResolutionStatus.RESOLVED else None
+        med_allergy_inputs.append((med.id, med.name_raw or "", canonical))
+        med_dosage_inputs.append((med.id, med.name_raw or "", med.strength_raw, med.dose_raw, canonical))
+
+    if patient_allergies:
+        allergy_findings = detect_allergy_contraindications(
+            analysis.id, patient_allergies, med_allergy_inputs
+        )
+        findings.extend(allergy_findings)
+
+    # 3. Dosage Safety Threshold Analysis
+    dosage_findings = detect_dosage_safety_warnings(
+        analysis.id, med_dosage_inputs
+    )
+    findings.extend(dosage_findings)
 
     # Persist findings in DB idempotently
     for f in findings:

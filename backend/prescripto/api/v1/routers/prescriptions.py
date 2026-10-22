@@ -51,6 +51,7 @@ router = APIRouter(prefix="/prescriptions", tags=["Prescriptions"])
 async def create_prescription(
     file: UploadFile = File(...),
     patient_external_id: Optional[str] = Form(None),
+    patient_ref: Optional[str] = Form(None),
     idempotency_key: Optional[str] = Header(None, alias="Idempotency-Key"),
     current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
@@ -65,12 +66,14 @@ async def create_prescription(
 
     file_bytes = await file.read()
 
+    ref = (patient_external_id or patient_ref or "").strip() or None
+
     use_case = IngestPrescriptionUseCase(db=db, storage_client=storage_client)
     cmd = IngestPrescriptionInput(
         file_bytes=file_bytes,
         uploader_id=current_user.id,
         idempotency_key=idempotency_key.strip(),
-        patient_external_id=patient_external_id,
+        patient_external_id=ref,
     )
     result = use_case.execute(cmd)
 

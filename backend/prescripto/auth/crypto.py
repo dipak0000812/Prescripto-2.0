@@ -25,6 +25,7 @@ def create_access_token(
     username: str,
     role: str,
     expires_delta: Optional[timedelta] = None,
+    extra_claims: Optional[Dict[str, Any]] = None,
 ) -> Tuple[str, int]:
     """Issues an RS256 signed JWT access token."""
     now = datetime.now(timezone.utc)
@@ -39,6 +40,8 @@ def create_access_token(
         "iat": int(now.timestamp()),
         "exp": int(expires_at.timestamp()),
     }
+    if extra_claims:
+        payload.update(extra_claims)
 
     token = jwt.encode(payload, settings.JWT_PRIVATE_KEY, algorithm="RS256")
     return token, ttl_seconds

@@ -5,6 +5,7 @@ from prescripto.ml.models import (
 )
 from prescripto.ml.calibration import TemperatureScalingCalibrator
 from prescripto.ml.runtime import ModelRuntime, MockModelRuntime
+from prescripto.ml.rapid_runtime import RapidOCRRuntime
 
 __all__ = [
     "BoundingBox",
@@ -13,4 +14,5 @@ __all__ = [
     "TemperatureScalingCalibrator",
     "ModelRuntime",
     "MockModelRuntime",
+    "RapidOCRRuntime",
 ]
