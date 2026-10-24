@@ -1,3 +1,9 @@
+/.venv/
+/data/
+/outputs/
+__pycache__/
+*.pyc
+
 # Environment & Secrets
 .env
 *.pem
