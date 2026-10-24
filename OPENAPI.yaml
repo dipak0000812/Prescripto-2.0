@@ -372,7 +372,7 @@ components:
       required: [analysis_id, status, analysis_timestamp, model_versions, medications, findings, not_evaluated, coverage_disclaimer]
       properties:
         analysis_id: { type: string, format: uuid }
-        status: { type: string, enum: [COMPLETED, REQUIRES_REVIEW] }
+        status: { type: string, enum: [COMPLETED, REQUIRES_REVIEW, REVIEWED_COMPLETE, REVIEWED_ESCALATED] }
         analysis_timestamp: { type: string, format: date-time }
         model_versions: { type: array, items: { type: string } }
         knowledge_snapshots: { type: array, items: { type: string } }

@@ -40,7 +40,7 @@
 9. **Zero PHI in operational logs:** Prescription images, raw OCR buffers, patient names, and medication names are stripped by logging processors.
 
 ### Regulatory Baseline: DPDPA 2023 & DPDPA Rules 2025
-Prescripto is designed for compliance with the applicable provisions of the **Digital Personal Data Protection Act, 2023 (DPDPA 2023)** and the **Digital Personal Data Protection Rules, 2025 (notified November 2025)**, subject to deployment context and formal legal/security review. The architecture enforces data minimization, purpose limitation, caller-scoped access control, consent/retention tracking, and verifiable erasure workflows.
+Prescripto uses data-minimization and access-control principles, but this architecture does **not** establish or claim DPDPA compliance. Applicability, commencement, lawful basis/consent, retention, rights handling, processor terms, and any cross-border transfer must be reviewed against the actual deployment and current official law before real personal data is collected.
 
 ---
 
@@ -174,8 +174,8 @@ PostgreSQL `FOR UPDATE SKIP LOCKED` handles job claiming. To guarantee safety du
 2. Worker A sends a heartbeat every 30 seconds, bumping `lease_expires_at` and `heartbeat_at`.
 3. If Worker A hangs or dies, its lease expires (`lease_expires_at < now()`).
 4. Worker B claims the expired job, increments the generation, and receives `lease_token = 102`.
-5. **Atomic Lease Validation:** Every stage persistence operation validates `analysis_jobs.lease_token`, `analysis_jobs.lease_owner`, and `analysis_jobs.lease_expires_at > now()` within the **exact same transaction**.
-6. **Expired Lease Rejection:** If Worker A's lease expires, even if no other worker has claimed the job yet or incremented the token, Worker A is forbidden from committing (`lease_expires_at > now()` check fails).
+5. **Atomic Lease Validation:** Every stage persistence operation locks the `analysis_jobs` row and validates `lease_token`, `lease_owner`, and lease validity in the **same transaction** as its writes. Use `clock_timestamp()`, not `now()`: PostgreSQL `now()` is fixed at transaction start.
+6. **Serialized Expiry and Takeover:** A commit may begin only while the lease is valid. The row lock serializes that commit against lease recovery/takeover: either the stage commit completes first, or recovery increments the generation first and the stale worker is rejected. Keep the transaction short; do not claim that an already-locked transaction is cancelled at the exact wall-clock expiry instant.
 7. If Worker A attempts to write stage outputs with `lease_token = 101` after Worker B claims the job (`lease_token = 102`), the write is rejected with `0 rows affected`, raising `WorkerFencedError`.
 
 ```python
@@ -196,9 +196,9 @@ def commit_stage_result(
                 WHERE analysis_id = :aid
                   AND lease_token = :token
                   AND lease_owner = :owner
-                  AND lease_expires_at > now()
+                                AND lease_expires_at > clock_timestamp()
                   AND status = 'RUNNING'
-                FOR SHARE
+                                FOR UPDATE
             """),
             {"aid": analysis_id, "token": lease_token, "owner": lease_owner}
         ).fetchone()
@@ -243,7 +243,7 @@ Every pipeline stage writing to the database is completely idempotent to ensure 
 | `OCR_RECOGNITION` | Line crops | Raw text + model-native confidence | `OCR_FAILED` -> field marked `UNREADABLE` | Yes |
 | `STRUCTURED_EXTRACTION` | OCR lines | `ExtractedField` line items with `FieldState` | `EXTRACTION_FAILED` | Yes |
 | `MEDICATION_NORMALIZATION` | `ExtractedField` names | Resolved `MedicationMaster` reference / `UNRESOLVED` | `UNRESOLVED` (valid state, not exception) | Yes |
-| `SAFETY_SCREENING` | Resolved medications | Capability-evaluated `RiskFinding` items | Provider timeout -> `NOT_EVALUATED` | Yes |
+| `SAFETY_SCREENING` | Resolved, verified canonical product IDs | Exact repeated-product candidates plus `ScreeningCoverage` rows | Ineligible identity -> coverage `NOT_EVALUATED` with reason | Yes |
 | `REPORT_ASSEMBLY` | All stage artifacts | Consolidated analysis record | DB constraint failure | Yes |
 
 *Note: `UNREADABLE` fields are structurally excluded prior to Medication Normalization. `UNRESOLVED` or `AMBIGUOUS` entities are excluded prior to Safety Screening.*
@@ -279,10 +279,8 @@ PENDING ──> CLAIMED ──> RUNNING ──> SUCCEEDED
 
 #### `max_retries` Lifecycle Semantics
 * `max_retries = 3` defines the maximum allowed retry attempts following an initial execution failure or lease expiration.
-* **Attempt 1 (Initial Execution):** `retry_count = 0`. If worker fails/crashes, status reset to `PENDING`, `retry_count = 1`, `backoff_until = now() + 5s`.
-* **Attempt 2 (Retry 1):** `retry_count = 1`. If worker fails/crashes, status reset to `PENDING`, `retry_count = 2`, `backoff_until = now() + 30s`.
-* **Attempt 3 (Retry 2):** `retry_count = 2`. If worker fails/crashes, status reset to `PENDING`, `retry_count = 3`, `backoff_until = now() + 2m`.
-* **Terminal Failure (After Retry 3):** `retry_count = 3`. Upon the 4th failure (`retry_count >= max_retries`), status transitions directly to `DEAD`, lease is revoked, and a high-severity alert is dispatched to operators.
+* `retry_count` counts retries already consumed; the initial attempt starts at 0. After failures 1, 2, and 3, set it to 1, 2, and 3 and requeue with 5s, 30s, and 2m backoff respectively.
+* After failure 4, `retry_count` is already 3, so transition to `DEAD`, revoke the lease, and alert operators. Thus `max_retries = 3` means one initial attempt plus three retries (four total attempts).
 
 ### 3. DeletionJob State Machine
 ```
@@ -350,8 +348,8 @@ CREATE TABLE analysis_jobs (
     created_at         TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at         TIMESTAMPTZ NOT NULL DEFAULT now()
 );
-CREATE INDEX idx_analysis_jobs_claimable ON analysis_jobs (status, backoff_until, created_at)
-    WHERE status IN ('PENDING', 'FAILED');
+CREATE INDEX idx_analysis_jobs_claimable ON analysis_jobs (backoff_until, created_at)
+    WHERE status = 'PENDING';
 
 -- 4. Fenced Pipeline Stages
 CREATE TABLE analysis_stages (
@@ -397,22 +395,28 @@ CREATE TABLE prescription_medications (
     line_index           INT NOT NULL,
     name_raw             TEXT,
     name_state           TEXT NOT NULL CHECK (name_state IN ('CLEAR', 'AMBIGUOUS', 'UNREADABLE', 'NOT_PRESENT')),
-    name_confidence      REAL,
+    name_confidence      REAL CHECK (name_confidence IS NULL OR name_confidence BETWEEN 0 AND 1),
     strength_raw         TEXT,
     strength_state       TEXT NOT NULL CHECK (strength_state IN ('CLEAR', 'AMBIGUOUS', 'UNREADABLE', 'NOT_PRESENT')),
-    strength_confidence  REAL,
+    strength_confidence  REAL CHECK (strength_confidence IS NULL OR strength_confidence BETWEEN 0 AND 1),
     dose_raw             TEXT,
     dose_state           TEXT NOT NULL CHECK (dose_state IN ('CLEAR', 'AMBIGUOUS', 'UNREADABLE', 'NOT_PRESENT')),
-    dose_confidence      REAL,
+    dose_confidence      REAL CHECK (dose_confidence IS NULL OR dose_confidence BETWEEN 0 AND 1),
+    unit_raw             TEXT,
+    unit_state           TEXT NOT NULL CHECK (unit_state IN ('CLEAR', 'AMBIGUOUS', 'UNREADABLE', 'NOT_PRESENT')),
+    unit_confidence      REAL CHECK (unit_confidence IS NULL OR unit_confidence BETWEEN 0 AND 1),
     frequency_raw        TEXT,
     frequency_state      TEXT NOT NULL CHECK (frequency_state IN ('CLEAR', 'AMBIGUOUS', 'UNREADABLE', 'NOT_PRESENT')),
-    frequency_confidence REAL,
+    frequency_confidence REAL CHECK (frequency_confidence IS NULL OR frequency_confidence BETWEEN 0 AND 1),
     route_raw            TEXT,
     route_state          TEXT NOT NULL CHECK (route_state IN ('CLEAR', 'AMBIGUOUS', 'UNREADABLE', 'NOT_PRESENT')),
-    route_confidence     REAL,
+    route_confidence     REAL CHECK (route_confidence IS NULL OR route_confidence BETWEEN 0 AND 1),
     duration_raw         TEXT,
     duration_state       TEXT NOT NULL CHECK (duration_state IN ('CLEAR', 'AMBIGUOUS', 'UNREADABLE', 'NOT_PRESENT')),
-    duration_confidence  REAL,
+    duration_confidence  REAL CHECK (duration_confidence IS NULL OR duration_confidence BETWEEN 0 AND 1),
+    instructions_raw    TEXT,
+    instructions_state  TEXT NOT NULL CHECK (instructions_state IN ('CLEAR', 'AMBIGUOUS', 'UNREADABLE', 'NOT_PRESENT')),
+    instructions_confidence REAL CHECK (instructions_confidence IS NULL OR instructions_confidence BETWEEN 0 AND 1),
     UNIQUE (analysis_id, line_index)             -- Idempotency key for extraction stage
 );
 
@@ -430,27 +434,35 @@ CREATE TABLE medication_candidates (
     UNIQUE (prescription_med_id, matching_strategy, source_vocabulary)
 );
 
--- 8. Capability-Aware Safety Findings (Prescription-Scoped)
--- V1 Executable check types: 'DUPLICATE_MEDICATION', 'EVIDENCE_LOOKUP', 'ADVERSE_EFFECT'
--- DDI ('KNOWN_INTERACTION') and 'DOSAGE_RANGE' are deferred in V1.
+-- 8. Potential exact-duplicate candidates (Prescription-Scoped)
+-- NOT_EVALUATED is represented by screening_coverage, never by a finding.
 CREATE TABLE risk_findings (
     id                    UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     analysis_id           UUID NOT NULL REFERENCES analyses(id) ON DELETE CASCADE,
-    check_type            TEXT NOT NULL CHECK (check_type IN ('DUPLICATE_MEDICATION', 'EVIDENCE_LOOKUP', 'ADVERSE_EFFECT')),
-    finding_key           TEXT NOT NULL,          -- Deterministic idempotency hash/key (e.g., md5(med_ids + source))
-    finding_status        TEXT NOT NULL
-                          CHECK (finding_status IN ('CONFIRMED_BY_SOURCE', 'POTENTIAL', 'INSUFFICIENT_EVIDENCE', 'NOT_EVALUATED', 'REQUIRES_REVIEW')),
+    check_type            TEXT NOT NULL CHECK (check_type = 'DUPLICATE_MEDICATION'),
+    finding_key           TEXT NOT NULL,          -- Stable key from sorted canonical product IDs and rule version
+    finding_status        TEXT NOT NULL CHECK (finding_status = 'POTENTIAL'),
     medication_ids        UUID[] NOT NULL DEFAULT '{}',
-    evidence_text         TEXT,
-    source_name           TEXT NOT NULL,
-    source_version        TEXT NOT NULL,
-    knowledge_snapshot_id UUID REFERENCES knowledge_snapshots(id),
-    confidence_score      REAL,
+    rule_id               TEXT NOT NULL,
+    rule_version          TEXT NOT NULL,
     check_timestamp       TIMESTAMPTZ NOT NULL DEFAULT now(),
-    not_evaluated_reason  TEXT,
-    CONSTRAINT chk_not_evaluated_reason
-        CHECK (finding_status != 'NOT_EVALUATED' OR not_evaluated_reason IS NOT NULL),
-    UNIQUE (analysis_id, check_type, source_name, finding_key) -- Idempotency key for safety stage
+    UNIQUE (analysis_id, check_type, rule_id, finding_key)
+);
+
+CREATE TABLE screening_coverage (
+    id                       UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    analysis_id              UUID NOT NULL REFERENCES analyses(id) ON DELETE CASCADE,
+    prescription_medication_id UUID NOT NULL REFERENCES prescription_medications(id) ON DELETE CASCADE,
+    check_type               TEXT NOT NULL CHECK (check_type = 'DUPLICATE_MEDICATION'),
+    coverage_status          TEXT NOT NULL CHECK (coverage_status IN ('EVALUATED', 'NOT_EVALUATED')),
+    not_evaluated_reason     TEXT,
+    rule_version             TEXT NOT NULL,
+    checked_at               TIMESTAMPTZ NOT NULL DEFAULT now(),
+    CONSTRAINT chk_coverage_reason CHECK (
+        (coverage_status = 'NOT_EVALUATED' AND not_evaluated_reason IS NOT NULL)
+        OR (coverage_status = 'EVALUATED' AND not_evaluated_reason IS NULL)
+    ),
+    UNIQUE (analysis_id, prescription_medication_id, check_type)
 );
 
 -- 9. Machine Learning Model Registry & Calibration Snapshots
@@ -543,7 +555,7 @@ BEGIN;
 SELECT id, analysis_id, lease_token, retry_count
 FROM analysis_jobs
 WHERE status = 'PENDING'
-  AND (backoff_until IS NULL OR backoff_until <= now())
+    AND (backoff_until IS NULL OR backoff_until <= clock_timestamp())
 ORDER BY created_at ASC
 LIMIT 1
 FOR UPDATE SKIP LOCKED;
@@ -553,9 +565,9 @@ UPDATE analysis_jobs
 SET status = 'RUNNING',
     lease_owner = :worker_id,
     lease_token = lease_token + 1,
-    lease_expires_at = now() + INTERVAL '10 minutes',
-    heartbeat_at = now(),
-    updated_at = now()
+    lease_expires_at = clock_timestamp() + INTERVAL '10 minutes',
+    heartbeat_at = clock_timestamp(),
+    updated_at = clock_timestamp()
 WHERE id = :job_id;
 COMMIT;
 ```
@@ -565,21 +577,21 @@ A scheduled sweeper query (or claim pre-pass) detects abandoned jobs where `stat
 
 ```sql
 UPDATE analysis_jobs
-SET status = CASE WHEN retry_count + 1 >= max_retries THEN 'DEAD' ELSE 'PENDING' END,
-    retry_count = retry_count + 1,
-    backoff_until = now() + (
+SET status = CASE WHEN retry_count >= max_retries THEN 'DEAD' ELSE 'PENDING' END,
+    retry_count = CASE WHEN retry_count >= max_retries THEN retry_count ELSE retry_count + 1 END,
+    backoff_until = CASE WHEN retry_count >= max_retries THEN NULL ELSE clock_timestamp() + (
         CASE
             WHEN retry_count = 0 THEN INTERVAL '5 seconds'
             WHEN retry_count = 1 THEN INTERVAL '30 seconds'
             ELSE INTERVAL '2 minutes'
         END
-    ),
+    ) END,
     lease_owner = NULL,
     lease_expires_at = NULL,
     last_error = 'Lease expired due to worker timeout or crash',
     updated_at = now()
 WHERE status IN ('CLAIMED', 'RUNNING')
-  AND lease_expires_at < now();
+    AND lease_expires_at < clock_timestamp();
 ```
 
 ---
@@ -659,14 +671,16 @@ class ExtractedField(Generic[T]):
     def propagate(self) -> "ExtractedField[T]":
         if self.state == FieldState.UNREADABLE:
             raise UncertaintyPropagationError("UNREADABLE field must not reach normalization or safety stages.")
-        if self.state != FieldState.CLEAR:
+        if self.state == FieldState.NOT_PRESENT:
+            return self
+        if self.state == FieldState.AMBIGUOUS:
             return ExtractedField(self.value, FieldState.AMBIGUOUS, self.confidence, self.raw_text)
         return self
 ```
 
 ### Type-Safe Invariants
 1. `UNREADABLE` fields trigger an immediate domain error if passed to Normalization or Safety screening.
-2. If any input field is `AMBIGUOUS`, the resulting clinical finding cannot exceed `POTENTIAL` or `REQUIRES_REVIEW` (never `CONFIRMED_BY_SOURCE`).
+2. Ambiguous or unreadable identity inputs are ineligible for screening and produce explicit `ScreeningCoverage`; no V1 check can upgrade an uncertain field.
 3. Mypy `--strict` type-checking is enforced across all domain packages.
 
 ---
@@ -705,14 +719,9 @@ Safety providers are modeled around explicit clinical capabilities. A provider c
 ```python
 class SafetyCheckType(str, Enum):
     DUPLICATE_MEDICATION = "DUPLICATE_MEDICATION"
-    EVIDENCE_LOOKUP      = "EVIDENCE_LOOKUP"
-    ADVERSE_EFFECT       = "ADVERSE_EFFECT"
-    # Note: KNOWN_INTERACTION (comprehensive DDI) and DOSAGE_RANGE are deferred in V1
 
 class ProviderCapability(str, Enum):
     CAN_CHECK_DUPLICATES  = "CAN_CHECK_DUPLICATES"
-    CAN_LOOKUP_EVIDENCE   = "CAN_LOOKUP_EVIDENCE"
-    CAN_CHECK_ADVERSE_ADV = "CAN_CHECK_ADVERSE_ADV"
 
 class SafetyProvider(ABC):
     @property
@@ -728,13 +737,9 @@ class SafetyProvider(ABC):
 ```
 
 ### V1 Safety Check Scope
-1. **`DUPLICATE_MEDICATION`:** Evaluated locally against the Canonical Medication Master. Fully supported.
-2. **`EVIDENCE_LOOKUP` / `ADVERSE_EFFECT`:** Lookups against openFDA or local references where verified.
-3. **Comprehensive Drug-Drug Interaction (`KNOWN_INTERACTION`):** **Deferred in V1.** Prescripto V1 does not claim comprehensive DDI coverage due to the absence of an authoritative, commercially licensed Indian DDI dataset.
-4. **`DOSAGE_RANGE`:** **Deferred in V1.** Not supported until a verified, licensed dosage reference dataset is integrated.
-5. **SIDER 4.1 Exclusion:** SIDER is licensed under CC BY-NC-SA 4.0. **SIDER is strictly research-only (`LICENSE_MODE=RESEARCH_ONLY`) and completely excluded from production/commercial builds.**
-
-If a provider lacks capability or times out, it produces `finding_status = NOT_EVALUATED` with an explicit `not_evaluated_reason` (never a false `SAFE` or `NO_INTERACTION`).
+1. **`DUPLICATE_MEDICATION`:** Compare only identical, resolved, verified canonical product IDs within the uploaded prescription. Emit a `POTENTIAL` candidate; a reviewer decides whether it matters.
+2. Every ineligible medication line receives a `screening_coverage` row with `NOT_EVALUATED` and an explicit reason. Coverage is not stored as a `RiskFinding`.
+3. DDI, dosage-range, allergy/contraindication, adverse-event causality, and external evidence checks are not executed in V1. No check may return or imply `SAFE`.
 
 ---
 
@@ -875,9 +880,9 @@ PostgreSQL database backups are retained for disaster recovery. Restoring an imm
 * **Decision:** RS256 signed JWTs with a 15-minute access TTL and a PostgreSQL-backed token blocklist for refresh grants.
 * **Rationale:** Stateless API verification with revocation control during token refresh. Reversal trigger: Enterprise multi-tenant SSO -> OAuth2/OIDC.
 
-### ADR-14: SIDER Commercial Exclusion (Research-Only)
-* **Decision:** SIDER 4.1 is restricted to research environments (`LICENSE_MODE=RESEARCH_ONLY`) and completely excluded from commercial builds.
-* **Rationale:** CC BY-NC-SA 4.0 license prohibits commercial usage.
+### ADR-14: No External Safety Data Provider in V1
+* **Decision:** Do not call openFDA, SIDER, or RxNorm at runtime in V1.
+* **Rationale:** The supported V1 scope is intentionally limited to local exact-product duplicate candidates. openFDA labeling and FAERS are US-specific evidence with explicit limitations; SIDER has non-commercial licensing restrictions; RxNorm is not a comprehensive Indian product authority. External lookup also discloses medication identities to a third party.
 
 ### ADR-15: Expired-Job Exponential Backoff Recovery & Retry Semantics
 * **Decision:** Expired job leases automatically reset to `PENDING` with exponential backoff (~5s, ~30s, ~2m) up to `max_retries` (total 4 attempts) before transitioning to `DEAD`.

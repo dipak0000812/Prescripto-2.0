@@ -1,0 +1,22 @@
+# ML Service runtime dependencies.
+# Derived strictly from the implementation files under ml/app/.
+# jiwer and rapidfuzz are NOT listed — they are evaluation tools, not runtime deps.
+# opencv-python is NOT listed — quality.py uses Pillow only.
+#
+# Pin exact versions after running: pip freeze | grep -E 'fastapi|uvicorn|pydantic|pillow|numpy|paddle'
+# Current versions tested against Python 3.12, Windows & Linux.
+
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.0
+pydantic>=2.8.0
+pydantic-settings>=2.4.0
+pillow>=10.4.0
+numpy>=1.26.4
+python-multipart>=0.0.9
+# PaddlePaddle + PaddleOCR: install separately per platform (CPU or GPU)
+# See: https://www.paddlepaddle.org.cn/install/quick
+# paddlepaddle>=2.6.1
+# paddleocr>=2.8.1
+
+# HTTP client (for backend RemoteMLClient; not needed inside the ML service itself)
+# httpx>=0.27.0

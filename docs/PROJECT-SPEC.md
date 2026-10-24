@@ -1,6 +1,6 @@
 # PROJECT-SPEC.md — Canonical Source of Truth
 
-**Version:** 1.0 · **Aligned to:** PRD v1 + System Architecture v1.1 (LOCKED)
+**Version:** 1.1 · **Decision baseline:** 2026-10-02
 **Rule:** where any document conflicts with this file, this file wins until explicitly updated.
 
 ---
@@ -9,18 +9,38 @@
 
 Architecture v1.1 postdates PRD v1 and supersedes it on these three points. PRD v1 must be amended; until it is, **this register is authoritative**.
 
-| # | PRD v1 says | Arch v1.1 says | Resolution | PRD sections to amend |
-|---|---|---|---|---|
-| C-1 | LLM explanation is in MVP scope; §8.6 FR-REP-01..05 define its behavior | `LLM_ENABLED = false` in V1; structured report is the complete product (ADR-09) | **v1.1 wins.** LLM deferred to V1.x. FR-REP-01/04/05 still apply to the *structured* report. FR-REP-02/03 become V1.x requirements. | §8.6, §12.7, §22.1, §23, §28 |
-| C-2 | §22.2 lists "selected evidence-backed interaction checks" as *Supported* | `KNOWN_INTERACTION` (DDI) **deferred entirely** in V1; check types limited to `DUPLICATE_MEDICATION`, `EVIDENCE_LOOKUP`, `ADVERSE_EFFECT` (ADR-08) | **v1.1 wins.** V1 makes no interaction-detection claim of any kind. | §8.5 FR-SAFE-07, §22.2 |
-| C-3 | §8.3 FR-OCR-06 and §12.1 require `unit` and `instructions` as independently stated+scored fields | `prescription_medications` DDL has only 6 field groups — `unit` and `instructions` absent | **PRD wins.** Without a `unit` column, "critical unit error" (mg→mcg, §12.1) is unmeasurable. Schema must add both. See §4 below. | Arch §9 DDL — **open defect, not yet fixed in v1.1** |
+| # | Conflict | Resolution | State |
+|---|---|---|---|
+| C-1 | PRD puts LLM explanations in V1; Architecture disables them | Structured report only; LLM remains out of V1 and no provider is selected | Resolved; PRD must conform |
+| C-2 | PRD claims selected interaction checks; Architecture defers DDI | V1 makes no DDI, dosage, allergy, or adverse-event claim; only exact duplicate-product candidates are in scope | Resolved; PRD and safety contracts must conform |
+| C-3 | PRD requires eight fields; Architecture DDL initially defined six | Eight field groups are required; DDL must include `unit` and `instructions` before migration 0001 | Resolved only when Architecture DDL is amended |
+| C-4 | Docs name multiple canonical files that are absent from this workspace | Existing files listed in §10 are authoritative; absent implementation artifacts are gates, not implied complete docs | Resolved in this baseline |
 
-> [!WARNING]
-> **C-3 is an open schema defect.** v1.1 locked without it. Two of the four critical-error metrics the PRD mandates (`critical unit error`, and instruction-level extraction) cannot be computed against the current DDL. Fix before the first Alembic migration is written — retrofitting columns after Tier B annotation begins means re-annotating.
+## 2. Locked V1 Decision Baseline
+
+These choices are locked for the academic research prototype. They do not establish clinical validity, regulatory clearance, or permission to process identifiable patient data.
+
+| Area | Locked decision |
+|---|---|
+| Intended use | Offline/restricted research prototype for transcription, structured extraction, and qualified human review. No diagnosis, treatment, prescribing, or autonomous safety clearance. |
+| V1 output | Structured extraction, field-level uncertainty, normalization candidates, and a coverage-complete review report. No generated explanation and no overall confidence score. |
+| Safety checks | Exact same canonical product ID repeated within one uploaded prescription may produce a `POTENTIAL` duplicate candidate. It is not a patient medication-history check or a clinical interaction check. |
+| External safety sources | No runtime openFDA, SIDER, RxNorm, or other external lookup in V1. This avoids unsupported Indian-market coverage, causal overclaiming, licensing ambiguity, and disclosure of medication names to third parties. |
+| Unsupported checks | DDI, dosage range, allergy/contraindication, adverse-event causality, and broad evidence lookup are not evaluated in V1. The report must state this explicitly. |
+| Human review | Every result is decision support. No output is actionable until a qualified/authorized reviewer reviews it. Unreadable, ambiguous, unresolved, failed, or unsupported items remain visible and cannot be silently omitted. |
+| OCR pipeline | Decode and orient image → quality gate → text-region detection → deterministic line grouping/cropping → line recognition → rule-based field parsing with source spans → medication candidate generation → report. No VLM and no LLM in V1. |
+| OCR model | PP-OCRv6 detector/recognizer and TrOCR-base-handwritten are benchmark candidates only. No production model winner is selected by reputation or paper-level aggregate scores. |
+| Dataset/evaluation | Tier B is required for model promotion and calibrated `CLEAR` states. Group splits by prescriber/author and source organization; one untouched lockbox is evaluated once after model/rules/thresholds are frozen. |
+| Identity normalization | Exact verified alias first; fuzzy matching may generate review candidates only. No automatic resolution from an unvalidated fuzzy score. RxNorm is optional metadata only and not an identity authority. |
+| Data handling | No real or identifiable patient data until ethics approval, legal basis/consent, retention policy, access control, threat review, and deployment security review are documented. DPDPA compliance is not asserted by this specification. |
+
+### Decisions deliberately not locked
+
+The following are evidence or authority gates, not design indecision: recognition model and detector configuration (Tier B), numerical confidence/review thresholds (Tier B calibration), minimum sample size for any claimed error bound (statistical plan and observed class counts), CDSCO-derived data reuse (written legal clearance), real-data collection (ethics/legal approval), and any clinical deployment (regulatory/clinical review). If a gate is unmet, the corresponding capability stays disabled; a planning deadline does not waive it.
 
 ---
 
-## 2. Terminology (canonical — no synonyms permitted)
+## 3. Terminology (canonical — no synonyms permitted)
 
 | Term | Meaning | Never call it |
 |---|---|---|
@@ -31,7 +51,8 @@ Architecture v1.1 postdates PRD v1 and supersedes it on these three points. PRD 
 | **PrescriptionMedication** | One extracted medication *line* from a document. | medication, drug, line |
 | **MedicationCandidate** | One scored normalization attempt for a line. | match, suggestion |
 | **Medication** | Canonical entity in the global Medication Master. Never deleted. | drug, canonical drug, master drug |
-| **RiskFinding** | One safety-check result. | risk, alert, warning, flag |
+| **RiskFinding** | A potential duplicate-product candidate emitted by the V1 deterministic rule. | risk, alert, warning, flag |
+| **ScreeningCoverage** | Whether a requested check ran for a medication or scope, including an explicit reason when it did not. | not-evaluated finding |
 | **KnowledgeSnapshot** | Versioned pointer to a knowledge source's state. | source, dataset |
 | **Reviewer** | "qualified/authorized human reviewer" — full phrase in user-facing text | doctor, pharmacist, clinician (in code/UI copy) |
 
@@ -39,14 +60,15 @@ Architecture v1.1 postdates PRD v1 and supersedes it on these three points. PRD 
 
 ---
 
-## 3. Canonical Enums
+## 4. Canonical Enums
 
 ```
 FieldState:        CLEAR | AMBIGUOUS | UNREADABLE | NOT_PRESENT
 ResolutionStatus:  RESOLVED | UNRESOLVED | AMBIGUOUS
-FindingStatus:     CONFIRMED_BY_SOURCE | POTENTIAL | INSUFFICIENT_EVIDENCE | NOT_EVALUATED | REQUIRES_REVIEW
-SafetyCheckType:   DUPLICATE_MEDICATION | EVIDENCE_LOOKUP | ADVERSE_EFFECT
-                   (KNOWN_INTERACTION, DOSAGE_RANGE — deferred, must not appear in V1 code)
+FindingStatus:     POTENTIAL
+SafetyCheckType:   DUPLICATE_MEDICATION
+                   (EVIDENCE_LOOKUP, ADVERSE_EFFECT, KNOWN_INTERACTION, DOSAGE_RANGE — deferred; must not execute in V1)
+CoverageStatus:    EVALUATED | NOT_EVALUATED
 AnalysisStatus:    QUEUED | PROCESSING | COMPLETED | REQUIRES_REVIEW | REVIEWING
                    | REVIEWED_COMPLETE | REVIEWED_ESCALATED | FAILED
 JobStatus:         PENDING | CLAIMED | RUNNING | SUCCEEDED | FAILED | DEAD | CANCELLED
@@ -66,13 +88,13 @@ LicenseMode:       COMMERCIAL_PERMISSIVE | RESEARCH_ONLY | PUBLIC_DOMAIN
 
 ---
 
-## 4. Canonical Structured Fields (8, not 6)
+## 5. Canonical Structured Fields (8)
 
 Every `PrescriptionMedication` carries these eight field groups, each with `_raw`, `_state`, `_confidence`:
 
 `name`, `strength`, `dose`, `unit`, `frequency`, `route`, `duration`, `instructions`
 
-Arch v1.1 DDL currently omits `unit` and `instructions` (conflict C-1 above). Required DDL addition:
+The DDL must persist `unit` and `instructions` along with the original six groups before the first migration:
 
 ```sql
 ALTER TABLE prescription_medications
@@ -88,26 +110,30 @@ ALTER TABLE prescription_medications
 
 ---
 
-## 5. Confidence Semantics (what each number means)
+## 6. Confidence Semantics (what each number means)
 
 | Layer | Value | Meaning | Comparable across models? |
 |---|---|---|---|
 | Model-native | `raw_score` | Beam-search score (TrOCR) or CTC probability (PP-OCR) | **No** |
-| Calibrated | `calibrated_confidence` | P(field correct), from that model version's calibration snapshot | Yes, within a model version |
+| Calibrated | `calibrated_confidence` | Estimated probability that the specific output target is correct, calibrated on end-to-end Tier B labels for that target | Only for the same target, dataset protocol, and model/pipeline version |
 | Field | `FieldState` | Calibrated confidence bucketed against the version's `review_threshold` | Yes |
 | Finding | `confidence_score` | Evidence strength from the source — **not** a model probability | No — never averaged with OCR confidence |
 
-**Prohibited:** any single "overall analysis confidence" score (PRD §17.1). Review routing is triggered by *rules over states*, never by an averaged scalar.
+**Prohibited:** treating OCR-native score as field correctness, or producing a single "overall analysis confidence" score. Review routing is triggered by explicit state/rule conditions, never by an averaged scalar. If target-level calibration is unsupported by sample counts, the output cannot be `CLEAR` on model confidence alone.
 
 ---
 
-## 6. Versioned Identifiers
+## 7. Versioned Identifiers
 
 Every `Analysis` pins: `pipeline_version` (semver of pipeline code), `model_snapshot_id` → `model_versions.id`, `knowledge_snapshot_id` per finding. No `"latest"` string is permitted in any production code path. Re-running with a new version creates a new `Analysis`, never an update.
 
 ---
 
-## 7. Non-Functional Requirements (consolidated)
+## 8. Screening Coverage Contract
+
+`RiskFinding` and `ScreeningCoverage` are separate concepts. A non-evaluation is not a finding and must not be encoded as an empty list or as a negative result. For every in-scope check and medication/scope, record `EVALUATED` or `NOT_EVALUATED`; the latter requires a reason. V1 coverage reasons include `UNRESOLVED_IDENTITY`, `AMBIGUOUS_IDENTITY`, `MASTER_ENTRY_UNVERIFIED`, and `CHECK_NOT_SUPPORTED`. The response includes both `findings[]` and `not_evaluated[]`; a finding may not imply that all checks ran.
+
+## 9. Non-Functional Requirements (consolidated)
 
 | ID | Requirement | Status |
 |---|---|---|
@@ -120,16 +146,18 @@ Every `Analysis` pins: `pipeline_version` (semver of pipeline code), `model_snap
 
 ---
 
-## 8. Document Map
+## 10. Document Map and Workspace Status
 
 | Doc | Authority over |
 |---|---|
 | `PROJECT-SPEC.md` (this) | Terminology, enums, conflicts, confidence semantics |
-| `PRD.md` | Product behavior, requirements, acceptance criteria |
-| `SYSTEM-ARCHITECTURE.md` v1.1 | Components, DDL, ADRs, execution model |
-| `API-CONTRACT.md` + `openapi.yaml` | API surface |
+| `PRD_V1.md` | Product behavior and requirements; must be amended to match this baseline |
+| `Architecture.md` | Components, DDL, ADRs, execution model |
+| `API-CONTRACT.md` | Behavioral API contract. Machine-readable OpenAPI is a pre-implementation deliverable; none exists in this workspace yet |
 | `ERROR-CONTRACT.md` | Error codes |
-| `ML-*.md`, `DATASET-CATALOG.md`, `EVALUATION-PLAN.md` | ML pipeline, models, data, metrics |
-| `SECURITY.md`, `THREAT-MODEL.md` | Security posture |
-| `TEST-STRATEGY.md`, `OBSERVABILITY.md`, `DEPLOYMENT.md`, `CI-CD.md` | Operations |
+| `ML-ARCHITECTURE.md`, `MODEL-SPECIFICATIONS.md`, `DATA-SPECIFICATION.md`, `DATASET-CATALOG.md` | ML pipeline, candidates, data, and evaluation contract |
+| `SECURITY.md` | Security posture; threat model remains a pre-real-data gate |
+| `OBSERVABILITY.md`, `DEPLOYMENT.md`, `CI-CD.md` | Operations targets; implementation has not started |
 | `IMPLEMENTATION-PLAN.md` | Build order |
+
+This workspace currently contains documentation only. Referenced but absent artifacts (including `ML-PIPELINES.md`, `EVALUATION-PLAN.md`, `THREAT-MODEL.md`, `TEST-STRATEGY.md`, and `openapi.yaml`) are not considered complete or authoritative until created and reviewed.

@@ -7,7 +7,7 @@
 [![React](https://img.shields.io/badge/React-20232A?logo=react&logoColor=61DAFB)](https://react.dev/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-EE4C2C?logo=pytorch&logoColor=white)](https://pytorch.org/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
-![Status](https://img.shields.io/badge/status-pre--implementation-yellow)
+![Status](https://img.shields.io/badge/status-backend%20implemented-blue)
 
 Prescripto AI 2.0 extracts structured medication data from prescription images, resolves each drug to a canonical identity, screens the result against licensed safety sources, and presents a provenance-backed report to a qualified human reviewer.
 
@@ -26,7 +26,7 @@ It does not diagnose, prescribe, or claim comprehensive interaction coverage. **
   - [System Architecture](#system-architecture)
   - [Pipeline Flow](#pipeline-flow)
   - [Uncertainty Model](#uncertainty-model)
-  - [Safety Engine](#safety-engine)
+  - [Safety Boundary](#safety-boundary)
   - [What V1 Does and Doesn't Cover](#what-v1-does-and-doesnt-cover)
   - [Tech Stack](#tech-stack)
   - [Knowledge Sources](#knowledge-sources)
@@ -48,6 +48,8 @@ The harder problem is that a verification system built carelessly is worse than 
 
 ## Approach
 
+The locked V1 goal is transcription, structured extraction, normalization candidates, and qualified human review. Backend implementation is partially complete and runnable (see [Current Status](#current-status)). No OCR model has been empirically validated yet; the worker defaults to a mock runtime.
+
 Prescripto treats this as a pipeline problem with one governing rule:
 
 > **Upstream uncertainty must never silently become downstream clinical certainty.**
@@ -58,7 +60,7 @@ Concretely:
 
 1. **Extraction** — line-level detection, then handwriting recognition on cropped lines. Every field gets one of four states: `CLEAR`, `AMBIGUOUS`, `UNREADABLE`, `NOT_PRESENT`.
 2. **Normalization** — drug names resolve against an internal Medication Master (CDSCO-sourced + verified aliases, RxNorm CUI where one exists). No confident match means `UNRESOLVED` and a trip to human review — never a best guess.
-3. **Screening** — deterministic rules over canonical entities. A provider that lacks a capability or times out returns `NOT_EVALUATED` with a reason, never a silent pass.
+3. **Screening** — one local rule may flag an exact repeated canonical product ID on the same document as `POTENTIAL`. DDI, dosage, allergy, adverse-event, and external evidence checks are out of scope in V1.
 4. **Review** — a qualified reviewer sees the image, the fields with their states, the findings with their sources, and an explicit list of what was *not* checked.
 
 Only two of eight pipeline stages use a learned model. Dosage parsing and safety screening are deterministic on purpose: a regex that mis-parses `500mg` is debuggable in minutes and fails identically every time; a model that does the same fails unpredictably and needs labeled data just to diagnose.
@@ -69,14 +71,18 @@ Documentation-first. Architecture is written and reviewed before implementation 
 
 | Phase | Status |
 |---|---|
-| Discovery & research | ✅ |
-| PRD v1 | ✅ Locked |
-| System Architecture v1.1 + ADRs | ✅ Locked |
-| Full engineering doc set (23 documents) | ✅ Complete |
-| Tier B evaluation dataset | 🔲 **Critical path — does not exist yet** |
-| Implementation | 🔲 Not started |
+| Product/architecture decision baseline | ✅ Updated 2026-10-02 |
+| OCR pipeline and evaluation protocol | ✅ Specified; not empirically validated |
+| Backend API + worker (FastAPI, PostgreSQL, MinIO, job queue, fencing) | ✅ Implemented and tested |
+| ML service (FastAPI, PP-OCRv6 adapter, `POST /v1/ocr/recognize`) | ✅ Implemented; PaddleOCR dependency optional |
+| Machine-readable OpenAPI schema (`OPENAPI.yaml`) | ✅ Present (hand-maintained; not yet auto-generated from code) |
+| Frontend (React + Vite) | 🔲 Not started |
+| OCR model selection + Tier B evaluation | 🔲 Blocked — no labeled dataset yet |
+| Calibration startup gate (refuse to start without calibration snapshot) | 🔲 Schema exists; startup enforcement not wired |
+| Legal/licensing review for CDSCO data collection | 🔲 Outstanding |
+| `mypy --strict` + ruff + contract CI gates | 🔲 CI runs pytest + pyflakes only |
 
-No production code exists. Setup instructions below describe the target system.
+The backend API and worker are runnable today with Docker Compose. See [Current Status](#current-status) for how to start them.
 
 ---
 
@@ -95,9 +101,7 @@ graph TD
     I --> J[Medication Master Normalization]
     J --> J1[(CDSCO + Verified Aliases)]
     J --> J2[(RxNorm — optional CUI)]
-    J --> K[Capability-Aware Safety Engine]
-    K --> K1[(openFDA)]
-    K --> K2[(SIDER — research builds only)]
+    C --> K[Local Exact-Duplicate Rule]
     K --> L[Report Assembly + Review Routing]
     L --> M[Qualified Human Reviewer]
 
@@ -105,7 +109,7 @@ graph TD
     style M fill:#4dabf7,stroke:#1864ab,color:#fff
 ```
 
-Single deployable, three processes (`api`, `worker`, `deletion_worker`) from one image. No Redis, Kafka, Kubernetes, vector database, or microservices — each is deferred behind a measured trigger documented in the architecture, and none has fired.
+Two images, five compose services (`api`, `worker`, `postgres`, `minio`, `ml-service`). The backend image runs `api` and `worker`; the ML image runs the independent OCR microservice on port 8001. `deletion_worker` is implemented but not yet added as a separate compose service. No Redis, Kafka, Kubernetes, vector database — each is deferred behind a measured trigger documented in the architecture, and none has fired.
 
 ## Pipeline Flow
 
@@ -149,29 +153,17 @@ Four field states propagate through every stage:
 | `CLEAR` | High calibrated confidence | Proceeds normally |
 | `AMBIGUOUS` | Uncertain or conflicting | Inherited downstream; finding capped at `POTENTIAL` |
 | `UNREADABLE` | Illegible | Structurally excluded — passing it downstream raises an exception |
-| `NOT_PRESENT` | Absent from the document | Not treated as zero or default |
+| `NOT_PRESENT` | Absent from the document | Remains absent; never converted to zero, a default, or `AMBIGUOUS` |
 
 Model confidence scores are **calibrated per model version** before use. Raw beam-search scores and CTC probabilities aren't comparable and aren't probabilities; thresholding them directly would make review routing arbitrary — which quietly breaks the human-in-the-loop guarantee the whole system rests on. A model without a calibration snapshot cannot load; the worker refuses to start.
 
 There is deliberately **no single "overall confidence" score.** Five clear fields and one ambiguous field is not "96% confident" — it's five of one thing and one of another, reported as such.
 
-## Safety Engine
+## Safety Boundary
 
-Deterministic, capability-aware, and entirely independent of any language model. Providers declare what they can answer; a provider that can't answer a check returns `NOT_EVALUATED` with a reason rather than nothing.
+V1 has one local deterministic check: the same resolved, verified canonical product ID repeated within a prescription may be flagged as a `POTENTIAL` duplicate for reviewer attention. This is not a patient medication-history check and does not infer that the prescriptions are clinically unsafe.
 
-**V1 check types:** `DUPLICATE_MEDICATION`, `EVIDENCE_LOOKUP`, `ADVERSE_EFFECT`.
-
-Every finding carries a status from a fixed set:
-
-| Status | Meaning |
-|---|---|
-| `CONFIRMED_BY_SOURCE` | A named source confirmed it |
-| `POTENTIAL` | Flagged, but an input was uncertain |
-| `INSUFFICIENT_EVIDENCE` | Source had partial information |
-| `NOT_EVALUATED` | Not checked — reason required by database constraint |
-| `REQUIRES_REVIEW` | Needs human judgment |
-
-And full provenance: source name, source version, knowledge snapshot ID, check timestamp, confidence, and the medication identities involved. A finding missing any of these is invalid and is never surfaced.
+Checks that cannot run are represented in a separate `not_evaluated[]` coverage list with a reason. They are not findings and can never be rendered as a negative result.
 
 > **The distinction the system is built around:** `NO_KNOWN_INTERACTION_IN_DATABASE` ≠ `NO_INTERACTION_EXISTS`, and `NOT_EVALUATED` ≠ `SAFE`. These are separate values in the data model, the API response, and the UI. Collapsing them is the easiest way to build something actively dangerous.
 
@@ -179,12 +171,12 @@ And full provenance: source name, source version, knowledge snapshot ID, check t
 
 Stated plainly, because a safety tool that overstates its coverage is the failure mode worth avoiding most.
 
-| Supported | Deferred (and why) |
+| V1 supports | Out of scope (and why) |
 |---|---|
 | Medication identity resolution | **Drug–drug interaction checking** — no legally obtainable Indian DDI dataset identified |
 | Duplicate medication detection | **Dosage-range checking** — no licensed dosage reference integrated |
 | Structured extraction of 8 fields with per-field confidence | **Allergy / contraindication checks** — no patient allergy record intake in V1 |
-| Adverse-effect and label evidence lookup | **Patient-facing explanation generation** — LLM disabled in V1 |
+| Coverage-honest report and review routing | **All external evidence lookups** — no V1 third-party medication queries |
 | Ambiguity detection and review routing | **Multi-language reports** — English only |
 | Coverage-honest reporting | **Automated model deployment** — needs measured regression gates first |
 
@@ -203,8 +195,8 @@ The LLM explanation layer is specified and deliberately switched off (`LLM_ENABL
 | Database | PostgreSQL 16+ | Relational integrity, CHECK constraints as safety invariants, `FOR UPDATE SKIP LOCKED` job queue, JSONB, full-text search |
 | Object storage | MinIO (dev) → S3 (prod) | boto3 only; swap is config |
 | Job queue | PostgreSQL + lease tokens | No second datastore to keep in sync |
-| Detection | PP-OCRv6 (Apache 2.0) | Locked |
-| Recognition | TrOCR / PP-OCRv6 | **Undecided — selected by benchmark, not by reputation** |
+| Detection | PP-OCRv6 candidate | Evaluated on prescription-specific region and line-grouping metrics |
+| Recognition | TrOCR-base / PP-OCRv6 candidates | No winner until Tier B lockbox evaluation |
 | Extraction | Rule-based | Auditable and deterministic where errors are clinical |
 | Deployment | Docker Compose | Same config for dev and deploy |
 
@@ -214,101 +206,128 @@ Every source's license is verified at its primary source before use. Reputation 
 
 | Source | License | V1 role |
 |---|---|---|
-| **RxNorm** | Free public API | Optional CUI enrichment. **Not the identity authority** — NLM states it contains few if any non-US drugs |
-| **openFDA** | Public | Label and adverse-event evidence. Its own disclaimer rules out clinical decision-making, so it is treated as evidence, not truth |
-| **SIDER 4.1** | CC BY-NC-SA 4.0 | Adverse-effect evidence, **research builds only** — excluded from any commercial deployment |
-| **CDSCO** | Indian regulatory data | Medication Master seed (reuse terms pending legal review) |
+| **RxNorm** | Public terminology | Not queried at runtime in V1; US-centric and not the identity authority |
+| **openFDA** | Public US data | Not queried at runtime; labels/FAERS do not establish Indian-market coverage or adverse-event causality |
+| **SIDER 4.1** | CC BY-NC-SA 4.0 | Not used in V1; licensing and mapping constraints remain |
+| **CDSCO** | Indian regulatory data | A small hand-crafted formulation list (10 sample entries) labelled `CDSCO_REGULATORY` is seeded in `scripts/seed_medications.py` for development. **Official CDSCO data has not been ingested; written legal/reuse clearance is outstanding.** |
 | **DrugBank** | Academic tier is non-clinical use only | ❌ Not used at runtime — the free tier doesn't clearly cover a clinical-decision-support use case |
 | **MIMIC-IV** | PhysioNet credentialed | ❌ Not a dependency — contains no prescription images, wrong data type for this problem |
 
-Evaluation uses a purpose-built **Tier B** benchmark: 200–500 legally obtained, de-identified prescriptions, dual-annotated with pharmacist adjudication. It is the only dataset permitted to select a model or set a threshold. Public datasets are used for pretraining and baselines, never for selection.
+Evaluation requires a purpose-built, legally approved **Tier B** benchmark with independent annotation and a writer/source-grouped lockbox. The 200–500 count is a collection target, not proof of statistical adequacy. See [`EVALUATION-PLAN.md`](docs/EVALUATION-PLAN.md).
 
 ---
 
 ## Documentation
 
-23 engineering documents under [`docs/`](docs/).
+19 specification documents under [`docs/`](docs/); this is not a complete implementation package.
 
 | Start here | Covers |
 |---|---|
 | [`PROJECT-SPEC.md`](docs/PROJECT-SPEC.md) | **Canonical** terminology, enums, conflict register |
-| [`PRD.md`](docs/PRD.md) | Requirements, safety invariants, acceptance criteria |
-| [`SYSTEM-ARCHITECTURE.md`](docs/SYSTEM-ARCHITECTURE.md) | Components, DDL, ADRs, execution model |
-| [`openapi.yaml`](docs/openapi.yaml) | Canonical API schema |
+| [`PRD_V1.md`](docs/PRD_V1.md) | Product requirements; alignment with the decision baseline is in progress |
+| [`Architecture.md`](docs/Architecture.md) | Components, DDL, ADRs, execution model |
+| [`ML-PIPELINES.md`](docs/ML-PIPELINES.md) and [`EVALUATION-PLAN.md`](docs/EVALUATION-PLAN.md) | OCR-to-report contract and evaluation gates |
 | [`IMPLEMENTATION-PLAN.md`](docs/IMPLEMENTATION-PLAN.md) | Vertical slices and build order |
 
-Also: `REQUIREMENTS`, `DOMAIN-MODEL`, `DATABASE-DESIGN`, `API-CONTRACT`, `ERROR-CONTRACT`, `ML-ARCHITECTURE`, `ML-PIPELINES`, `MODEL-SPECIFICATIONS`, `DATA-SPECIFICATION`, `DATASET-CATALOG`, `EVALUATION-PLAN`, `SECURITY`, `THREAT-MODEL`, `TEST-STRATEGY`, `OBSERVABILITY`, `DEPLOYMENT`, `CI-CD`, `REFERENCES`.
+The machine-readable OpenAPI document, threat model, and test strategy are not present yet and remain implementation gates; no docs-only file substitutes for generated API schemas or verified tests.
 
 ---
 
+## Current Status
+
+What runs today:
+
+```
+docker compose up          # starts api, worker, postgres, minio, ml-service
+cd backend && pip install -e ".[dev]"
+python -m pytest -q        # 109 passed, 6 skipped (Postgres-only on SQLite)
+```
+
+The API is reachable at `http://localhost:8000`. Auth, prescription upload, async analysis pipeline (mock OCR by default), medication normalization, duplicate detection, and review routing are all functional. Set `ML_RUNTIME_MODE=remote` to call the real PaddleOCR service (requires `paddleocr` installed in the ml-service container).
+
+What is not yet runnable:
+- **Frontend** — no `web/` or `frontend/` directory exists.
+- **Real OCR model** — PaddleOCR weights are downloaded at first use; worker defaults to `MockModelRuntime`.
+- **Calibration startup gate** — `CalibrationSnapshot` table exists in schema but the worker does not validate it at boot.
+- **Rate limiting** — described in `SECURITY.md` but not yet implemented in the API.
+
+### Planned (not implemented)
+
+The following items are specified in the architecture documents but are not yet wired in code:
+
+| Item | Where specified | Gap |
+|---|---|---|
+| Frontend (React 18 + Vite) | `README.md`, `CI-CD.md` | No code |
+| Calibration startup gate | `DEPLOYMENT.md §52-61`, `ML-ARCHITECTURE.md §37` | Schema exists; startup check not wired |
+| Rate limiting on auth + upload | `SECURITY.md §65-67` | Not implemented |
+| `mypy --strict` + ruff + contract CI gates | `CI-CD.md` | CI runs pytest + pyflakes only |
+| `deletion_worker` compose service | `DEPLOYMENT.md` | Code exists; not added to `docker-compose.yml` |
+
 ## Local Setup
 
-> Implementation hasn't started. This describes the target setup and will be replaced with working instructions.
-
 ```bash
-git clone https://github.com/dipak0000812/Prescripto-2.0.git
-cd Prescripto-2.0
-cp .env.example .env
-docker compose up          # api · worker · deletion_worker · postgres · minio
+# 1. Copy env template and fill in JWT keys
+cp backend/.env.example backend/.env
+python backend/scripts/generate_keys.py   # writes JWT_PRIVATE_KEY / JWT_PUBLIC_KEY
+
+# 2. Start all services
+docker compose up -d
+
+# 3. Run migrations
+docker compose exec api alembic upgrade head
+
+# 4. Seed sample medications
+docker compose exec api python scripts/seed_medications.py
+
+# 5. Create an operator user
+docker compose exec api python scripts/create_user.py
 ```
 
-Key environment variables (full list in [`DEPLOYMENT.md`](docs/DEPLOYMENT.md)):
-
-```env
-DATABASE_URL=postgresql://...
-S3_ENDPOINT=http://localhost:9000
-S3_BUCKET=prescripto
-RETENTION_VAULT_BUCKET=prescripto-retention   # separately permissioned
-JWT_PRIVATE_KEY=...
-OCR_MODEL_NAME=...
-OCR_MODEL_VERSION=...                          # exact version — never "latest"
-LLM_ENABLED=false
-ENABLED_KNOWLEDGE_PROVIDERS=openfda,rxnorm
-RETENTION_DAYS=30
-```
-
-The worker refuses to start unless the configured model version is registered, has a calibration snapshot, and its checkpoint SHA-256 matches. An uncalibrated model routes the wrong cases to human review — booting anyway would be worse than not booting.
+The API docs are served at `http://localhost:8000/docs`.
 
 ## Project Structure
 
 ```
-Prescripto-2.0/
-├── prescripto/
-│   ├── domain/          # Pure business logic — zero I/O, zero framework imports
-│   │   ├── safety/      # Capability-aware engine, FindingStatus
-│   │   └── uncertainty/ # FieldState, ExtractedField
-│   ├── application/     # Use cases and DTOs
-│   ├── api/v1/          # Routers and API schemas
-│   ├── pipeline/        # Stage implementations
-│   ├── ml/              # ModelRuntime interface, adapters, calibration
-│   ├── knowledge/       # Knowledge provider implementations
-│   ├── worker/          # Queue poller, lease heartbeat, stage fence
-│   ├── retention/       # Deletion workflow and manifest vault
-│   ├── db/              # SQLAlchemy models, Alembic migrations
-│   └── auth/ audit/ storage/ config/
-├── web/                 # React client, OpenAPI-generated types
-├── docs/                # 23 engineering documents
-├── tests/               # unit · integration · contract · failure · security
-└── docker/
+backed/
+  prescripto/
+    api/           FastAPI routes and schemas
+    worker/        Job queue, heartbeat, coordinator, pipeline driver
+    pipeline/      Stage handlers (engine.py)
+    domain/        Pure-Python domain models (medication, safety, review, uncertainty)
+    application/   Use cases and application services
+    db/            ORM models, Alembic migrations
+    ml/            Backend ML interface (MockModelRuntime, RemoteMLClient)
+    knowledge/     OpenFDA + local safety providers
+    storage/       MinIO/S3 client
+    audit/         PHI-safe structured logging
+    config/        Pydantic settings
+  scripts/         Seeds, key generation, user creation
+  tests/           Unit + integration (pytest, SQLite + PostgreSQL)
+ml/
+  app/             Standalone ML FastAPI service (PP-OCRv6, extraction)
+docs/              19 specification documents
+research/          CER/WER evaluation scripts (not production)
+OPENAPI.yaml       Hand-maintained API schema (full endpoint coverage)
+docker-compose.yml Starts api + worker + postgres + minio + ml-service
 ```
 
-`domain/` has no SQLAlchemy, FastAPI, boto3, or PyTorch imports. `mypy --strict` runs against it in CI — the uncertainty invariants are encoded as types, and without strict mode those annotations are just decoration.
+The canonical architecture description is in [`Architecture.md`](docs/Architecture.md).
 
 ---
 
 ## Privacy & Safety Design
 
-Governing framework: **India's DPDPA 2023 and DPDPA Rules 2025.** Not HIPAA — applying a US framework to an Indian academic system is legally sloppy rather than conservative.
+India is the intended research context. This specification does not establish DPDPA compliance or a lawful basis to collect/process personal data. Obtain current legal and ethics review before collecting real prescriptions; do not use real patient data in development or demos.
 
 - **Verifiable deletion, not just a deleted row.** Deletion spans PostgreSQL, object storage, and derived artifacts, then writes an immutable manifest to a separately-permissioned retention vault. Without that manifest, a backup restore resurrects deleted data — so manifest re-application is a mandatory step in the restore procedure, not a note in a runbook.
 - **Global knowledge preserved.** Deletion purges prescription-scoped records only. The canonical Medication Master and knowledge snapshots are never deleted — one user's erasure must not degrade the system for everyone.
 - **No PHI in logs**, enforced by a whitelist processor that drops any unlisted field and increments a metric. A blacklist would need to predict every field a future developer might add.
 - **Application-mediated storage.** No public bucket. Presigned GET URLs with a 60-second TTL, never logged or stored.
-- **Minimal third-party exposure.** openFDA is queried one drug at a time — a combined query would hand a patient's full medication profile to a third party in a single request.
+- **No third-party medication lookup in V1.** Medication names and prescription contents are not sent to openFDA, RxNorm, SIDER, or an LLM provider.
 - **Human-in-the-loop.** No auto-approve path exists. No finding is actionable without a qualified reviewer.
 - **Full reproducibility.** Every analysis pins its pipeline version, model version, checkpoint hash, calibration snapshot, and per-finding knowledge snapshot. `"latest"` is banned in production code paths and checked in CI.
 
-Security posture is documented in [`SECURITY.md`](docs/SECURITY.md) and [`THREAT-MODEL.md`](docs/THREAT-MODEL.md), including accepted risks and known gaps. **Nothing here has been penetration-tested or independently audited** — the system is described as security-conscious, not secure.
+Security controls are proposed in [`SECURITY.md`](docs/SECURITY.md); a threat model remains a pre-real-data gate. **Nothing here has been penetration-tested or independently audited** — the system is described as security-conscious, not secure.
 
 ---
 

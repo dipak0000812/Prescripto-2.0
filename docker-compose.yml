@@ -1,0 +1,152 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: prescripto-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: prescripto_db
+      POSTGRES_USER: prescripto
+      POSTGRES_PASSWORD: prescripto_secret
+    ports:
+      - "5435:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U prescripto -d prescripto_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  minio:
+    image: cgr.dev/chainguard/minio:latest
+    container_name: prescripto-minio
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+
+  createbuckets:
+    build:
+      context: ./backend
+      dockerfile: docker/Dockerfile
+    container_name: prescripto-createbuckets
+    depends_on:
+      - minio
+    env_file:
+      - ./backend/.env
+    volumes:
+      - ./backend/scripts/init_buckets.py:/app/scripts/init_buckets.py:ro
+    environment:
+      - PYTHONPATH=/app
+      - S3_ENDPOINT=http://minio:9000
+    command: python scripts/init_buckets.py
+
+  migrate:
+    build:
+      context: ./backend
+      dockerfile: docker/Dockerfile
+    container_name: prescripto-migrate
+    command: alembic upgrade head
+    env_file:
+      - ./backend/.env
+    environment:
+      - PYTHONPATH=/app
+      - DATABASE_URL=postgresql+psycopg2://prescripto:prescripto_secret@postgres:5432/prescripto_db
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  api:
+    build:
+      context: ./backend
+      dockerfile: docker/Dockerfile
+    container_name: prescripto-api
+    restart: unless-stopped
+    command: uvicorn prescripto.api.main:app --host 0.0.0.0 --port 8000
+    ports:
+      - "8000:8000"
+    env_file:
+      - ./backend/.env
+    environment:
+      - PYTHONPATH=/app
+      - DATABASE_URL=postgresql+psycopg2://prescripto:prescripto_secret@postgres:5432/prescripto_db
+      - S3_ENDPOINT=http://minio:9000
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_started
+      createbuckets:
+        condition: service_completed_successfully
+      migrate:
+        condition: service_completed_successfully
+
+  ml-service:
+    build:
+      context: ./ml
+      dockerfile: Dockerfile
+    container_name: prescripto-ml
+    restart: unless-stopped
+    command: sh -c "pip install --no-cache-dir python-multipart && ln -sfn /service /service/ml && uvicorn ml.app.main:app --host 0.0.0.0 --port 8001"
+    ports:
+      - "8001:8001"
+    environment:
+      - PYTHONPATH=/service
+      - ML_PORT=8001
+      - ML_DEVICE=cpu
+      - ML_MODEL_NAME=PP-OCRv6
+      - ML_MODEL_VERSION=6.0.0
+      - LOG_LEVEL=INFO
+
+  worker:
+    build:
+      context: ./backend
+      dockerfile: docker/Dockerfile
+    container_name: prescripto-worker
+    restart: unless-stopped
+    command: python -m prescripto.worker.main
+    env_file:
+      - ./backend/.env
+    environment:
+      - PYTHONPATH=/app
+      - DATABASE_URL=postgresql+psycopg2://prescripto:prescripto_secret@postgres:5432/prescripto_db
+      - S3_ENDPOINT=http://minio:9000
+      - ML_SERVICE_URL=http://ml-service:8001
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_started
+      migrate:
+        condition: service_completed_successfully
+
+  deletion_worker:
+    build:
+      context: ./backend
+      dockerfile: docker/Dockerfile
+    container_name: prescripto-deletion-worker
+    restart: unless-stopped
+    command: python -m prescripto.retention.worker
+    env_file:
+      - ./backend/.env
+    environment:
+      - PYTHONPATH=/app
+      - DATABASE_URL=postgresql+psycopg2://prescripto:prescripto_secret@postgres:5432/prescripto_db
+      - S3_ENDPOINT=http://minio:9000
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_started
+      migrate:
+        condition: service_completed_successfully
+
+volumes:
+  postgres_data:
+  minio_data:
