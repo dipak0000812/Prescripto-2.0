@@ -2,9 +2,10 @@ import json, re, sys, os
 import ollama
 from rapidfuzz import fuzz
 
-OUT_DIR = r"C:\Users\Admin\Desktop\Prescripto-2.0\outputs\ocr_paddle"
-RES_DIR = r"C:\Users\Admin\Desktop\Prescripto-2.0\outputs\structured"
-MODEL = "qwen2.5:7b-instruct"
+ROOT = os.environ.get("PRESCRIPTO_ROOT") or os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+OUT_DIR = os.path.join(ROOT, "outputs", "ocr_paddle")
+RES_DIR = os.path.join(ROOT, "outputs", "structured")
+MODEL = os.environ.get("QWEN_INSTRUCT_MODEL", "qwen2.5:7b-instruct")
 FIELDS = ["medication_name", "strength", "dose", "frequency", "duration", "route", "instructions"]
 FORMS = ["tab", "cap", "syp", "inj"]
 os.makedirs(RES_DIR, exist_ok=True)

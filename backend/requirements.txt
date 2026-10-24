@@ -19,3 +19,5 @@ pytest==8.2.2
 pytest-asyncio==0.23.7
 mypy==1.10.0
 types-pyyaml==6.0.12.20240311
+rapidfuzz>=3.9.0
+rapidocr-onnxruntime>=1.3.0

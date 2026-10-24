@@ -2,10 +2,10 @@ import csv, json, os, re, sys
 from rapidfuzz import fuzz
 
 
-ROOT = r"C:\Users\Admin\Desktop\Prescripto-2.0"
-LABELS = os.path.join(ROOT, r"data\labels\drug_labels.csv")
-STR_DIR = sys.argv[1] if len(sys.argv) > 1 else os.path.join(ROOT, r"outputs\structured")
-OCR_DIR = os.path.join(ROOT, r"outputs\ocr_paddle")
+ROOT = os.environ.get("PRESCRIPTO_ROOT") or os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+LABELS = os.path.join(ROOT, "data", "labels", "drug_labels.csv")
+STR_DIR = sys.argv[1] if len(sys.argv) > 1 else os.path.join(ROOT, "outputs", "structured")
+OCR_DIR = os.path.join(ROOT, "outputs", "ocr_paddle")
 
 
 def norm(s):

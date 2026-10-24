@@ -33,19 +33,24 @@ class PaddleOCRRuntime:
         if self._ocr is None:
             try:
                 from paddleocr import PaddleOCR
-            except ImportError as error:
-                raise RuntimeError(
-                    "OCR runtime dependencies are missing; install paddleocr."
-                ) from error
-
-            self._ocr = PaddleOCR(
-                device=self.device,
-                ocr_version="PP-OCRv6",
-                lang="en",
-                use_doc_orientation_classify=False,
-                use_doc_unwarping=False,
-                use_textline_orientation=False,
-            )
+                self._ocr = PaddleOCR(
+                    device=self.device,
+                    ocr_version="PP-OCRv6",
+                    lang="en",
+                    use_doc_orientation_classify=False,
+                    use_doc_unwarping=False,
+                    use_textline_orientation=False,
+                )
+                self._is_rapid = False
+            except Exception:
+                try:
+                    from rapidocr_onnxruntime import RapidOCR
+                    self._ocr = RapidOCR()
+                    self._is_rapid = True
+                except ImportError as error:
+                    raise RuntimeError(
+                        "OCR runtime dependencies are missing; install paddleocr or rapidocr-onnxruntime."
+                    ) from error
         return self._ocr
 
     @staticmethod
@@ -125,7 +130,22 @@ class PaddleOCRRuntime:
         with Image.open(BytesIO(image_bytes)) as source:
             image = np.asarray(source.convert("RGB"))
 
-        predictions = self._get_ocr().predict(image)
+        engine = self._get_ocr()
+        if getattr(self, "_is_rapid", False):
+            results, _ = engine(image)
+            if not results:
+                return []
+            texts: list[str] = [str(item[1]) for item in results]
+            scores: list[float | None] = [float(item[2]) if item[2] is not None else None for item in results]
+            boxes: list[tuple[float, float, float, float]] = []
+            for item in results:
+                pts = item[0]
+                xs = [float(p[0]) for p in pts]
+                ys = [float(p[1]) for p in pts]
+                boxes.append((min(xs), min(ys), max(xs), max(ys)))
+            return self._group_lines(texts, scores, boxes)
+
+        predictions = engine.predict(image)
         texts: list[str] = []
         scores: list[float | None] = []
         polygons: Any = None

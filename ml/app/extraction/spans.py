@@ -13,14 +13,25 @@ from typing import Any
 from ml.app.schemas.perception import FieldState
 
 
+def clean_ocr_text(text: str) -> str:
+    """Fix common OCR digit/letter confusions inside number+unit tokens and strip artifacts."""
+    def fix_token(match: re.Match) -> str:
+        token = match.group(0)
+        return token.replace('O', '0').replace('o', '0').replace('Z', '2')
+
+    text = re.sub(r'\b[\dOoZ]+(?:mg|mcg|g|ml|ing|ong)\b', fix_token, text, flags=re.IGNORECASE)
+    text = text.strip().rstrip(':')
+    return text
+
+
 PATTERNS: dict[str, re.Pattern[str]] = {
-    "strength": re.compile(r"\b\d+(?:\.\d+)?\s?(?:mg|mcg|g|ml|%)\b", re.IGNORECASE),
+    "strength": re.compile(r"\b\d+(?:\.\d+)?\s?(?:mg|mcg|g|ml|%|ing|ong)\b", re.IGNORECASE),
     "dose": re.compile(
-        r"\b\d+(?:\.\d+)?\s?(?:tablets?|tabs?|capsules?|caps?|drops?|ml|puffs?)\b",
+        r"\b\d+(?:\.\d+)?\s?(?:tablets?|tabs?|capsules?|caps?|drops?|ml|puffs?|barlet|ta6|tupp|supp)\b",
         re.IGNORECASE,
     ),
     "frequency": re.compile(
-        r"\b(?:OD|BD|BID|TDS|TID|QID|QDS|once daily|twice daily|three times daily|four times daily|at night)\b",
+        r"\b(?:OD|BD|BID|TDS|TID|QID|QDS|once daily|twice daily|three times daily|four times daily|at night|s\s?\d+\s?dd\s?\d+)\b",
         re.IGNORECASE,
     ),
     "route": re.compile(r"\b(?:oral|PO|topical|top|IM|IV|inhaled|ophthalmic)\b", re.IGNORECASE),
@@ -48,7 +59,8 @@ def _field(value: str | None, unreadable: bool = False) -> dict[str, Any]:
 
 def extract_prescription_fields(text: str) -> dict[str, dict[str, Any]]:
     """Extract explicit spans only; all OCR-derived values remain review-required."""
-    line = " ".join(text.split())
+    cleaned = clean_ocr_text(text)
+    line = " ".join(cleaned.split())
     matches = {name: pattern.search(line) for name, pattern in PATTERNS.items()}
     value_by_name = {
         name: match.group(0) if match else None for name, match in matches.items()

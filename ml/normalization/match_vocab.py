@@ -1,15 +1,17 @@
 import csv, json, os, re
 from rapidfuzz import process, fuzz
 
-ROOT = r"C:\Users\Admin\Desktop\Prescripto-2.0"
-VOCAB = os.path.join(ROOT, r"data\vocab\medicine_vocab.csv")
-OCR_DIR = os.path.join(ROOT, r"outputs\ocr_paddle")
-STR_DIR = os.path.join(ROOT, r"outputs\structured")
-OUT_DIR = os.path.join(ROOT, r"outputs\normalized")
+ROOT = os.environ.get("PRESCRIPTO_ROOT") or os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+VOCAB = os.path.join(ROOT, "data", "vocab", "medicine_vocab.csv")
+OCR_DIR = os.path.join(ROOT, "outputs", "ocr_paddle")
+STR_DIR = os.path.join(ROOT, "outputs", "structured")
+OUT_DIR = os.path.join(ROOT, "outputs", "normalized")
 os.makedirs(OUT_DIR, exist_ok=True)
 
-with open(VOCAB, encoding="utf-8") as fh:
-    NAMES = [r["name"] for r in csv.DictReader(fh)]
+NAMES = []
+if os.path.exists(VOCAB):
+    with open(VOCAB, encoding="utf-8") as fh:
+        NAMES = [r["name"] for r in csv.DictReader(fh)]
 LOWER = [n.lower() for n in NAMES]
 
 def load(p):

@@ -1,12 +1,12 @@
 import csv, json, os, re, sys
 from rapidfuzz import fuzz, process
 
-ROOT = r"C:\Users\Admin\Desktop\Prescripto-2.0"
-OCR = os.path.join(ROOT, r"outputs\ocr_paddle")
-VLM = os.path.join(ROOT, r"outputs\vlm")
-STR = os.path.join(ROOT, r"outputs\structured")
-OUT = os.path.join(ROOT, r"outputs\final")
-VOCAB = os.path.join(ROOT, r"data\vocab\medicine_vocab.csv")
+ROOT = os.environ.get("PRESCRIPTO_ROOT") or os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+OCR = os.path.join(ROOT, "outputs", "ocr_paddle")
+VLM = os.path.join(ROOT, "outputs", "vlm")
+STR = os.path.join(ROOT, "outputs", "structured")
+OUT = os.path.join(ROOT, "outputs", "final")
+VOCAB = os.path.join(ROOT, "data", "vocab", "medicine_vocab.csv")
 T = 80
 FIELDS = ("strength", "dose", "frequency", "duration", "route", "instructions")
 os.makedirs(OUT, exist_ok=True)

@@ -2,10 +2,11 @@ import io, json, os, sys
 import ollama
 from PIL import Image
 
-DATA_DIR = r"C:\Users\Admin\Desktop\prescripto data"
-LABELS = r"C:\Users\Admin\Desktop\Prescripto-2.0\data\labels\drug_labels.json"
-OUT = r"C:\Users\Admin\Desktop\Prescripto-2.0\outputs\vlm"
-MODEL = "qwen2.5vl:7b"
+ROOT = os.environ.get("PRESCRIPTO_ROOT") or os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+DATA_DIR = os.environ.get("PRESCRIPTO_DATA_DIR") or os.path.join(ROOT, "data", "prescriptions")
+LABELS = os.path.join(ROOT, "data", "labels", "drug_labels.json")
+OUT = os.path.join(ROOT, "outputs", "vlm")
+MODEL = os.environ.get("VLM_MODEL", "qwen2.5vl:7b")
 EXTS = (".jpg", ".jpeg", ".png")
 os.makedirs(OUT, exist_ok=True)
 

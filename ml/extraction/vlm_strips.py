@@ -3,12 +3,12 @@ import ollama
 from PIL import Image
 from rapidfuzz import fuzz
 
-ROOT = r"C:\Users\Admin\Desktop\Prescripto-2.0"
-DATA_DIR = r"C:\Users\Admin\Desktop\prescripto data"
-LABELS = os.path.join(ROOT, r"data\labels\drug_labels.json")
-WHOLE = os.path.join(ROOT, r"outputs\vlm")
-OUT = os.path.join(ROOT, r"outputs\vlm_strips")
-MODEL = "qwen2.5vl:7b"
+ROOT = os.environ.get("PRESCRIPTO_ROOT") or os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+DATA_DIR = os.environ.get("PRESCRIPTO_DATA_DIR") or os.path.join(ROOT, "data", "prescriptions")
+LABELS = os.path.join(ROOT, "data", "labels", "drug_labels.json")
+WHOLE = os.path.join(ROOT, "outputs", "vlm")
+OUT = os.path.join(ROOT, "outputs", "vlm_strips")
+MODEL = os.environ.get("VLM_MODEL", "qwen2.5vl:7b")
 N_STRIPS, OVERLAP = 3, 0.12
 PREFIX = r"^(tab|tas|cap|syp|inj|t|pb)\b[\.\s]*"
 os.makedirs(OUT, exist_ok=True)

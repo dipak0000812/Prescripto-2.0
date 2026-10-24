@@ -1,8 +1,8 @@
 import json, os, sys
 
-ROOT = r"C:\Users\Admin\Desktop\Prescripto-2.0"
-SRC = os.path.join(ROOT, r"outputs\final")
-OUT = os.path.join(ROOT, r"outputs\api")
+ROOT = os.environ.get("PRESCRIPTO_ROOT") or os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+SRC = os.path.join(ROOT, "outputs", "final")
+OUT = os.path.join(ROOT, "outputs", "api")
 os.makedirs(OUT, exist_ok=True)
 
 FIELDS = ["name", "strength", "dose", "unit", "frequency", "route", "duration", "instructions"]

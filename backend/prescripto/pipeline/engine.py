@@ -88,6 +88,20 @@ def handle_quality_check(
         raise ValueError("Uploaded image cannot be decoded") from error
 
     is_poor_quality = width < 400 or height < 400 or is_blank
+    blur_score = None
+    brightness = None
+    sharp_ok = True
+    exposure_ok = True
+
+    try:
+        from ml.ocr.quality_check import check_blur, check_exposure
+        sharp_ok, blur_score = check_blur(image_bytes, threshold=100.0)
+        exposure_ok, brightness = check_exposure(image_bytes, low_thresh=20.0, high_thresh=255.0)
+        if not sharp_ok or not exposure_ok:
+            is_poor_quality = True
+    except Exception:
+        pass
+
     context["quality_failed"] = is_poor_quality
 
     return {
@@ -96,8 +110,12 @@ def handle_quality_check(
         "width": width,
         "height": height,
         "is_blank": is_blank,
+        "blur_score": blur_score,
+        "brightness": brightness,
+        "sharp_ok": sharp_ok,
+        "exposure_ok": exposure_ok,
         "quality_passed": not is_poor_quality,
-        "check_method": "decode_dimensions_and_contrast",
+        "check_method": "decode_dimensions_contrast_and_laplacian",
     }
 
 

@@ -1,15 +1,24 @@
 import os, json
 import numpy as np
 from PIL import Image
-from paddleocr import PaddleOCR
+try:
+    from paddleocr import PaddleOCR
+    HAS_PADDLE = True
+except ImportError:
+    HAS_PADDLE = False
 
-DATA_DIR = r"C:\Users\Admin\Desktop\prescripto data"
-OUT_DIR = r"C:\Users\Admin\Desktop\Prescripto-2.0\outputs\ocr_paddle"
+ROOT = os.environ.get("PRESCRIPTO_ROOT") or os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+DATA_DIR = os.environ.get("PRESCRIPTO_DATA_DIR") or os.path.join(ROOT, "data", "prescriptions")
+OUT_DIR = os.path.join(ROOT, "outputs", "ocr_paddle")
 EXTS = (".jpg", ".jpeg", ".png", ".tif", ".tiff")
 MIN_SCORE = 0.5
 
 os.makedirs(OUT_DIR, exist_ok=True)
-ocr = PaddleOCR(device="gpu:0")
+if HAS_PADDLE:
+    device = os.environ.get("PADDLE_DEVICE", "cpu")
+    ocr = PaddleOCR(device=device)
+else:
+    ocr = None
 
 seen = {}
 for f in sorted(os.listdir(DATA_DIR)):

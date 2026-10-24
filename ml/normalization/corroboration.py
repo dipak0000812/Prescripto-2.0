@@ -1,7 +1,7 @@
 import json, os, re
 from rapidfuzz import fuzz
 
-ROOT = r"C:\Users\Admin\Desktop\Prescripto-2.0"
+ROOT = os.environ.get("PRESCRIPTO_ROOT") or os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 T = 80
 
 

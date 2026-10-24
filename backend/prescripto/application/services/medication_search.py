@@ -101,10 +101,24 @@ class MedicationSearchService:
                 )
                 continue
 
-            # 3. Fuzzy similarity via sequence matcher
-            sim_brand = difflib.SequenceMatcher(None, query_text, brand_lower).ratio()
-            sim_generic = difflib.SequenceMatcher(None, query_text, generic_lower).ratio()
-            best_sim = max(sim_brand, sim_generic)
+            # 3. Fuzzy similarity via RapidFuzz token matching / sequence matcher
+            try:
+                from rapidfuzz import fuzz
+                score_brand = max(
+                    fuzz.ratio(query_text, brand_lower),
+                    fuzz.partial_ratio(brand_lower, query_text),
+                    fuzz.token_set_ratio(query_text, brand_lower),
+                ) / 100.0
+                score_generic = max(
+                    fuzz.ratio(query_text, generic_lower),
+                    fuzz.partial_ratio(generic_lower, query_text),
+                    fuzz.token_set_ratio(query_text, generic_lower),
+                ) / 100.0
+                best_sim = max(score_brand, score_generic)
+            except ImportError:
+                sim_brand = difflib.SequenceMatcher(None, query_text, brand_lower).ratio()
+                sim_generic = difflib.SequenceMatcher(None, query_text, generic_lower).ratio()
+                best_sim = max(sim_brand, sim_generic)
 
             if best_sim >= 0.65:
                 scored_candidates.append(
