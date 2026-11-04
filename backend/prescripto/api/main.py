@@ -4,7 +4,7 @@ Conforms strictly to docs/API-CONTRACT.md and docs/ERROR-CONTRACT.md.
 """
 import uuid
 import time
-from typing import Callable
+from typing import Callable, Optional
 from fastapi import FastAPI, Request, Response, status
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -60,6 +60,10 @@ async def request_middleware(request: Request, call_next: Callable) -> Response:
 
     duration_ms = round((time.time() - start_time) * 1000, 2)
     response.headers["X-Request-ID"] = str(request_id)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
 
     # Operational structured log (Whitelisted keys only: Zero PHI)
     logger.info(
@@ -176,15 +180,50 @@ app.include_router(patients_router, prefix="/api/v1")
 
 
 @app.get("/api/v1/storage/{key:path}", tags=["Storage"], include_in_schema=False)
-def get_storage_file(key: str) -> Response:
-    """Serves locally stored prescription images when local storage fallback is used."""
+def get_storage_file(
+    key: str,
+    expires: Optional[int] = None,
+    signature: Optional[str] = None,
+) -> Response:
+    """Serves stored prescription images with HMAC signature and expiry check."""
     import mimetypes
-    from prescripto.storage.client import get_storage_client
+    from prescripto.storage.client import StorageClient, get_storage_client
+    from prescripto.storage.exceptions import StorageObjectNotFoundException
+
+    if not expires or not signature:
+        return JSONResponse(
+            status_code=403,
+            content={
+                "error": {
+                    "code": "FORBIDDEN_RESOURCE_ACCESS",
+                    "message": "Access to storage resource requires valid signature and expiry",
+                    "request_id": str(uuid.uuid4()),
+                }
+            },
+        )
+
+    if not StorageClient.verify_storage_signature(key, expires, signature):
+        return JSONResponse(
+            status_code=403,
+            content={
+                "error": {
+                    "code": "FORBIDDEN_RESOURCE_ACCESS",
+                    "message": "Storage signature has expired or is invalid",
+                    "request_id": str(uuid.uuid4()),
+                }
+            },
+        )
+
     sc = get_storage_client()
     try:
         content = sc.get_object(key)
         media_type, _ = mimetypes.guess_type(key)
         return Response(content=content, media_type=media_type or "application/octet-stream")
+    except StorageObjectNotFoundException:
+        return JSONResponse(
+            status_code=404,
+            content={"error": {"code": "RESOURCE_NOT_FOUND", "message": f"Object {key} not found", "request_id": str(uuid.uuid4())}},
+        )
     except Exception:
         return JSONResponse(
             status_code=404,
@@ -207,6 +246,7 @@ def _run_worker_daemon():
 def startup_event():
     # Only spawn worker thread if not in test suite environment
     import os
+    settings.log_missing_gemini_api_key()
     if os.environ.get("PYTEST_CURRENT_TEST") is None:
         t = threading.Thread(target=_run_worker_daemon, daemon=True)
         t.start()

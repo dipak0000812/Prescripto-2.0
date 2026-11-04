@@ -18,13 +18,19 @@ from prescripto.auth.exceptions import (
     TokenExpiredException,
     TokenRevokedException,
     BlocklistUnavailableException,
+    RateLimitExceededException,
 )
+from prescripto.config.settings import settings
 
 
 import re
+import time
 import random
 from prescripto.db.models.patient import Patient
 from prescripto.auth.crypto import hash_password
+
+# In-memory sliding window for OTP attempt rate limiting: phone -> list of failure timestamps
+_failed_otp_attempts: Dict[str, list] = {}
 
 
 class AuthService:
@@ -74,12 +80,16 @@ class AuthService:
         if len(clean_phone) < 10:
             raise InvalidCredentialsException("Please enter a valid 10-digit mobile number")
 
-        return {
+        payload: Dict[str, Any] = {
             "status": "SENT",
             "phone_number": clean_phone,
-            "message": "OTP sent successfully to your mobile number. Use test OTP: 123456",
-            "mock_otp": "123456",
+            "message": "OTP sent successfully to your mobile number.",
         }
+        if settings.ENVIRONMENT == "development":
+            payload["mock_otp"] = "123456"
+            payload["message"] = "OTP sent successfully to your mobile number. Use test OTP: 123456"
+
+        return payload
 
     @staticmethod
     def verify_patient_otp(
@@ -87,15 +97,27 @@ class AuthService:
     ) -> Dict[str, Any]:
         """
         Verifies patient OTP (123456), auto-creates or retrieves Patient & User record,
-        and returns real JWT token pair.
+        and returns real JWT token pair. Rate-limited to 5 failed attempts per 15 minutes.
         """
         clean_phone = re.sub(r"[^\d]", "", phone_number)
         if len(clean_phone) < 10:
             raise InvalidCredentialsException("Please enter a valid 10-digit mobile number")
 
+        now = time.time()
+        # Clean up expired timestamps older than 15 mins (900s)
+        recent_failures = [t for t in _failed_otp_attempts.get(clean_phone, []) if now - t < 900]
+        _failed_otp_attempts[clean_phone] = recent_failures
+
+        if len(recent_failures) >= 5:
+            raise RateLimitExceededException("Too many failed OTP attempts. Please wait 15 minutes before trying again.")
+
         # Mock OTP verification
         if otp.strip() != "123456":
+            _failed_otp_attempts[clean_phone].append(now)
             raise InvalidCredentialsException("Invalid OTP code. Please use 123456 for testing.")
+
+        # Reset failed attempts on success
+        _failed_otp_attempts.pop(clean_phone, None)
 
         # Find or create patient
         patient = db.query(Patient).filter(
@@ -134,7 +156,7 @@ class AuthService:
                 username=user_name,
                 email=user_email,
                 hashed_password=hash_password(uuid.uuid4().hex),
-                role="OPERATOR",
+                role="PATIENT",
                 is_active=True,
             )
             db.add(user)

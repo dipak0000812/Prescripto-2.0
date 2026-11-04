@@ -2,7 +2,11 @@
 Prescripto AI 2.0 — Object Storage Service (MinIO / S3).
 Manages deterministic object keys, ephemeral presigned URLs, and zero-PHI operations.
 """
+import hashlib
+import hmac
+import time
 import uuid
+from pathlib import Path
 from typing import Optional, Union
 import boto3
 from botocore.client import BaseClient
@@ -57,8 +61,46 @@ class StorageClient:
             )
 
         self._is_mock_s3 = s3_client is not None
-        from pathlib import Path
-        self._local_dir = Path("prescripto_storage")
+        self._local_dir = Path("prescripto_storage").resolve()
+
+    def _resolve_safe_path(self, key: str, bucket_name: Optional[str] = None) -> Path:
+        """Resolves target path and ensures it stays strictly within _local_dir and bucket."""
+        bucket = bucket_name or self.default_bucket
+        bucket_dir = (self._local_dir / bucket).resolve()
+        clean_key = key.lstrip("/\\")
+        candidate = (bucket_dir / clean_key).resolve()
+        try:
+            candidate.relative_to(bucket_dir)
+            candidate.relative_to(self._local_dir)
+        except ValueError:
+            raise StorageObjectNotFoundException(f"Path traversal detected for key {key}")
+        return candidate
+
+    @staticmethod
+    def sign_storage_key(key: str, expires_at: int) -> str:
+        """Generates an HMAC-SHA256 signature for key and expiration timestamp."""
+        secret = (settings.JWT_PRIVATE_KEY or settings.S3_SECRET_KEY or "prescripto_storage_signing_key").encode("utf-8")
+        clean_key = key.lstrip("/\\")
+        msg = f"{clean_key}:{expires_at}".encode("utf-8")
+        return hmac.new(secret, msg, hashlib.sha256).hexdigest()
+
+    @staticmethod
+    def verify_storage_signature(key: str, expires_at: int, signature: str) -> bool:
+        """Verifies signature authenticity and checks whether TTL has expired."""
+        try:
+            if time.time() > float(expires_at):
+                return False
+        except (ValueError, TypeError):
+            return False
+        expected = StorageClient.sign_storage_key(key, int(expires_at))
+        return hmac.compare_digest(expected, signature)
+
+    def generate_signed_storage_url(self, key: str, expires_in: int = 60) -> str:
+        """Generates a short-lived HMAC signed URL for local storage endpoint."""
+        expires_at = int(time.time()) + expires_in
+        sig = self.sign_storage_key(key, expires_at)
+        clean_key = key.lstrip("/\\")
+        return f"/api/v1/storage/{clean_key}?expires={expires_at}&signature={sig}"
 
     @staticmethod
     def generate_prescription_key(document_id: Union[uuid.UUID, str], extension: str) -> str:
@@ -126,7 +168,7 @@ class StorageClient:
             logger.info("storage_put_success", status="SUCCESS")
         except (BotoCoreError, ClientError, Exception) as e:
             if not self._is_mock_s3:
-                target_path = self._local_dir / bucket / key
+                target_path = self._resolve_safe_path(key, bucket)
                 target_path.parent.mkdir(parents=True, exist_ok=True)
                 target_path.write_bytes(data)
                 logger.info("storage_put_local_success", status="SUCCESS", key=key)
@@ -143,19 +185,19 @@ class StorageClient:
         except ClientError as e:
             error_code = e.response.get("Error", {}).get("Code")
             if error_code in ("NoSuchKey", "404"):
-                local_path = self._local_dir / bucket / key
+                local_path = self._resolve_safe_path(key, bucket)
                 if local_path.is_file():
                     return local_path.read_bytes()
                 raise StorageObjectNotFoundException(f"Object {key} not found") from e
             if not self._is_mock_s3:
-                local_path = self._local_dir / bucket / key
+                local_path = self._resolve_safe_path(key, bucket)
                 if local_path.is_file():
                     return local_path.read_bytes()
             logger.error("storage_get_failed", error_code="STORAGE_UNAVAILABLE")
             raise StorageUnavailableException(f"Storage get error: {e}") from e
         except (BotoCoreError, Exception) as e:
             if not self._is_mock_s3:
-                local_path = self._local_dir / bucket / key
+                local_path = self._resolve_safe_path(key, bucket)
                 if local_path.is_file():
                     return local_path.read_bytes()
             logger.error("storage_get_failed", error_code="STORAGE_UNAVAILABLE")
@@ -169,7 +211,7 @@ class StorageClient:
             logger.info("storage_delete_success", status="SUCCESS")
         except (BotoCoreError, ClientError, Exception) as e:
             if not self._is_mock_s3:
-                local_path = self._local_dir / bucket / key
+                local_path = self._resolve_safe_path(key, bucket)
                 if local_path.is_file():
                     local_path.unlink()
                 logger.info("storage_delete_local_success", status="SUCCESS")
@@ -188,11 +230,11 @@ class StorageClient:
             if error_code in ("404", "NoSuchKey"):
                 return False
             if not self._is_mock_s3:
-                return (self._local_dir / bucket / key).is_file()
+                return self._resolve_safe_path(key, bucket).is_file()
             raise StorageUnavailableException(f"Storage check error: {e}") from e
         except (BotoCoreError, Exception) as e:
             if not self._is_mock_s3:
-                return (self._local_dir / bucket / key).is_file()
+                return self._resolve_safe_path(key, bucket).is_file()
             raise StorageUnavailableException(f"Storage connection error: {e}") from e
 
     def generate_presigned_url(
@@ -215,7 +257,7 @@ class StorageClient:
             return url
         except (BotoCoreError, ClientError, Exception) as e:
             if not self._is_mock_s3:
-                return f"/api/v1/storage/{key}"
+                return self.generate_signed_storage_url(key, expires_in=expires_in)
             logger.error("presigned_url_generation_failed", error_code="STORAGE_UNAVAILABLE")
             raise StorageUnavailableException(f"Failed to generate presigned URL: {e}") from e
 

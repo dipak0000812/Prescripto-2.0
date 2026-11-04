@@ -48,5 +48,6 @@ class PrescriptionDetailDTO:
     mime_type: str
     file_size_bytes: int
     patient_ref: Optional[str] = None
+    patient_name: Optional[str] = None
     image_url: Optional[str] = None
     analyses: List[AnalysisSummaryDTO] = field(default_factory=list)

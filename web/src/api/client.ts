@@ -1,7 +1,8 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { ApiError, TokenResponse } from '../types/api';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api/v1';
+const rawBase = import.meta.env.VITE_API_BASE_URL || '/api/v1';
+const API_BASE_URL = rawBase.endsWith('/api/v1') ? rawBase : `${rawBase.replace(/\/+$/, '')}/api/v1`;
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -194,7 +195,7 @@ export function normalizeApiError(error: AxiosError<{ error?: ApiError }> | any)
   if (status === 415) {
     return {
       code: 'UNSUPPORTED_MEDIA_TYPE',
-      message: 'File format not supported. Only JPEG, PNG, TIFF, or PDF files are accepted.',
+      message: 'File format not supported. Only JPEG, PNG, or TIFF images are accepted.',
       request_id: requestId,
     };
   }

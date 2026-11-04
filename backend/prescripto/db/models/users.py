@@ -21,7 +21,7 @@ class User(Base):
     hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
     role: Mapped[str] = mapped_column(
         String(50),
-        CheckConstraint("role IN ('OPERATOR', 'REVIEWER', 'ADMIN')", name="chk_user_role"),
+        CheckConstraint("role IN ('OPERATOR', 'REVIEWER', 'ADMIN', 'PATIENT')", name="chk_user_role"),
         nullable=False,
         default=Role.OPERATOR.value,
     )

@@ -158,6 +158,47 @@ export interface AnalysisStatusResponse {
   analysis_id: string;
   status: AnalysisStatusEnum;
   stages: AnalysisStageOut[];
+  error_message?: string | null;
+  provider_used?: string | null;
+  model_used?: string | null;
+  attempts?: number | null;
+  fallback_reason?: string | null;
+  recognition_fallback_used?: boolean;
+  recognition_fallback_reason?: string | null;
+}
+
+export interface ExtractedMedicationOrder {
+  original_text: string;
+  name?: string | null;
+  strength?: string | null;
+  dose?: string | null;
+  route?: string | null;
+  frequency?: string | null;
+  duration?: string | null;
+  instructions?: string | null;
+  needs_review: boolean;
+}
+
+export interface PrescriptionExtraction {
+  processing_status: string;
+  source_type: string;
+  provider_used?: string | null;
+  model_used?: string | null;
+  attempts?: number | null;
+  fallback_reason?: string | null;
+  recognition_fallback_used?: boolean;
+  recognition_fallback_reason?: string | null;
+  hospital_details: string[];
+  patient_details: Record<string, string | string[] | null>;
+  date?: string | null;
+  symptoms: string[];
+  diagnosis: string[];
+  vitals: string[];
+  medication_orders: ExtractedMedicationOrder[];
+  non_medication_treatments: string[];
+  general_advice: string[];
+  uncertain_items: Array<Record<string, string | null>>;
+  warnings: string[];
 }
 
 export interface AnalysisResult {
@@ -167,9 +208,16 @@ export interface AnalysisResult {
   model_versions: string[];
   knowledge_snapshots: string[];
   medications: MedicationLine[];
+  document_extraction?: PrescriptionExtraction | null;
   findings: RiskFindingOut[];
   not_evaluated: NotEvaluatedItem[];
   coverage_disclaimer: string;
+  provider_used?: string | null;
+  model_used?: string | null;
+  attempts?: number | null;
+  fallback_reason?: string | null;
+  recognition_fallback_used?: boolean;
+  recognition_fallback_reason?: string | null;
 }
 
 export interface ReviewDecision {
@@ -220,6 +268,7 @@ export interface PrescriptionDetail {
   mime_type: string;
   file_size_bytes: number;
   patient_ref: string | null;
+  patient_name?: string | null;
   image_url: string | null;
   analyses: AnalysisSummaryItem[];
 }

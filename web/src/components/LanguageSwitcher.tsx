@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useLanguage, Language } from '../context/LanguageContext';
-import { Globe, Volume2, VolumeX, HelpCircle, X, Sparkles } from 'lucide-react';
+import { VolumeX, HelpCircle, X, Sun, Moon, Sunrise, Clock, Check } from 'lucide-react';
 
 export const LanguageSwitcher: React.FC = () => {
   const { language, setLanguage, isSpeaking, stopSpeaking, t } = useLanguage();
@@ -20,131 +20,172 @@ export const LanguageSwitcher: React.FC = () => {
         <button
           onClick={stopSpeaking}
           title={t('common.stop_audio', 'Stop Voice')}
-          className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold text-rose-700 bg-rose-50 border border-rose-200 rounded-full animate-pulse hover:bg-rose-100 transition-colors cursor-pointer"
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[#881337] bg-[#FFE4E6] border border-[#FDA4AF] rounded-xl hover:bg-[#FECDD3] transition-colors cursor-pointer min-h-[36px]"
         >
-          <VolumeX className="w-3.5 h-3.5" />
+          <VolumeX className="w-4 h-4 text-[#BE123C]" aria-hidden="true" />
           <span>{t('common.stop_audio', 'Stop Voice')}</span>
         </button>
       )}
 
-      {/* Language Selector Dropdown */}
-      <div className="relative inline-flex items-center">
-        <div className="flex items-center gap-1.5 px-2 py-1 text-xs font-medium text-slate-700 bg-slate-50 border border-slate-200 rounded-lg hover:border-slate-300 transition-colors">
-          <Globe className="w-3.5 h-3.5 text-indigo-600" />
-          <select
-            value={language}
-            onChange={(e) => setLanguage(e.target.value as Language)}
-            aria-label="Select Language"
-            className="bg-transparent font-medium text-slate-800 text-xs focus:outline-hidden cursor-pointer pr-1"
-          >
-            {languages.map((l) => (
-              <option key={l.code} value={l.code} className="text-slate-900 bg-white">
-                {l.nativeName} ({l.label})
-              </option>
-            ))}
-          </select>
-        </div>
+      {/* Language Buttons with Script Names (English / हिन्दी / ગુજરાતી / मराठी) */}
+      <div
+        className="inline-flex items-center bg-[#F4F2EC] p-0.5 rounded-xl border border-stone-200"
+        role="group"
+        aria-label="Select Language"
+      >
+        {languages.map((l) => {
+          const isSelected = language === l.code;
+          return (
+            <button
+              key={l.code}
+              type="button"
+              onClick={() => setLanguage(l.code)}
+              aria-pressed={isSelected}
+              className={`px-2.5 sm:px-3 py-1.5 text-xs sm:text-sm font-semibold rounded-lg transition-all cursor-pointer min-h-[36px] flex items-center gap-1 ${
+                isSelected
+                  ? 'bg-[#0F5147] text-white shadow-2xs'
+                  : 'text-[#1C252E] hover:bg-white/60'
+              }`}
+            >
+              <span>{l.nativeName}</span>
+            </button>
+          );
+        })}
       </div>
 
-      {/* Plain Language / Medical Terms Help Button */}
+      {/* Simple Guide / Medical Abbreviations Help Button */}
       <button
+        type="button"
         onClick={() => setShowGlossary(true)}
         title="Plain Language & Medicine Timing Guide"
-        className="flex items-center gap-1 px-2 py-1 text-xs font-medium text-slate-600 bg-slate-50 border border-slate-200 rounded-lg hover:text-indigo-600 hover:border-indigo-200 transition-colors cursor-pointer"
+        className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-[#1C252E] bg-white border border-stone-300 rounded-xl hover:bg-[#FAF9F6] transition-colors cursor-pointer min-h-[36px]"
       >
-        <HelpCircle className="w-3.5 h-3.5 text-slate-500" />
-        <span className="hidden sm:inline">सरल भाषा / Guide</span>
+        <HelpCircle className="w-4 h-4 text-[#0F5147]" aria-hidden="true" />
+        <span className="hidden lg:inline">गाइड / Guide</span>
       </button>
 
-      {/* Plain Language Glossary Modal */}
+      {/* Plain Language Medical Guide Modal */}
       {showGlossary && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs animate-in fade-in duration-150">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-xl border border-slate-200 relative">
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-xs"
+        >
+          <div className="bg-white rounded-xl max-w-lg w-full p-5 sm:p-6 shadow-md border border-stone-200 relative max-h-[90vh] overflow-y-auto">
             <button
               onClick={() => setShowGlossary(false)}
-              className="absolute top-4 right-4 p-1.5 text-slate-400 hover:text-slate-700 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
+              className="absolute top-4 right-4 p-2 text-stone-500 hover:text-stone-800 rounded-lg hover:bg-stone-100 transition-colors cursor-pointer min-h-[40px] min-w-[40px] flex items-center justify-center"
+              aria-label="Close guide"
             >
               <X className="w-5 h-5" />
             </button>
 
-            <div className="flex items-center gap-2 mb-4">
-              <div className="p-2 bg-indigo-50 text-indigo-700 rounded-xl">
-                <Sparkles className="w-5 h-5" />
+            <div className="flex items-center gap-2.5 mb-4 pr-10">
+              <div className="w-10 h-10 rounded-xl bg-[#E6F0EE] text-[#0F5147] flex items-center justify-center border border-[#9DC1BB] shrink-0">
+                <HelpCircle className="w-5 h-5" />
               </div>
               <div>
-                <h3 className="text-base font-semibold text-slate-900">
+                <h3 className="text-base sm:text-lg font-bold text-[#1C252E]">
                   {language === 'hi'
-                    ? 'डॉक्टर के पर्चे की सरल भाषा'
+                    ? 'दवा का समय व सरल अर्थ'
                     : language === 'gu'
-                    ? 'પ્રિસ્ક્રિપ્શનની સરળ સમજૂતી'
+                    ? 'દવા લેવાનો સમય અને સરળ સમજૂતી'
                     : language === 'mr'
-                    ? 'डॉक्टरांच्या चिठ्ठीची सोपी भाषा'
-                    : 'Simple Prescription Guide'}
+                    ? 'औषधाची वेळ व सोपा अर्थ'
+                    : 'Medicine Timing Guide'}
                 </h3>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-stone-600">
                   {language === 'hi'
-                    ? 'दवाइयों पर लिखे संक्षिप्त शब्दों का आसान मतलब'
+                    ? 'पर्चे पर लिखे संक्षिप्त शब्दों का आसान मतलब'
                     : language === 'gu'
-                    ? 'દવાઓ પર લખેલા ટૂંકા શબ્દોનો સરળ અર્થ'
-                    : 'Easy meaning of common prescription abbreviations'}
+                    ? 'પ્રિસ્ક્રિપ્શનમાં લખેલા શબ્દોનો સરળ અર્થ'
+                    : language === 'mr'
+                    ? 'चिठ्ठीवरील संक्षिप्त शब्दांचा सोपा अर्थ'
+                    : 'Clear explanations for prescription abbreviations'}
                 </p>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
-              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
-                <div className="font-bold text-indigo-700 flex items-center gap-1.5">
-                  <span>OD</span>
-                  <span className="text-slate-400 font-normal">| ☀️</span>
+            <div className="space-y-2.5 text-xs sm:text-sm">
+              <div className="p-3 bg-[#FAF9F6] rounded-xl border border-stone-200 flex items-start gap-3">
+                <div className="w-8 h-8 rounded-lg bg-[#E6F0EE] text-[#0F5147] flex items-center justify-center shrink-0 font-bold text-xs">
+                  OD
                 </div>
-                <div className="text-slate-700 mt-0.5">{t('sig.od', 'Once a day')}</div>
-                <div className="text-[11px] text-slate-500">दिन में 1 बार (सुबह)</div>
-              </div>
-
-              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
-                <div className="font-bold text-indigo-700 flex items-center gap-1.5">
-                  <span>BD / BID</span>
-                  <span className="text-slate-400 font-normal">| ☀️ 🌙</span>
+                <div className="flex-1 min-w-0">
+                  <div className="font-bold text-[#1C252E] flex items-center gap-1.5">
+                    <Sun className="w-4 h-4 text-amber-600" aria-hidden="true" />
+                    <span>{t('sig.od', 'Once a day')}</span>
+                  </div>
+                  <p className="text-stone-600 text-xs mt-0.5">
+                    {language === 'hi' ? 'दिन में केवल एक बार' : language === 'gu' ? 'દિવસમાં ૧ વાર' : language === 'mr' ? 'दिवसातून १ वेळा' : 'Take 1 time daily, usually in the morning'}
+                  </p>
                 </div>
-                <div className="text-slate-700 mt-0.5">{t('sig.bd', 'Twice a day (Morning & Night)')}</div>
-                <div className="text-[11px] text-slate-500">दिन में 2 बार (सुबह और शाम)</div>
               </div>
 
-              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
-                <div className="font-bold text-indigo-700 flex items-center gap-1.5">
-                  <span>TDS / TID</span>
-                  <span className="text-slate-400 font-normal">| ☀️ 🌤️ 🌙</span>
+              <div className="p-3 bg-[#FAF9F6] rounded-xl border border-stone-200 flex items-start gap-3">
+                <div className="w-8 h-8 rounded-lg bg-[#E6F0EE] text-[#0F5147] flex items-center justify-center shrink-0 font-bold text-xs">
+                  BD
                 </div>
-                <div className="text-slate-700 mt-0.5">{t('sig.tds', 'Three times a day')}</div>
-                <div className="text-[11px] text-slate-500">दिन में 3 बार (सुबह, दोपहर, रात)</div>
-              </div>
-
-              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
-                <div className="font-bold text-indigo-700 flex items-center gap-1.5">
-                  <span>SOS</span>
-                  <span className="text-slate-400 font-normal">| ⚠️</span>
+                <div className="flex-1 min-w-0">
+                  <div className="font-bold text-[#1C252E] flex items-center gap-1.5">
+                    <Sunrise className="w-4 h-4 text-amber-600" aria-hidden="true" />
+                    <Moon className="w-4 h-4 text-stone-600" aria-hidden="true" />
+                    <span>{t('sig.bd', 'Twice a day (Morning & Night)')}</span>
+                  </div>
+                  <p className="text-stone-600 text-xs mt-0.5">
+                    {language === 'hi' ? 'सुबह और रात को' : language === 'gu' ? 'સવારે અને રાત્રે' : language === 'mr' ? 'सकाळी आणि रात्री' : 'Take in morning and at night with 12 hour gap'}
+                  </p>
                 </div>
-                <div className="text-slate-700 mt-0.5">{t('sig.sos', 'Only when needed')}</div>
-                <div className="text-[11px] text-slate-500">ज़रूरत पड़ने पर (दर्द या बुख़ार)</div>
               </div>
 
-              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
-                <div className="font-bold text-indigo-700">Tab / Cap</div>
-                <div className="text-slate-700 mt-0.5">Tablet / Capsule</div>
-                <div className="text-[11px] text-slate-500">गोली या कैप्सूल</div>
+              <div className="p-3 bg-[#FAF9F6] rounded-xl border border-stone-200 flex items-start gap-3">
+                <div className="w-8 h-8 rounded-lg bg-[#E6F0EE] text-[#0F5147] flex items-center justify-center shrink-0 font-bold text-xs">
+                  TDS
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-bold text-[#1C252E] flex items-center gap-1.5">
+                    <Clock className="w-4 h-4 text-[#0F5147]" aria-hidden="true" />
+                    <span>{t('sig.tds', 'Three times a day (Morning, Afternoon, Night)')}</span>
+                  </div>
+                  <p className="text-stone-600 text-xs mt-0.5">
+                    {language === 'hi' ? 'सुबह, दोपहर और रात को' : language === 'gu' ? 'સવાર, બપોર અને રાત્રે' : language === 'mr' ? 'सकाळी, दुपारी आणि रात्री' : 'Take morning, afternoon, and night with food'}
+                  </p>
+                </div>
               </div>
 
-              <div className="p-3 bg-slate-50 rounded-xl border border-slate-200">
-                <div className="font-bold text-indigo-700">mg / ml</div>
-                <div className="text-slate-700 mt-0.5">Strength / Quantity</div>
-                <div className="text-[11px] text-slate-500">दवा की मात्रा (पावर)</div>
+              <div className="p-3 bg-[#FAF9F6] rounded-xl border border-stone-200 flex items-start gap-3">
+                <div className="w-8 h-8 rounded-lg bg-[#FEF3C7] text-[#78350F] flex items-center justify-center shrink-0 font-bold text-xs border border-[#FCD34D]">
+                  SOS
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-bold text-[#78350F] flex items-center gap-1.5">
+                    <span>{t('sig.sos', 'Take only when you have pain or fever')}</span>
+                  </div>
+                  <p className="text-stone-600 text-xs mt-0.5">
+                    {language === 'hi' ? 'दवा सिर्फ ज़रूरत पड़ने पर लें' : language === 'gu' ? 'માત્ર જરૂર હોય ત્યારે જ લેવી' : language === 'mr' ? 'फक्त गरज असेल तेव्हाच घ्या' : 'Only take when you feel pain, fever, or symptoms'}
+                  </p>
+                </div>
               </div>
             </div>
 
-            <div className="mt-4 pt-3 border-t border-slate-100 flex justify-end">
+            <div className="mt-5 p-3 rounded-xl bg-[#E6F0EE] border border-[#9DC1BB] text-xs text-[#0F5147] flex items-start gap-2">
+              <Check className="w-4 h-4 text-[#0F5147] shrink-0 mt-0.5" />
+              <span>
+                {language === 'hi'
+                  ? 'दवा की खुराक या समय में कोई भी संदेह होने पर अपने डॉक्टर या दवा विक्रेता (केमिस्ट) से सलाह लें।'
+                  : language === 'gu'
+                  ? 'દવા લેવામાં કોઈ પણ શંકા હોય તો હંમેશા તમારા ડોક્ટર અથવા મેડિકલ સ્ટોરવાળાની સલાહ લો.'
+                  : language === 'mr'
+                  ? 'औषधाबद्दल कोणतीही शंका असल्यास नेहमी आपल्या डॉक्टरांचा किंवा केमिस्टचा सल्ला घ्या.'
+                  : 'Always check with your doctor or pharmacist if you are unsure about any medicine timing.'}
+              </span>
+            </div>
+
+            <div className="mt-5">
               <button
+                type="button"
                 onClick={() => setShowGlossary(false)}
-                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium rounded-lg cursor-pointer transition-colors"
+                className="w-full py-2.5 rounded-xl bg-[#0F5147] text-white font-semibold text-sm hover:bg-[#0A3831] transition min-h-[48px] cursor-pointer"
               >
                 {t('common.close', 'Close')}
               </button>
@@ -155,3 +196,5 @@ export const LanguageSwitcher: React.FC = () => {
     </div>
   );
 };
+
+export default LanguageSwitcher;

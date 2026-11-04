@@ -19,6 +19,7 @@ from fastapi import (
 from sqlalchemy.orm import Session
 
 from prescripto.db.session import get_db
+from prescripto.config.settings import settings
 from prescripto.db.models.users import User
 from prescripto.auth.dependencies import get_current_user
 from prescripto.storage.client import StorageClient, get_storage_client
@@ -64,7 +65,7 @@ async def create_prescription(
     if not idempotency_key or not idempotency_key.strip():
         raise MissingIdempotencyKeyException()
 
-    file_bytes = await file.read()
+    file_bytes = await file.read(settings.MAX_UPLOAD_BYTES + 1)
 
     ref = (patient_external_id or patient_ref or "").strip() or None
 
@@ -174,4 +175,3 @@ def delete_prescription(
     use_case = RequestDeletionUseCase(db=db)
     job_id = use_case.execute(document_id=id, caller=current_user)
     return DeletionAccepted(deletion_job_id=job_id)
-

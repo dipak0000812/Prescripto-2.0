@@ -28,6 +28,7 @@ from prescripto.api.v1.schemas.analysis import (
     FieldValue,
     RiskFindingOut,
     NotEvaluatedItem,
+    PrescriptionExtractionOut,
 )
 
 
@@ -54,6 +55,25 @@ class GetAnalysisStatusUseCase:
             AnalysisStage.analysis_id == analysis_id
         ).order_by(AnalysisStage.started_at).all()
 
+        provider_used = None
+        model_used = None
+        attempts = None
+        fallback_reason = None
+        fallback_used = False
+
+        for s in stages:
+            if s.output_json and isinstance(s.output_json, dict):
+                if s.output_json.get("provider_used"):
+                    provider_used = s.output_json.get("provider_used")
+                if s.output_json.get("model_used"):
+                    model_used = s.output_json.get("model_used")
+                if s.output_json.get("attempts") is not None:
+                    attempts = s.output_json.get("attempts")
+                if s.output_json.get("fallback_reason"):
+                    fallback_reason = s.output_json.get("fallback_reason")
+                if s.output_json.get("recognition_fallback_used") or s.output_json.get("fallback_occurred"):
+                    fallback_used = True
+
         return AnalysisStatus(
             analysis_id=analysis.id,
             status=analysis.status,
@@ -65,7 +85,32 @@ class GetAnalysisStatusUseCase:
                 )
                 for s in stages
             ],
+            error_message=self._user_facing_error(analysis.error_detail),
+            provider_used=provider_used,
+            model_used=model_used,
+            attempts=attempts,
+            fallback_reason=fallback_reason,
+            recognition_fallback_used=fallback_used,
+            recognition_fallback_reason=fallback_reason,
         )
+
+    @staticmethod
+    def _user_facing_error(error_detail: str | None) -> str | None:
+        if not error_detail:
+            return None
+        if error_detail.startswith("GEMINI_QUOTA_EXCEEDED:"):
+            return "Gemini's current free-tier rate or quota limit was reached. Please retry later."
+        if error_detail.startswith("GEMINI_TIMEOUT:"):
+            return "Prescription recognition timed out. Please try again later."
+        if error_detail.startswith("GEMINI_CONFIGURATION_ERROR:"):
+            return "Gemini recognition is not configured on the backend. Contact the administrator."
+        if error_detail.startswith("GEMINI_AUTHENTICATION_ERROR:"):
+            return "The backend could not authenticate with Gemini. Contact the administrator."
+        if error_detail.startswith("GEMINI_MODEL_UNAVAILABLE:"):
+            return "The configured Gemini model is unavailable. Contact the administrator."
+        if error_detail.startswith("GEMINI_MALFORMED_RESPONSE:"):
+            return "Prescription recognition returned an unreadable result. Please retry later."
+        return "Prescription analysis could not be completed. Please retry later or contact support."
 
 
 class GetAnalysisResultUseCase:
@@ -110,18 +155,17 @@ class GetAnalysisResultUseCase:
 
             res_id = candidate.resolved_medication_id if candidate else None
             res_status = candidate.resolution_status if candidate else ResolutionStatus.UNRESOLVED.value
-
             medication_lines.append(
                 MedicationLine(
                     line_index=m.line_index,
-                    name=FieldValue(value=m.name_raw, state=m.name_state, confidence=m.name_confidence or 0.0),
-                    strength=FieldValue(value=m.strength_raw, state=m.strength_state, confidence=m.strength_confidence or 0.0),
-                    dose=FieldValue(value=m.dose_raw, state=m.dose_state, confidence=m.dose_confidence or 0.0),
-                    unit=FieldValue(value=m.unit_raw, state=m.unit_state, confidence=m.unit_confidence or 0.0),
-                    frequency=FieldValue(value=m.frequency_raw, state=m.frequency_state, confidence=m.frequency_confidence or 0.0),
-                    route=FieldValue(value=m.route_raw, state=m.route_state, confidence=m.route_confidence or 0.0),
-                    duration=FieldValue(value=m.duration_raw, state=m.duration_state, confidence=m.duration_confidence or 0.0),
-                    instructions=FieldValue(value=m.instructions_raw, state=m.instructions_state, confidence=m.instructions_confidence or 0.0),
+                    name=FieldValue(value=m.name_raw, state=m.name_state, confidence=m.name_confidence),
+                    strength=FieldValue(value=m.strength_raw, state=m.strength_state, confidence=m.strength_confidence),
+                    dose=FieldValue(value=m.dose_raw, state=m.dose_state, confidence=m.dose_confidence),
+                    unit=FieldValue(value=m.unit_raw, state=m.unit_state, confidence=m.unit_confidence),
+                    frequency=FieldValue(value=m.frequency_raw, state=m.frequency_state, confidence=m.frequency_confidence),
+                    route=FieldValue(value=m.route_raw, state=m.route_state, confidence=m.route_confidence),
+                    duration=FieldValue(value=m.duration_raw, state=m.duration_state, confidence=m.duration_confidence),
+                    instructions=FieldValue(value=m.instructions_raw, state=m.instructions_state, confidence=m.instructions_confidence),
                     resolved_medication_id=res_id,
                     resolution_status=res_status,
                 )
@@ -163,6 +207,21 @@ class GetAnalysisResultUseCase:
         model_versions = [f"pipeline:{analysis.pipeline_version}"]
         snapshots = self.db.query(KnowledgeSnapshot).all()
         knowledge_names = [f"{s.source_name} {s.source_version}" for s in snapshots] or ["CDSCO 2024.1", "OPENFDA 2024-Q1"]
+        extraction_stage = self.db.query(AnalysisStage).filter(
+            AnalysisStage.analysis_id == analysis_id,
+            AnalysisStage.stage_name == "STRUCTURED_EXTRACTION",
+        ).first()
+        extraction_out = extraction_stage.output_json if (extraction_stage and extraction_stage.output_json) else {}
+        document_extraction = (
+            PrescriptionExtractionOut.model_validate(extraction_out)
+            if extraction_out
+            else None
+        )
+        provider_used = extraction_out.get("provider_used")
+        model_used = extraction_out.get("model_used")
+        attempts = extraction_out.get("attempts")
+        fallback_reason = extraction_out.get("fallback_reason")
+        fallback_used = bool(extraction_out.get("recognition_fallback_used") or extraction_out.get("fallback_occurred"))
 
         return AnalysisResult(
             analysis_id=analysis.id,
@@ -171,7 +230,14 @@ class GetAnalysisResultUseCase:
             model_versions=model_versions,
             knowledge_snapshots=knowledge_names,
             medications=medication_lines,
+            document_extraction=document_extraction,
             findings=findings_out,
             not_evaluated=not_evaluated_out,
             coverage_disclaimer=MANDATORY_COVERAGE_DISCLAIMER,
+            provider_used=provider_used,
+            model_used=model_used,
+            attempts=attempts,
+            fallback_reason=fallback_reason,
+            recognition_fallback_used=fallback_used,
+            recognition_fallback_reason=fallback_reason,
         )

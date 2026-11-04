@@ -39,3 +39,8 @@ class InsufficientRoleException(AuthException):
 class ForbiddenResourceAccessException(AuthException):
     def __init__(self, message: str = "Access to requested resource is forbidden"):
         super().__init__(status.HTTP_403_FORBIDDEN, "FORBIDDEN_RESOURCE_ACCESS", message)
+
+
+class RateLimitExceededException(AuthException):
+    def __init__(self, message: str = "Too many failed attempts. Please try again later."):
+        super().__init__(status.HTTP_429_TOO_MANY_REQUESTS, "RATE_LIMIT_EXCEEDED", message)

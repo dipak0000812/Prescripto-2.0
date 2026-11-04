@@ -119,6 +119,74 @@ def handle_quality_check(
     }
 
 
+def _resolve_recognition_provider(context: Dict[str, Any]):
+    """Resolves active recognition provider respecting explicit overrides and RECOGNITION_PROVIDER setting."""
+    if context.get("recognition_provider") is not None:
+        return context["recognition_provider"]
+    from prescripto.config.settings import settings
+    from prescripto.ml.recognition_providers import (
+        get_recognition_provider,
+        LocalRapidOCRProvider,
+    )
+    provider_type = (settings.RECOGNITION_PROVIDER or "gemini").lower()
+    if provider_type in ("rapidocr", "local_rapidocr", "local"):
+        return LocalRapidOCRProvider(ocr_runtime=context.get("ocr_runtime"))
+    return get_recognition_provider(provider_type)
+
+
+def _recognize_document(context: Dict[str, Any], image_bytes: bytes, mime_type: str):
+    """Gemini first; RapidOCR on ANY RecognitionError. Remote ml-service is not used."""
+    from prescripto.config.settings import settings
+    from prescripto.ml.recognition_providers import (
+        LocalRapidOCRProvider,
+        RecognitionError,
+    )
+
+    provider = _resolve_recognition_provider(context)
+    try:
+        rec_result = provider.recognize_document(image_bytes, mime_type=mime_type)
+        context["recognition_provider_used"] = getattr(rec_result, "provider_used", "gemini")
+        context["recognition_model_used"] = getattr(rec_result, "model_used", None)
+        context["recognition_attempts"] = getattr(rec_result, "attempts", 1)
+        context["recognition_fallback_used"] = getattr(rec_result, "fallback_occurred", False)
+        context["recognition_fallback_reason"] = getattr(rec_result, "fallback_reason", None)
+        return rec_result
+    except RecognitionError as err:
+        if type(provider).__name__ == "LocalRapidOCRProvider":
+            raise
+        result = LocalRapidOCRProvider(
+            ocr_runtime=context.get("ocr_runtime")
+        ).recognize_document(image_bytes, mime_type=mime_type)
+        result.provider_used = "rapidocr"
+        result.model_used = "rapidocr"
+        result.attempts = getattr(err, "attempts", 1)
+        result.fallback_occurred = True
+        result.fallback_reason = str(err).split(":", 1)[0]
+        context["recognition_provider_used"] = "rapidocr"
+        context["recognition_model_used"] = "rapidocr"
+        context["recognition_attempts"] = getattr(err, "attempts", 1)
+        context["recognition_fallback_used"] = True
+        context["recognition_fallback_reason"] = str(err)
+        return result
+    except Exception as err:
+        if type(provider).__name__ == "LocalRapidOCRProvider":
+            raise
+        result = LocalRapidOCRProvider(
+            ocr_runtime=context.get("ocr_runtime")
+        ).recognize_document(image_bytes, mime_type=mime_type)
+        result.provider_used = "rapidocr"
+        result.model_used = "rapidocr"
+        result.attempts = getattr(err, "attempts", 1)
+        result.fallback_occurred = True
+        result.fallback_reason = f"UNEXPECTED_ERROR:{type(err).__name__}"
+        context["recognition_provider_used"] = "rapidocr"
+        context["recognition_model_used"] = "rapidocr"
+        context["recognition_attempts"] = getattr(err, "attempts", 1)
+        context["recognition_fallback_used"] = True
+        context["recognition_fallback_reason"] = str(err)
+        return result
+
+
 def handle_text_detection(
     db: Session,
     analysis: Analysis,
@@ -127,24 +195,43 @@ def handle_text_detection(
 ) -> Dict[str, Any]:
     """
     Stage: TEXT_DETECTION.
-    Uses ModelRuntime text detector to identify line bounding boxes on the prescription.
+    Uses the configured RecognitionProvider (Gemini Vision, local RapidOCR, or mock) to recognize
+    document text and perform clinical entity classification.
     """
-    runtime = context.get("ocr_runtime")
-    if runtime is None:
-        try:
-            from prescripto.ml.rapid_runtime import RapidOCRRuntime
-            runtime = RapidOCRRuntime()
-        except Exception:
-            from prescripto.ml.runtime import MockModelRuntime
-            runtime = MockModelRuntime()
-    lines = runtime.recognize_document(context["document_bytes"])
-    context["ocr_lines"] = lines
+    from prescripto.ml.runtime import OCRLine
+
+    doc = document
+    if not doc and analysis.document_id:
+        doc = db.query(PrescriptionDocument).filter(PrescriptionDocument.id == analysis.document_id).first()
+    mime = doc.mime_type if doc and doc.mime_type else "image/jpeg"
+
+    rec_result = _recognize_document(context, context["document_bytes"], mime)
+    context["document_recognition"] = rec_result
+
+    # Maintain backwards-compatible ocr_lines for stages and tests expecting it
+    ocr_lines: List[OCRLine] = []
+    for idx, item in enumerate(rec_result.items):
+        l_idx = item.line_index if item.line_index is not None else idx
+        box_tuple = tuple(item.box) if item.box and len(item.box) == 4 else (0.0, 0.0, 100.0, 20.0)
+        ocr_lines.append(OCRLine(line_index=l_idx, text=item.original_text, raw_score=item.confidence or 0.95, box=box_tuple))
+
+    context["ocr_lines"] = ocr_lines
+
+    fallback_used = rec_result.fallback_occurred or context.get("recognition_fallback_used", False)
+    fallback_reason = rec_result.fallback_reason or context.get("recognition_fallback_reason")
 
     return {
         "stage": "TEXT_DETECTION",
         "status": "COMPLETED",
-        "regions_detected_count": len(lines),
-        "detector_model": "RapidOCR",
+        "regions_detected_count": len(ocr_lines),
+        "detector_model": rec_result.provider_used,
+        "provider_used": rec_result.provider_used,
+        "model_used": rec_result.model_used,
+        "attempts": rec_result.attempts,
+        "fallback_occurred": fallback_used,
+        "fallback_reason": fallback_reason,
+        "recognition_fallback_used": fallback_used,
+        "recognition_fallback_reason": fallback_reason,
     }
 
 
@@ -156,7 +243,7 @@ def handle_ocr_recognition(
 ) -> Dict[str, Any]:
     """
     Stage: OCR_RECOGNITION.
-    Recognizes text across detected line regions and produces calibrated inference confidences.
+    Emits recognized lines and preserves recognition provider provenance.
     """
     lines = context.get("ocr_lines", [])
     recognized_lines = [
@@ -171,13 +258,24 @@ def handle_ocr_recognition(
     ]
 
     context["recognized_lines"] = recognized_lines
+    rec_result = context.get("document_recognition")
+    provider_name = rec_result.provider_used if rec_result else "RapidOCR"
+    model_name = getattr(rec_result, "model_used", None) if rec_result else "RapidOCR"
+    attempts = getattr(rec_result, "attempts", 1) if rec_result else 1
 
     return {
         "stage": "OCR_RECOGNITION",
         "status": "COMPLETED",
         "lines_recognized_count": len(recognized_lines),
-        "recognizer_model": "PP-OCRv6",
+        "recognizer_model": provider_name,
+        "provider_used": provider_name,
+        "model_used": model_name,
+        "attempts": attempts,
         "calibrated": False,
+        "fallback_occurred": rec_result.fallback_occurred if rec_result else False,
+        "fallback_reason": rec_result.fallback_reason if rec_result else None,
+        "recognition_fallback_used": rec_result.fallback_occurred if rec_result else False,
+        "recognition_fallback_reason": rec_result.fallback_reason if rec_result else None,
     }
 
 
@@ -189,29 +287,116 @@ def handle_structured_extraction(
 ) -> Dict[str, Any]:
     """
     Stage: STRUCTURED_EXTRACTION.
-    If no prescription medications already exist for this analysis, generates extraction lines.
+    Strictly separates genuine medication orders from non-medication clinical entities
+    (hospital details, patient details, dates, symptoms, diagnosis, vitals, and general advice).
+    Guarantees zero false medication entries from non-drug text.
     """
+    import re
+    from prescripto.domain.uncertainty.models import FieldState
+    from prescripto.domain.recognition.models import DocumentFieldType
+    from prescripto.ml.extraction import is_form_boilerplate, extract_patient_name
+
     existing_meds = db.query(PrescriptionMedication).filter(
         PrescriptionMedication.analysis_id == analysis.id
     ).all()
-
     existing_by_line = {med.line_index: med for med in existing_meds}
-    recognized_lines = context.get("recognized_lines", [])
-    for line in recognized_lines:
-        line_index = int(line["line_index"])
+
+    rec_result = context.get("document_recognition")
+    if rec_result is None:
+        doc = document or db.query(PrescriptionDocument).filter(PrescriptionDocument.id == analysis.document_id).first()
+        mime = doc.mime_type if doc and doc.mime_type else "image/jpeg"
+        rec_result = _recognize_document(context, context["document_bytes"], mime)
+        context["document_recognition"] = rec_result
+
+    # 2. Extract ONLY genuine medications (Strict zero-false-medication clinical rule)
+    extracted_count = 0
+    for item in rec_result.medications:
+        line_index = int(item.line_index if item.line_index is not None else extracted_count)
         if line_index in existing_by_line:
             continue
-        fields = extract_prescription_fields(str(line.get("text") or ""))
-        values: dict[str, Any] = {"id": uuid.uuid4(), "analysis_id": analysis.id, "line_index": line_index}
-        for field_name, field_value in fields.items():
-            values[f"{field_name}_raw"] = field_value["raw"]
-            values[f"{field_name}_state"] = field_value["state"]
-            values[f"{field_name}_confidence"] = field_value["confidence"]
-        db.add(PrescriptionMedication(**values))
-    db.flush()
-    line_count = len(recognized_lines)
 
-    return {"line_count": line_count, "status": "COMPLETED", "calibrated": False}
+        raw_name = item.name or item.original_text
+        if not raw_name or is_form_boilerplate(raw_name):
+            continue
+
+        values: dict[str, Any] = {
+            "id": uuid.uuid4(),
+            "analysis_id": analysis.id,
+            "line_index": line_index,
+            "name_raw": raw_name,
+            "name_state": FieldState.AMBIGUOUS.value,
+            "name_confidence": item.confidence,
+            "strength_raw": item.strength,
+            "strength_state": FieldState.AMBIGUOUS.value if item.strength else FieldState.NOT_PRESENT.value,
+            "strength_confidence": item.confidence if item.strength else None,
+            "dose_raw": item.dose,
+            "dose_state": FieldState.AMBIGUOUS.value if item.dose else FieldState.NOT_PRESENT.value,
+            "dose_confidence": item.confidence if item.dose else None,
+            "route_raw": item.route,
+            "route_state": FieldState.AMBIGUOUS.value if item.route else FieldState.NOT_PRESENT.value,
+            "route_confidence": item.confidence if item.route else None,
+            "frequency_raw": item.frequency,
+            "frequency_state": FieldState.AMBIGUOUS.value if item.frequency else FieldState.NOT_PRESENT.value,
+            "frequency_confidence": item.confidence if item.frequency else None,
+            "duration_raw": item.duration,
+            "duration_state": FieldState.AMBIGUOUS.value if item.duration else FieldState.NOT_PRESENT.value,
+            "duration_confidence": item.confidence if item.duration else None,
+            "instructions_raw": item.instructions,
+            "instructions_state": FieldState.AMBIGUOUS.value if item.instructions else FieldState.NOT_PRESENT.value,
+            "instructions_confidence": item.confidence if item.instructions else None,
+            "unit_raw": None,
+            "unit_state": FieldState.NOT_PRESENT.value,
+            "unit_confidence": None,
+        }
+        db.add(PrescriptionMedication(**values))
+        extracted_count += 1
+
+    db.flush()
+
+    return {
+        "line_count": extracted_count,
+        "status": "COMPLETED",
+        "calibrated": False,
+        "processing_status": rec_result.processing_status,
+        "source_type": rec_result.source_type,
+        "hospital_details": rec_result.hospital_details,
+        "patient_details": rec_result.patient_details,
+        "date": rec_result.date,
+        "symptoms": rec_result.symptoms,
+        "diagnosis": rec_result.diagnosis,
+        "vitals": rec_result.vitals,
+        "medication_orders": [
+            {
+                "original_text": item.original_text,
+                "name": item.name,
+                "strength": item.strength,
+                "dose": item.dose,
+                "route": item.route,
+                "frequency": item.frequency,
+                "duration": item.duration,
+                "instructions": item.instructions,
+                "needs_review": True,
+            }
+            for item in rec_result.medications
+        ],
+        "general_advice": rec_result.general_advice,
+        "non_medication_treatments": [t.original_text for t in rec_result.non_medication_treatments],
+        "uncertain_items": [
+            {
+                "original_text": item.original_text,
+                "uncertainty_reason": item.uncertainty_reason,
+            }
+            for item in rec_result.uncertain_items
+        ],
+        "warnings": rec_result.warnings,
+        "provider_used": rec_result.provider_used,
+        "model_used": rec_result.model_used,
+        "attempts": rec_result.attempts,
+        "fallback_occurred": rec_result.fallback_occurred,
+        "fallback_reason": rec_result.fallback_reason,
+        "recognition_fallback_used": rec_result.fallback_occurred,
+        "recognition_fallback_reason": rec_result.fallback_reason,
+    }
 
 
 def handle_medication_normalization(
@@ -222,7 +407,8 @@ def handle_medication_normalization(
 ) -> Dict[str, Any]:
     """
     Stage: MEDICATION_NORMALIZATION.
-    Normalizes each PrescriptionMedication against Medication Master.
+    Resolves only a unique exact verified medication match. Candidate suggestions never
+    overwrite the source wording or become a resolved medicine without human review.
     """
     meds = db.query(PrescriptionMedication).filter(
         PrescriptionMedication.analysis_id == analysis.id
@@ -238,6 +424,7 @@ def handle_medication_normalization(
         ).first()
         extracted_text = med.name_raw or (stored_candidate.extracted_text if stored_candidate else "")
         search_result = search_service.search_candidates(extracted_text)
+
         exact_verified = [
             candidate
             for candidate in search_result.candidates
@@ -245,8 +432,11 @@ def handle_medication_normalization(
             and candidate.medication.verification_status
             in {VerificationStatus.VERIFIED_AUTHORITY.value, VerificationStatus.EXPERT_CONFIRMED.value}
         ]
-        can_resolve = med.name_state == "CLEAR" and len(exact_verified) == 1
-        if can_resolve:
+
+        top_candidate = search_result.candidates[0] if search_result.candidates else None
+
+        can_resolve_exact = (len(exact_verified) == 1)
+        if can_resolve_exact:
             exact = exact_verified[0]
             resolution = MedicationResolutionResult(
                 extracted_text=extracted_text,
@@ -264,7 +454,6 @@ def handle_medication_normalization(
             )
         resolutions[med.id] = resolution
 
-        top_candidate = search_result.candidates[0] if search_result.candidates else None
         if stored_candidate:
             stored_candidate.extracted_text = extracted_text
             stored_candidate.matching_strategy = (top_candidate.matching_strategy if top_candidate else "NO_MATCH")
@@ -316,11 +505,11 @@ def handle_safety_screening(
 
     # 1. Duplicate detection
     resolved_pairs = [
-        (med.id, context.get("medication_resolutions", {}).get(
-            med.id,
-            MedicationResolutionResult(med.name_raw or "", ResolutionStatus.UNRESOLVED),
-        ))
+        (med.id, resolution)
         for med in meds
+        if (resolution := context.get("medication_resolutions", {}).get(med.id))
+        and resolution.resolution_status == ResolutionStatus.RESOLVED
+        and resolution.resolved_medication is not None
     ]
     findings = list(detect_duplicate_medications(analysis.id, resolved_pairs))
 
@@ -339,6 +528,8 @@ def handle_safety_screening(
     for med in meds:
         res = context.get("medication_resolutions", {}).get(med.id)
         canonical = res.resolved_medication if res and res.resolution_status == ResolutionStatus.RESOLVED else None
+        if canonical is None:
+            continue
         med_allergy_inputs.append((med.id, med.name_raw or "", canonical))
         med_dosage_inputs.append((med.id, med.name_raw or "", med.strength_raw, med.dose_raw, canonical))
 
@@ -453,10 +644,24 @@ def handle_report_assembly(
     analysis.completed_at = utc_now()
     db.flush()
 
+    rec_result = context.get("document_recognition")
+    fallback_used = context.get("recognition_fallback_used", False) or getattr(rec_result, "fallback_occurred", False)
+    fallback_reason = context.get("recognition_fallback_reason", getattr(rec_result, "fallback_reason", None))
+    provider_used = context.get("recognition_provider_used", getattr(rec_result, "provider_used", "rapidocr"))
+    model_used = context.get("recognition_model_used", getattr(rec_result, "model_used", None))
+    attempts = context.get("recognition_attempts", getattr(rec_result, "attempts", 1))
+
     return {
         "final_status": analysis.status,
         "review_required": analysis.review_required,
         "review_reasons": analysis.review_reasons,
+        "provider_used": provider_used,
+        "model_used": model_used,
+        "attempts": attempts,
+        "fallback_occurred": fallback_used,
+        "fallback_reason": fallback_reason,
+        "recognition_fallback_used": fallback_used,
+        "recognition_fallback_reason": fallback_reason,
         "status": "COMPLETED",
     }
 

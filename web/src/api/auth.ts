@@ -25,7 +25,7 @@ export async function sendOtpApi(phoneNumber: string): Promise<{
   status: string;
   phone_number: string;
   message: string;
-  mock_otp: string;
+  mock_otp?: string;
 }> {
   const response = await apiClient.post('/auth/send-otp', {
     phone_number: phoneNumber,

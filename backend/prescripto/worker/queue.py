@@ -300,6 +300,7 @@ class QueuePoller:
         lease_token: int,
         worker_id: str,
         error_message: str,
+        retryable: bool = True,
     ) -> None:
         """
         Increments retry_count, computes exponential backoff, or transitions to DEAD.
@@ -336,7 +337,7 @@ class QueuePoller:
 
         analysis = db.query(Analysis).filter(Analysis.id == job.analysis_id).first()
 
-        if new_retry_count >= job.max_retries:
+        if not retryable or new_retry_count >= job.max_retries:
             job.status = "DEAD"
             job.backoff_until = None
             if analysis:

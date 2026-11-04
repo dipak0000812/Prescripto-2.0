@@ -2,7 +2,7 @@ import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Layout } from './components/Layout';
-import { HomePage } from './pages/HomePage';
+import HomePage from './pages/HomePage';
 import { LoginPage } from './pages/LoginPage';
 import { PrescriptionsListPage } from './pages/PrescriptionsListPage';
 import { UploadPrescriptionPage } from './pages/UploadPrescriptionPage';
@@ -12,6 +12,7 @@ import { SystemHealthPage } from './pages/SystemHealthPage';
 import { PatientSearchPage } from './pages/PatientSearchPage';
 import { PatientTimelinePage } from './pages/PatientTimelinePage';
 import { PatientPortalPage } from './pages/PatientPortalPage';
+import { HelpPage } from './pages/HelpPage';
 import { Role } from './types/api';
 import { ShieldAlert, RefreshCw } from 'lucide-react';
 
@@ -29,7 +30,7 @@ const ProtectedRoute: React.FC<{
       <div className="min-h-screen flex items-center justify-center bg-slate-50">
         <div className="text-center">
           <RefreshCw className="w-8 h-8 text-teal-600 animate-spin mx-auto mb-3" />
-          <div className="text-xs font-semibold text-slate-600">Verifying Clinical Session...</div>
+          <div className="text-xs font-semibold text-slate-600">Checking your session...</div>
         </div>
       </div>
     );
@@ -111,6 +112,9 @@ export const App: React.FC = () => {
 
             {/* Prescriptions Upload Intake */}
             <Route path="upload" element={<UploadPrescriptionPage />} />
+
+            {/* Help & FAQ Screen */}
+            <Route path="help" element={<HelpPage />} />
 
             {/* Doctor-Wide Patient Search & Lookup */}
             <Route

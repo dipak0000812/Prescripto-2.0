@@ -8,14 +8,14 @@ interface StageProgressBarProps {
 }
 
 const ORDERED_STAGES: { id: StageName; label: string; desc: string }[] = [
-  { id: 'INGESTION', label: '1. Ingestion', desc: 'Integrity & Format Verification' },
-  { id: 'QUALITY_CHECK', label: '2. Quality Check', desc: 'Laplacian Variance & Contrast' },
-  { id: 'TEXT_DETECTION', label: '3. Text Detection', desc: 'Line Bounding Box Detection' },
-  { id: 'OCR_RECOGNITION', label: '4. Recognition', desc: 'Handwriting OCR & Calibration' },
-  { id: 'STRUCTURED_EXTRACTION', label: '5. Extraction', desc: '8 Clinical Fields Structured' },
-  { id: 'MEDICATION_NORMALIZATION', label: '6. Normalization', desc: 'CDSCO Medication Master' },
-  { id: 'SAFETY_SCREENING', label: '7. Safety Screening', desc: 'Duplicate Check & OpenFDA' },
-  { id: 'REPORT_ASSEMBLY', label: '8. Report Assembly', desc: 'Review Triggers & Packaging' },
+  { id: 'INGESTION', label: '1. Image received', desc: 'Upload accepted' },
+  { id: 'QUALITY_CHECK', label: '2. Image quality', desc: 'Image processing step' },
+  { id: 'TEXT_DETECTION', label: '3. Text detection', desc: 'Locating text in the image' },
+  { id: 'OCR_RECOGNITION', label: '4. Text recognition', desc: 'Reading visible text' },
+  { id: 'STRUCTURED_EXTRACTION', label: '5. Text extraction', desc: 'Organizing extracted details' },
+  { id: 'MEDICATION_NORMALIZATION', label: '6. Medicine review', desc: 'Processing medicine candidates' },
+  { id: 'SAFETY_SCREENING', label: '7. Safety screening', desc: 'Processing available checks' },
+  { id: 'REPORT_ASSEMBLY', label: '8. Preparing result', desc: 'Making the result available' },
 ];
 
 export const StageProgressBar: React.FC<StageProgressBarProps> = ({ stages, currentStatus }) => {
@@ -29,19 +29,17 @@ export const StageProgressBar: React.FC<StageProgressBarProps> = ({ stages, curr
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-slate-100">
         <div>
           <h3 className="text-sm font-bold text-slate-900 tracking-tight flex items-center gap-2">
-            <span>Deterministic 8-Stage Clinical Verification</span>
+            <span>Processing progress</span>
             {currentStatus === 'PROCESSING' && (
               <span className="inline-flex items-center gap-1 text-xs font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
                 <Loader2 className="w-3 h-3 animate-spin" /> In Progress
               </span>
             )}
           </h3>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Monotonic lease fencing with per-stage verification — no uncalibrated inference
-          </p>
+          <p className="text-xs text-slate-500 mt-0.5">Processing status only; completion does not verify the transcription or clinical content.</p>
         </div>
         <div className="text-right">
-          <div className="text-xs font-medium text-slate-700">
+          <div className="text-xs font-medium text-slate-700" role="status" aria-live="polite">
             {completedCount} of {ORDERED_STAGES.length} stages completed
           </div>
           <div className="w-36 bg-slate-100 rounded-full h-2 mt-1.5 overflow-hidden border border-slate-200">
@@ -79,6 +77,7 @@ export const StageProgressBar: React.FC<StageProgressBarProps> = ({ stages, curr
           return (
             <div
               key={s.id}
+              aria-current={status === 'RUNNING' ? 'step' : undefined}
               className={`p-3 rounded-lg border text-xs flex items-start gap-2.5 transition-all ${badgeColor}`}
             >
               <div className="mt-0.5">{icon}</div>

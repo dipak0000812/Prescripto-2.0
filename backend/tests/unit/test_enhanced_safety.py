@@ -91,14 +91,17 @@ def test_detect_dosage_safety_warning_exceeds_threshold():
 
 
 def test_llm_explainer_deterministic_fallback():
-    service = LLMExplainerService(gemini_key=None, openai_key=None)
+    service = LLMExplainerService(gemini_key=None)
     
     medications = [
         {"name_raw": "Augmentin 625", "strength_raw": "625mg", "frequency_raw": "BD", "duration_raw": "5 days"},
         {"name_raw": "Dolo 650", "strength_raw": "650mg", "frequency_raw": "TDS", "duration_raw": "3 days"},
     ]
     findings = [
-        {"evidence_text": "CRITICAL ALLERGY ALERT: Patient is allergic to Penicillin. Augmentin is contraindicated."}
+        {
+            "finding_status": FindingStatus.CONFIRMED_BY_SOURCE.value,
+            "evidence_text": "CRITICAL ALLERGY ALERT: Patient is allergic to Penicillin. Augmentin is contraindicated.",
+        }
     ]
     patient = {
         "name": "Rahul Verma",
@@ -111,4 +114,4 @@ def test_llm_explainer_deterministic_fallback():
     assert "Rahul Verma" in result["executive_summary"]
     assert len(result["patient_instructions"]) == 2
     assert "CRITICAL ALLERGY ALERT" in result["clinical_alerts"][0]
-    assert len(result["doctor_recommendations"]) > 0
+    assert result["doctor_recommendations"] == []

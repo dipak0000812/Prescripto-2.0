@@ -254,3 +254,11 @@ def test_submit_review_success_escalated(client: TestClient, sample_analysis, au
     # Verify DB transition
     db_session.refresh(analysis)
     assert analysis.status == "REVIEWED_ESCALATED"
+
+
+def test_get_clinical_summary_not_found_raises_http_exception(client: TestClient, auth_tokens):
+    """Test 1: Verify get_clinical_summary raises 404 HTTPException correctly when analysis not found."""
+    headers = {"Authorization": f"Bearer {auth_tokens['reviewer']}"}
+    fake_id = uuid.uuid4()
+    response = client.get(f"/api/v1/analyses/{fake_id}/clinical-summary", headers=headers)
+    assert response.status_code == 404

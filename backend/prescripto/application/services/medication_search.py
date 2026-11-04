@@ -54,7 +54,19 @@ class MedicationSearchService:
                 candidates=[],
             )
 
-        query_text = extracted_text.strip().lower()
+        import re
+        raw_query = extracted_text.strip().lower()
+        # Clean query: strip dosage/volume units (e.g., '15 me', '15ml', '120ml', '500mg')
+        clean_query = re.sub(
+            r"\b\d+(?:\.\d+)?\s*(?:ml|me|m1|mi|mg|mcg|g|tablets?|tabs?|caps?|oz)\b",
+            "",
+            raw_query,
+            flags=re.IGNORECASE,
+        ).strip()
+        clean_query = re.sub(r"^tn\b", "tr. ", clean_query, flags=re.IGNORECASE)
+        clean_query = re.sub(r"^tn(?=[a-z])", "tr. ", clean_query, flags=re.IGNORECASE)
+        query_text = clean_query if clean_query else raw_query
+
         all_meds = self.db.query(DBMedication).all()
 
         scored_candidates: List[CandidateMatch] = []
@@ -65,7 +77,13 @@ class MedicationSearchService:
             ingredients = [i.lower() for i in (med.active_ingredients or [])]
 
             # 1. Exact match
-            if query_text == brand_lower or query_text == generic_lower or any(query_text == i for i in ingredients):
+            if (
+                query_text == brand_lower
+                or query_text == generic_lower
+                or raw_query == brand_lower
+                or raw_query == generic_lower
+                or any(query_text == i or raw_query == i for i in ingredients)
+            ):
                 scored_candidates.append(
                     CandidateMatch(
                         medication=_to_domain_medication(med),
@@ -77,7 +95,12 @@ class MedicationSearchService:
                 continue
 
             # 2. Substring match (e.g. "Augmentin 625" in "Augmentin 625 Duo" or "Dolo 650" in "Dolo 650")
-            if query_text in brand_lower or brand_lower in query_text:
+            if (
+                query_text in brand_lower
+                or brand_lower in query_text
+                or raw_query in brand_lower
+                or brand_lower in raw_query
+            ):
                 score = 0.90
                 scored_candidates.append(
                     CandidateMatch(
@@ -101,15 +124,17 @@ class MedicationSearchService:
                 )
                 continue
 
-            # 3. Fuzzy similarity via RapidFuzz token matching / sequence matcher
+            # 3. Fuzzy similarity via RapidFuzz weighted ratio / token matching
             try:
                 from rapidfuzz import fuzz
                 score_brand = max(
+                    fuzz.WRatio(query_text, brand_lower),
                     fuzz.ratio(query_text, brand_lower),
                     fuzz.partial_ratio(brand_lower, query_text),
                     fuzz.token_set_ratio(query_text, brand_lower),
                 ) / 100.0
                 score_generic = max(
+                    fuzz.WRatio(query_text, generic_lower),
                     fuzz.ratio(query_text, generic_lower),
                     fuzz.partial_ratio(generic_lower, query_text),
                     fuzz.token_set_ratio(query_text, generic_lower),

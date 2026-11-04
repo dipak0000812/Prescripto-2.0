@@ -11,7 +11,9 @@ from sqlalchemy.orm import Session
 from sqlalchemy import or_, desc
 
 from prescripto.db.session import get_db
-from prescripto.auth.dependencies import get_current_user
+from prescripto.auth.dependencies import get_current_user, require_role
+from prescripto.auth.exceptions import InsufficientRoleException
+from prescripto.db.models.enums import Role
 from prescripto.db.models.users import User
 from prescripto.db.models.patient import Patient
 from prescripto.db.models.document import PrescriptionDocument
@@ -91,7 +93,7 @@ def search_patients(
     q: str = Query(default="", description="Search query (name, PAT-ID, or phone)"),
     limit: int = Query(default=25, ge=1, le=100),
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_role(Role.REVIEWER, Role.ADMIN)),
 ) -> List[PatientSummary]:
     """Search patients across name, patient ID, and mobile phone number."""
     query = db.query(Patient)
@@ -184,6 +186,12 @@ def get_patient_timeline(
             detail=f"Patient '{patient_identifier}' not found",
         )
 
+    # Access control: allowed for REVIEWER/ADMIN, or a PATIENT user whose own linked patient record matches
+    is_staff = current_user.role in (Role.REVIEWER.value, Role.ADMIN.value, "REVIEWER", "ADMIN")
+    is_own_patient = (patient.user_id is not None and patient.user_id == current_user.id)
+    if not (is_staff or is_own_patient):
+        raise InsufficientRoleException("Caller lacks permission to view this patient record")
+
     # Find all prescription documents matching this patient
     docs = db.query(PrescriptionDocument).filter(
         or_(
@@ -263,10 +271,10 @@ def get_patient_timeline(
             ).all()
             for rv in revs:
                 review_list.append({
-                    "action": rv.action,
+                    "action": getattr(rv, "status", "SUBMITTED"),
                     "reviewer_id": str(rv.reviewer_id),
                     "notes": rv.notes,
-                    "reviewed_at": rv.reviewed_at.isoformat(),
+                    "reviewed_at": (rv.submitted_at or rv.created_at or utc_now()).isoformat(),
                 })
 
         timeline_events.append(

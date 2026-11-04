@@ -48,6 +48,7 @@ class PrescriptionDetail(BaseModel):
     mime_type: str
     file_size_bytes: int
     patient_ref: Optional[str] = None
+    patient_name: Optional[str] = None
     image_url: Optional[str] = Field(
         default=None,
         description="Presigned GET, 60-second TTL. Never cache, log, or persist.",

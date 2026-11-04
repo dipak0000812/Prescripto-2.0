@@ -41,6 +41,8 @@ MEDICATIONS = [
     ("Combiflam", "Ibuprofen + Paracetamol", ["Ibuprofen", "Paracetamol"], "400mg+325mg", "Tablet", "Oral"),
     ("Meftal Spas", "Mefenamic Acid + Dicyclomine", ["Mefenamic Acid", "Dicyclomine"], "250mg+10mg", "Tablet", "Oral"),
     # Antacids / GI
+    ("Amphojel", "Aluminum Hydroxide Gel", ["Aluminum Hydroxide"], "320mg/5ml", "Suspension", "Oral"),
+    ("Tr. Belladonna", "Belladonna Tincture", ["Belladonna Alkaloids"], "15ml", "Liquid", "Oral"),
     ("Pantoprazole 40", "Pantoprazole", ["Pantoprazole Sodium"], "40mg", "Tablet", "Oral"),
     ("Omeprazole 20", "Omeprazole", ["Omeprazole"], "20mg", "Capsule", "Oral"),
     ("Rabeprazole 20", "Rabeprazole", ["Rabeprazole Sodium"], "20mg", "Tablet", "Oral"),
@@ -141,8 +143,10 @@ def seed_medications(db_session=None):
         from prescripto.db.models.medication import Medication
         existing = {m[0] for m in db_session.query(Medication.brand_name).all()}
         inserted = 0
+        skipped = 0
         for brand, generic, ingredients, strength, form, route in MEDICATIONS:
             if brand in existing:
+                skipped += 1
                 continue
             med = Medication(
                 id=uuid.uuid4(),
@@ -162,7 +166,18 @@ def seed_medications(db_session=None):
             existing.add(brand)
             inserted += 1
         db_session.commit()
+        total = db_session.query(Medication).count()
+        print(f"Seeded {inserted} new medications, skipped {skipped} existing.")
+        print(f"Total medications in database: {total}")
         return inserted
+
+    # If no db_session provided, default to SQLAlchemy SessionLocal (PostgreSQL / configured DB)
+    try:
+        from prescripto.db.session import SessionLocal
+        with SessionLocal() as session:
+            return seed_medications(db_session=session)
+    except Exception as exc:
+        print(f"SessionLocal fallback to direct sqlite connection: {exc}")
 
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()

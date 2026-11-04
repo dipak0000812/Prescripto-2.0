@@ -9,7 +9,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=(".env", "backend/.env", "../.env"),
         env_file_encoding="utf-8",
         extra="ignore",
     )
@@ -19,14 +19,18 @@ class Settings(BaseSettings):
     LOG_LEVEL: str = Field(default="INFO")
 
     # Database
+    # Host default uses Compose's published port (5435). Inside Docker, compose
+    # overrides this to postgres:5432 on the internal network.
     DATABASE_URL: str = Field(
-        default="postgresql+psycopg2://prescripto:prescripto_secret@localhost:5432/prescripto_db"
+        default="postgresql+psycopg2://prescripto:prescripto_secret@localhost:5435/prescripto_db"
     )
     DB_POOL_SIZE: int = Field(default=10)
     DB_MAX_OVERFLOW: int = Field(default=20)
 
     # CORS Configuration
-    CORS_ORIGINS: str = Field(default="http://localhost:3000,http://127.0.0.1:3000")
+    CORS_ORIGINS: str = Field(
+        default="http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,http://127.0.0.1:3000"
+    )
 
     # Object Storage (MinIO / S3)
     S3_ENDPOINT: str = Field(default="http://localhost:9000")
@@ -49,17 +53,22 @@ class Settings(BaseSettings):
     MODEL_CACHE_DIR: str = Field(default="/tmp/prescripto_models")
 
     # ML Service integration
-    # ML_RUNTIME_MODE controls which ModelRuntime the worker instantiates:
-    #   "rapidocr" — RapidOCRRuntime (default; real OCR via ONNX PaddleOCR on CPU)
-    #   "mock"     — MockModelRuntime (hermetic testing; no external service needed)
-    #   "remote"   — RemoteMLClient (calls the ML service at ML_SERVICE_URL)
+    # ML_RUNTIME_MODE=remote (ml-service) is disabled. Leave "rapidocr" so local
+    # RapidOCR can run only as a Gemini quota/auth/timeout fallback.
+    #   "rapidocr" — RapidOCRRuntime (Gemini fallback; ONNX PaddleOCR on CPU)
+    #   "mock"     — MockModelRuntime (hermetic testing)
+    #   "remote"   — unused; do not enable
     ML_RUNTIME_MODE: str = Field(default="rapidocr")
     ML_SERVICE_URL: str = Field(default="http://localhost:8001")
 
+    # Machine Learning & Vision Recognition Providers
+    RECOGNITION_PROVIDER: str = Field(default="gemini")
+    GEMINI_API_KEY: Optional[str] = Field(default=None)
+    GEMINI_MODEL: str = Field(default="gemini-3.5-flash")
+    GEMINI_FALLBACK_MODEL: str = Field(default="gemini-3.1-flash-lite")
+
     # Feature & Safety Flags
     LLM_ENABLED: bool = Field(default=False)
-    GEMINI_API_KEY: Optional[str] = Field(default=None)
-    OPENAI_API_KEY: Optional[str] = Field(default=None)
     ENABLED_KNOWLEDGE_PROVIDERS: str = Field(default="openfda,cdsco")
     LICENSE_MODE_ALLOWED: str = Field(default="COMMERCIAL_PERMISSIVE")
     OPENFDA_API_KEY: Optional[str] = Field(default=None)
@@ -85,12 +94,32 @@ class Settings(BaseSettings):
             return ["*"]
         return [o.strip() for o in self.CORS_ORIGINS.split(",") if o.strip()]
 
+    @field_validator("DATABASE_URL", mode="before")
+    @classmethod
+    def normalize_database_url(cls, v: str) -> str:
+        if isinstance(v, str):
+            if v.startswith("postgres://"):
+                return v.replace("postgres://", "postgresql+psycopg2://", 1)
+            elif v.startswith("postgresql://") and not v.startswith("postgresql+"):
+                return v.replace("postgresql://", "postgresql+psycopg2://", 1)
+        return v
+
     @field_validator("OCR_MODEL_VERSION")
     @classmethod
     def validate_no_latest(cls, v: str) -> str:
         if v.lower() == "latest":
             raise ValueError("OCR_MODEL_VERSION must be an exact pinned version, never 'latest'.")
         return v
+
+    def log_missing_gemini_api_key(self) -> None:
+        """Logs once when GEMINI_API_KEY is unset. Does not print the key."""
+        if (self.GEMINI_API_KEY or "").strip():
+            return
+        from prescripto.audit.logger import get_logger
+
+        get_logger("prescripto.config").error(
+            "GEMINI_API_KEY is not configured. Set it in backend/.env before using Gemini recognition."
+        )
 
 
 settings = Settings()

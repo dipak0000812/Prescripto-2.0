@@ -94,7 +94,7 @@ def test_detect_duplicate_medications_same_canonical_identity_is_potential():
     assert "reviewer confirmation" in f.evidence_text
 
 
-def test_different_products_with_same_ingredient_are_not_duplicate_findings():
+def test_different_products_with_same_ingredient_generates_duplicate_finding():
     analysis_id = uuid.uuid4()
     med1 = CanonicalMedication(
         id=uuid.uuid4(),
@@ -113,6 +113,34 @@ def test_different_products_with_same_ingredient_are_not_duplicate_findings():
     resolved_lines = [
         (uuid.uuid4(), MedicationResolutionResult("Calpol", ResolutionStatus.RESOLVED, med1)),
         (uuid.uuid4(), MedicationResolutionResult("Dolo", ResolutionStatus.RESOLVED, med2)),
+    ]
+
+    findings = detect_duplicate_medications(analysis_id, resolved_lines)
+    assert len(findings) == 1
+    assert findings[0].check_type == SafetyCheckType.DUPLICATE_MEDICATION
+    assert findings[0].finding_status == FindingStatus.POTENTIAL
+    assert "Duplicate active ingredient detected" in findings[0].evidence_text
+
+
+def test_different_products_without_shared_ingredients_have_zero_findings():
+    analysis_id = uuid.uuid4()
+    med1 = CanonicalMedication(
+        id=uuid.uuid4(),
+        brand_name="Calpol 650",
+        generic_name="Paracetamol",
+        active_ingredients=["Paracetamol"],
+        strength="650mg",
+    )
+    med2 = CanonicalMedication(
+        id=uuid.uuid4(),
+        brand_name="Amoxil 500",
+        generic_name="Amoxicillin",
+        active_ingredients=["Amoxicillin"],
+        strength="500mg",
+    )
+    resolved_lines = [
+        (uuid.uuid4(), MedicationResolutionResult("Calpol", ResolutionStatus.RESOLVED, med1)),
+        (uuid.uuid4(), MedicationResolutionResult("Amoxil", ResolutionStatus.RESOLVED, med2)),
     ]
 
     assert detect_duplicate_medications(analysis_id, resolved_lines) == []

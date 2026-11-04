@@ -64,12 +64,12 @@ def create_or_update_user(
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Create or update a Prescripto user.")
-    parser.add_argument("--username", required=True, help="Username for authentication")
-    parser.add_argument("--email", required=True, help="User email address")
-    parser.add_argument("--password", required=True, help="Plaintext password to hash")
+    parser.add_argument("--username", default="admin", help="Username for authentication")
+    parser.add_argument("--email", default="admin@prescripto.local", help="User email address")
+    parser.add_argument("--password", default="AdminPass123!", help="Plaintext password to hash")
     parser.add_argument(
         "--role",
-        default="OPERATOR",
+        default="ADMIN",
         choices=["OPERATOR", "REVIEWER", "ADMIN"],
         help="RBAC role assigned to the user",
     )

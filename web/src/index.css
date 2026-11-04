@@ -1,36 +1,152 @@
 @import "tailwindcss";
 
+@theme {
+  --color-surface: #FAF9F6;
+  --color-surface-card: #FFFFFF;
+  --color-surface-subtle: #F4F2EC;
+  --color-brand: #0F5147;
+  --color-brand-hover: #0A3831;
+  --color-brand-light: #E6F0EE;
+  --color-brand-border: #9DC1BB;
+  --color-alert-amber: #B45309;
+  --color-alert-amber-bg: #FEF3C7;
+  --color-alert-rose: #BE123C;
+  --color-alert-rose-bg: #FFE4E6;
+  --color-alert-green: #047857;
+  --color-alert-green-bg: #ECFDF5;
+  --color-text-main: #1C252E;
+  --color-text-muted: #4B5563;
+  --color-border-subtle: #E5E7EB;
+  --font-sans: 'Noto Sans', 'Noto Sans Devanagari', 'Noto Sans Gujarati', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+:root {
+  --surface: #FAF9F6;
+  --surface-card: #FFFFFF;
+  --surface-subtle: #F4F2EC;
+  --brand: #0F5147;
+  --brand-hover: #0A3831;
+  --brand-light: #E6F0EE;
+  --brand-border: #9DC1BB;
+  --alert-amber: #B45309;
+  --alert-amber-bg: #FEF3C7;
+  --alert-rose: #BE123C;
+  --alert-rose-bg: #FFE4E6;
+  --alert-green: #047857;
+  --alert-green-bg: #ECFDF5;
+  --text-main: #1C252E;
+  --text-muted: #4B5563;
+  --border-subtle: #E5E7EB;
+}
+
 @layer base {
+  html {
+    font-size: 18px; /* Accessible base font size for elderly & low-vision patients */
+  }
+
   body {
-    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-    color: #0f172a;
-    background-color: #f8fafc;
+    font-family: 'Noto Sans', 'Noto Sans Devanagari', 'Noto Sans Gujarati', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    color: #1C252E;
+    background-color: #FAF9F6;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   code, pre, .font-mono {
     font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   }
+
+  /* Clear, high-contrast accessible focus ring using brand color */
+  :focus-visible {
+    outline: 2px solid #0F5147;
+    outline-offset: 2px;
+  }
+
+  /* Respect reduced motion accessibility setting */
+  @media (prefers-reduced-motion: reduce) {
+    *, ::before, ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
 }
 
-/* Clean, modern light scrollbars */
+/* Subtle, calm scrollbars */
 ::-webkit-scrollbar {
-  width: 7px;
-  height: 7px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: #FAF9F6;
 }
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: #D1D5DB;
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #9CA3AF;
 }
 
-/* Subtle, smooth transitions */
-.transition-smooth {
-  transition: all 0.2s ease-in-out;
+/* Print Stylesheet for Patient & Clinical Summaries */
+@media print {
+  body {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    font-size: 11pt !important;
+  }
+
+  /* Hide navigation, action bars, modals, footer, and interactive controls when printing */
+  header,
+  nav,
+  footer,
+  .no-print,
+  button:not(.print-show),
+  .sticky {
+    display: none !important;
+  }
+
+  main {
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* Ensure card borders and backgrounds remain crisp on printed paper */
+  .bg-white,
+  .bg-slate-50,
+  .bg-amber-50,
+  .bg-emerald-50,
+  .bg-teal-50 {
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  .border,
+  .border-slate-200,
+  .border-amber-200,
+  .border-emerald-200,
+  .border-teal-200 {
+    border: 1px solid #94a3b8 !important;
+  }
+
+  /* Prevent awkward page breaks inside cards */
+  section,
+  .page-break-avoid {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Print header banner */
+  .print-only {
+    display: block !important;
+  }
 }
 
-
+@media screen {
+  .print-only {
+    display: none !important;
+  }
+}

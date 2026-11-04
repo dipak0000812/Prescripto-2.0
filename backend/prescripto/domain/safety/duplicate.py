@@ -81,9 +81,22 @@ def detect_duplicate_medications(
             if pair_key in seen_pairs:
                 continue
 
-            if med1.id == med2.id:
+            is_same_canonical = med1.id == med2.id
+            shared_ingredients = set()
+            if med1.active_ingredients and med2.active_ingredients:
+                ingr1 = {i.strip().lower() for i in med1.active_ingredients if i and i.strip()}
+                ingr2 = {i.strip().lower() for i in med2.active_ingredients if i and i.strip()}
+                shared_ingredients = ingr1 & ingr2
+
+            if is_same_canonical or shared_ingredients:
                 seen_pairs.add(pair_key)
                 finding_key = f"dup_med_{pair_key[0]}_{pair_key[1]}"
+                if is_same_canonical:
+                    evidence = "The same canonical product identity appears on multiple prescription lines; reviewer confirmation is required."
+                else:
+                    shared_str = ", ".join(sorted(shared_ingredients))
+                    evidence = f"Duplicate active ingredient detected: '{med1.brand_name}' and '{med2.brand_name}' share active ingredient(s): {shared_str}. Reviewer confirmation is required."
+
                 findings.append(
                     DomainRiskFinding(
                         id=uuid.uuid4(),
@@ -92,7 +105,7 @@ def detect_duplicate_medications(
                         finding_key=finding_key,
                         finding_status=FindingStatus.POTENTIAL,
                         medication_ids=[id1, id2],
-                        evidence_text="The same canonical product identity appears on multiple prescription lines; reviewer confirmation is required.",
+                        evidence_text=evidence,
                         source_name="PRESCRIPTO_DETERMINISTIC_RULES",
                         source_version="1.0.0",
                         confidence_score=None,

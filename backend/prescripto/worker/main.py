@@ -19,6 +19,7 @@ from prescripto.worker.coordinator import PipelineCoordinator
 from prescripto.worker.exceptions import WorkerFencedError
 from prescripto.ml.runtime import MockModelRuntime, RemoteMLClient
 from prescripto.ml.rapid_runtime import RapidOCRRuntime
+from prescripto.ml.recognition_providers import RecognitionNonRetryableError
 from prescripto.storage.client import get_storage_client
 
 configure_logging(settings.LOG_LEVEL)
@@ -148,6 +149,7 @@ class WorkerRunner:
                     lease_token=claim.lease_token,
                     worker_id=self.worker_id,
                     error_message=str(e),
+                    retryable=not isinstance(e, RecognitionNonRetryableError),
                 )
             return True
 
@@ -158,6 +160,7 @@ class WorkerRunner:
     def start(self) -> None:
         """Starts continuous polling worker loop."""
         self._running = True
+        settings.log_missing_gemini_api_key()
         logger.info(
             "worker_started",
             worker_id=self.worker_id,

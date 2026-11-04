@@ -1,40 +1,45 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage, Language } from '../context/LanguageContext';
+import { Button } from '../components/ui/Button';
+import { Input } from '../components/ui/Input';
+import { AlertBanner } from '../components/ui/AlertBanner';
 import {
-  ShieldCheck,
-  Lock,
-  Mail,
   Phone,
   KeyRound,
   User,
-  AlertCircle,
-  Loader2,
+  Mail,
+  Lock,
+  Camera,
+  Clock,
+  Volume2,
   ArrowRight,
-  Stethoscope,
-  HeartPulse,
+  ShieldCheck,
   CheckCircle2,
-  Sparkles,
+  Stethoscope,
+  RotateCcw,
 } from 'lucide-react';
 
 export const LoginPage: React.FC = () => {
   const { doctorLogin, sendOtp, loginWithOtp } = useAuth();
+  const { language, setLanguage, t } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Active tab: 'patient' or 'doctor'
+  // Active mode: 'patient' or 'doctor'
   const [authMode, setAuthMode] = useState<'patient' | 'doctor'>('patient');
 
   // Patient OTP State
-  const [phoneNumber, setPhoneNumber] = useState<string>('9876543210');
-  const [patientName, setPatientName] = useState<string>('Rahul Verma');
+  const [phoneNumber, setPhoneNumber] = useState<string>('');
+  const [patientName, setPatientName] = useState<string>('');
   const [otp, setOtp] = useState<string>('');
   const [otpSent, setOtpSent] = useState<boolean>(false);
   const [otpInfoMessage, setOtpInfoMessage] = useState<string | null>(null);
 
   // Doctor / Staff State
-  const [email, setEmail] = useState<string>('doctor.sharma@prescripto.local');
-  const [password, setPassword] = useState<string>('DoctorPass123!');
+  const [email, setEmail] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
 
   // Common UI State
   const [error, setError] = useState<string | null>(null);
@@ -42,22 +47,35 @@ export const LoginPage: React.FC = () => {
 
   const fromState = (location.state as any)?.from?.pathname;
 
+  const languages: { code: Language; nativeName: string; label: string }[] = [
+    { code: 'en', nativeName: 'English', label: 'English' },
+    { code: 'hi', nativeName: 'हिन्दी', label: 'Hindi' },
+    { code: 'gu', nativeName: 'ગુજરાતી', label: 'Gujarati' },
+    { code: 'mr', nativeName: 'मराठी', label: 'Marathi' },
+  ];
+
   // Handle Patient Send OTP
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!phoneNumber.trim()) {
-      setError('Please enter your 10-digit mobile number.');
+    const cleanNumber = phoneNumber.replace(/\D/g, '').trim();
+    if (cleanNumber.length < 10) {
+      setError(t('auth.error_phone_required', 'Please enter your 10-digit mobile number.'));
       return;
     }
     setError(null);
     setIsSubmitting(true);
     try {
-      const res = await sendOtp(phoneNumber.trim());
+      const res = await sendOtp(cleanNumber);
       setOtpSent(true);
-      setOtp(res.mock_otp || '123456');
-      setOtpInfoMessage(`OTP sent to +91 ${phoneNumber.slice(-10)}. Test OTP is ${res.mock_otp || '123456'}`);
+      const code = res.mock_otp || '123456';
+      setOtp(code);
+      setOtpInfoMessage(`${t('auth.test_mode_notice', 'Test Mode: Use verification code 123456')}`);
     } catch (err: any) {
-      setError(err?.response?.data?.detail || err?.message || 'Failed to send OTP. Please check mobile number.');
+      setError(
+        err?.response?.data?.detail ||
+          err?.message ||
+          'Could not send code. Please check your number and tap Send again.'
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -66,18 +84,24 @@ export const LoginPage: React.FC = () => {
   // Handle Patient Verify OTP
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!otp.trim()) {
-      setError('Please enter the 6-digit OTP code.');
+    const cleanOtp = otp.replace(/\D/g, '').trim();
+    if (!cleanOtp) {
+      setError(t('auth.error_otp_required', 'Please enter the 6-digit code received on your phone.'));
       return;
     }
     setError(null);
     setIsSubmitting(true);
     try {
-      await loginWithOtp(phoneNumber.trim(), otp.trim(), patientName.trim());
-      const destination = fromState && fromState !== '/' && fromState !== '/login' ? fromState : '/patient-portal';
+      await loginWithOtp(phoneNumber.trim(), cleanOtp, patientName.trim());
+      const destination =
+        fromState && fromState !== '/' && fromState !== '/login' ? fromState : '/patient-portal';
       navigate(destination, { replace: true });
     } catch (err: any) {
-      setError(err?.response?.data?.detail || err?.message || 'Invalid OTP code. Please use 123456 for testing.');
+      setError(
+        err?.response?.data?.detail ||
+          err?.message ||
+          'The code does not match. Please use code 123456 or tap Resend.'
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -87,106 +111,141 @@ export const LoginPage: React.FC = () => {
   const handleDoctorLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email.trim() || !password) {
-      setError('Please enter your email and password.');
+      setError(t('auth.error_credentials_required', 'Please enter both email and password.'));
       return;
     }
     setError(null);
     setIsSubmitting(true);
     try {
       await doctorLogin(email.trim(), password);
-      const destination = fromState && fromState !== '/' && fromState !== '/login' && fromState !== '/patient-portal' ? fromState : '/prescriptions';
+      const destination =
+        fromState && fromState !== '/' && fromState !== '/login' && fromState !== '/patient-portal'
+          ? fromState
+          : '/prescriptions';
       navigate(destination, { replace: true });
     } catch (err: any) {
-      setError(err?.response?.data?.detail || err?.message || 'Invalid email or password. Please verify your credentials.');
+      setError(
+        err?.response?.data?.detail ||
+          err?.message ||
+          'Email or password incorrect. Please check and try again.'
+      );
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Quick Presets
-  const setPatientPreset = (phone: string, name: string) => {
-    setPhoneNumber(phone);
-    setPatientName(name);
-    setOtpSent(false);
-    setOtp('');
-    setError(null);
-    setOtpInfoMessage(null);
-  };
-
-  const setDoctorPreset = (em: string, pw: string) => {
-    setEmail(em);
-    setPassword(pw);
-    setError(null);
-  };
-
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 flex flex-col justify-center items-center py-12 px-4 sm:px-6 lg:px-8">
-      <div className="w-full max-w-lg">
+    <div className="min-h-screen bg-[#FAF9F6] text-[#1C252E] flex flex-col justify-between py-6 px-4 sm:px-6 lg:px-8">
+      <div className="w-full max-w-lg mx-auto">
         {/* Brand Header */}
-        <div className="text-center mb-8">
-          <Link to="/" className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-teal-600 text-white shadow-xs mb-3 hover:bg-teal-700 transition">
-            <HeartPulse className="w-7 h-7" />
+        <div className="text-center mb-6">
+          <Link to="/" className="inline-flex items-center gap-2 mb-2 group">
+            <div className="w-10 h-10 rounded-xl bg-[#0F5147] text-white flex items-center justify-center shadow-2xs group-hover:bg-[#0A3831] transition">
+              <ShieldCheck className="w-6 h-6" />
+            </div>
+            <span className="text-2xl font-bold tracking-tight text-[#1C252E]">
+              Prescripto <span className="text-[#0F5147]">2.0</span>
+            </span>
           </Link>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight flex items-center justify-center gap-2">
-            Prescripto <span>2.0</span>
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Clinical Document Intelligence & Patient Safety Platform
+          <p className="text-sm text-stone-600">
+            {t('auth.welcome_subtitle', 'Log in with your mobile number to view and listen to your prescribed medicines.')}
           </p>
         </div>
 
-        {/* Main Card */}
-        <div className="bg-white border border-slate-200 rounded-2xl shadow-xs p-7 sm:p-9">
-          {/* Top Tabs: Patient vs Doctor */}
-          <div className="grid grid-cols-2 p-1 bg-slate-100 rounded-xl mb-6 border border-slate-200">
-            <button
-              type="button"
-              onClick={() => {
-                setAuthMode('patient');
-                setError(null);
-              }}
-              className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg text-xs font-semibold transition ${
-                authMode === 'patient'
-                  ? 'bg-white text-teal-900 shadow-2xs border border-slate-200'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              <User className="w-4 h-4 text-teal-600" />
-              <span>Patient Login</span>
-              <span className="text-[10px] font-semibold px-1.5 py-0.2 rounded bg-teal-50 text-teal-800 border border-teal-200">OTP</span>
-            </button>
+        {/* 1. Language Pick (Big Script-Named Buttons on First Screen) */}
+        <div className="mb-6 bg-white border border-stone-200 rounded-xl p-3 sm:p-4 shadow-2xs">
+          <label className="block text-xs font-bold uppercase tracking-wider text-stone-600 mb-2 text-center">
+            {t('auth.pick_language', 'Choose your language')}
+          </label>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2" role="group" aria-label="Select Language">
+            {languages.map((l) => {
+              const isSelected = language === l.code;
+              return (
+                <button
+                  key={l.code}
+                  type="button"
+                  onClick={() => setLanguage(l.code)}
+                  aria-pressed={isSelected}
+                  className={`min-h-[48px] px-3 py-2 rounded-xl text-sm font-semibold transition flex flex-col items-center justify-center cursor-pointer border ${
+                    isSelected
+                      ? 'bg-[#0F5147] text-white border-[#0F5147] shadow-2xs'
+                      : 'bg-[#FAF9F6] text-[#1C252E] border-stone-200 hover:bg-[#F4F2EC]'
+                  }`}
+                >
+                  <span className="text-base font-bold leading-tight">{l.nativeName}</span>
+                  <span className={`text-[11px] ${isSelected ? 'text-emerald-100' : 'text-stone-500'}`}>
+                    {l.label}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* 2. Main Login / OTP Card */}
+        <div className="bg-white border border-stone-200 rounded-xl p-5 sm:p-7 shadow-2xs mb-6">
+          {/* Calm Mode Switcher: Patient OTP (Default) vs Staff */}
+          <div className="flex items-center justify-between border-b border-stone-200 pb-3 mb-5">
+            <h2 className="text-lg font-bold text-[#1C252E]">
+              {authMode === 'patient'
+                ? otpSent
+                  ? t('auth.otp_label', 'Enter 6-digit code')
+                  : t('auth.welcome_title', 'Welcome to Prescripto')
+                : t('auth.doctor_tab', 'Doctor & Staff')}
+            </h2>
 
             <button
               type="button"
               onClick={() => {
-                setAuthMode('doctor');
+                setAuthMode(authMode === 'patient' ? 'doctor' : 'patient');
                 setError(null);
+                setOtpSent(false);
               }}
-              className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg text-xs font-semibold transition ${
-                authMode === 'doctor'
-                  ? 'bg-white text-indigo-900 shadow-2xs border border-slate-200'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
+              className="text-xs font-semibold text-[#0F5147] hover:underline flex items-center gap-1 cursor-pointer min-h-[36px]"
             >
-              <Stethoscope className="w-4 h-4 text-indigo-600" />
-              <span>Doctor & Staff</span>
-              <span className="text-[10px] font-semibold px-1.5 py-0.2 rounded bg-indigo-50 text-indigo-800 border border-indigo-200">Email</span>
+              {authMode === 'patient' ? (
+                <>
+                  <Stethoscope className="w-3.5 h-3.5" />
+                  <span>{t('auth.doctor_tab', 'Doctor & Staff')}</span>
+                </>
+              ) : (
+                <>
+                  <User className="w-3.5 h-3.5" />
+                  <span>{t('auth.patient_tab', 'Patient (Mobile OTP)')}</span>
+                </>
+              )}
             </button>
           </div>
 
-          {/* Error Banner */}
+          {/* Error Banner with Plain Words + Retry Guidance */}
           {error && (
-            <div className="mb-5 p-3.5 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800 flex items-start gap-2.5">
-              <AlertCircle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
-              <div className="leading-relaxed font-medium">{error}</div>
+            <div className="mb-4">
+              <AlertBanner
+                type="error"
+                title="Please check"
+                badgeLabel="Problem"
+                action={
+                  <button
+                    type="button"
+                    onClick={() => setError(null)}
+                    className="text-xs font-semibold text-[#BE123C] hover:underline flex items-center gap-1 cursor-pointer mt-1"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    <span>Dismiss and try again</span>
+                  </button>
+                }
+              >
+                {error}
+              </AlertBanner>
             </div>
           )}
 
-          {/* Info Banner */}
+          {/* Info Banner for Test Mode */}
           {otpInfoMessage && authMode === 'patient' && (
-            <div className="mb-5 p-3.5 bg-teal-50 border border-teal-200 rounded-xl text-xs text-teal-800 flex items-start gap-2.5">
-              <CheckCircle2 className="w-4 h-4 text-teal-600 shrink-0 mt-0.5" />
-              <div className="leading-relaxed font-medium">{otpInfoMessage}</div>
+            <div className="mb-4">
+              <AlertBanner type="info" title="Test Mode" badgeLabel="Note">
+                {otpInfoMessage}
+              </AlertBanner>
             </div>
           )}
 
@@ -197,284 +256,240 @@ export const LoginPage: React.FC = () => {
                 /* Step 1: Enter Phone Number */
                 <form onSubmit={handleSendOtp} className="space-y-4">
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                      Mobile Number
+                    <label
+                      htmlFor="patient-phone"
+                      className="block text-sm font-semibold text-[#1C252E] mb-1.5"
+                    >
+                      {t('auth.phone_label', 'Your 10-digit mobile number')} <span className="text-[#BE123C]">*</span>
                     </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500 font-medium text-xs">
-                        <Phone className="w-4 h-4 text-slate-400 mr-1.5" />
+
+                    <div className="relative flex items-center">
+                      <div className="absolute left-3.5 flex items-center gap-1.5 text-stone-600 font-semibold text-base pointer-events-none">
+                        <Phone className="w-5 h-5 text-stone-500" aria-hidden="true" />
                         <span>+91</span>
                       </div>
                       <input
+                        id="patient-phone"
                         type="tel"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        autoComplete="tel-national"
                         required
                         maxLength={10}
                         value={phoneNumber}
                         onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ''))}
-                        className="w-full pl-16 pr-4 py-2.5 text-sm font-medium bg-white border border-slate-300 rounded-xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-600/20 focus:border-teal-600 transition"
-                        placeholder="9876543210"
+                        className="w-full pl-20 pr-4 py-3 min-h-[52px] text-lg font-semibold bg-white border border-stone-300 rounded-xl text-[#1C252E] placeholder:text-stone-400 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-[#0F5147] focus-visible:border-[#0F5147]"
+                        placeholder={t('auth.phone_placeholder', 'e.g. 9876543210')}
                       />
                     </div>
-                    <p className="text-[11px] text-slate-500 mt-1">
-                      We will send a 6-digit verification code to this mobile number.
-                    </p>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                      Patient Full Name
+                    <label
+                      htmlFor="patient-name"
+                      className="block text-sm font-semibold text-[#1C252E] mb-1.5"
+                    >
+                      {t('auth.patient_name_label', 'Patient name (optional)')}
                     </label>
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                        <User className="w-4 h-4" />
+                    <div className="relative flex items-center">
+                      <div className="absolute left-3.5 text-stone-500 pointer-events-none">
+                        <User className="w-5 h-5" aria-hidden="true" />
                       </div>
                       <input
+                        id="patient-name"
                         type="text"
+                        autoComplete="name"
                         value={patientName}
                         onChange={(e) => setPatientName(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2.5 text-sm font-medium bg-white border border-slate-300 rounded-xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-teal-600/20 focus:border-teal-600 transition"
-                        placeholder="e.g. Rahul Verma"
+                        className="w-full pl-11 pr-4 py-3 min-h-[48px] text-base bg-white border border-stone-300 rounded-xl text-[#1C252E] placeholder:text-stone-400 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-[#0F5147] focus-visible:border-[#0F5147]"
+                        placeholder={t('auth.patient_name_placeholder', 'e.g. Rahul Sharma')}
                       />
                     </div>
                   </div>
 
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="w-full py-2.5 px-4 bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold rounded-xl shadow-xs transition disabled:opacity-50 flex items-center justify-center gap-2"
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        <span>Sending OTP...</span>
-                      </>
-                    ) : (
-                      <>
-                        <span>Get Verification OTP</span>
-                        <ArrowRight className="w-4 h-4" />
-                      </>
-                    )}
-                  </button>
+                  <div className="pt-2">
+                    <Button
+                      type="submit"
+                      variant="primary"
+                      size="lg"
+                      isLoading={isSubmitting}
+                      className="w-full min-h-[52px] text-base"
+                      rightIcon={<ArrowRight className="w-5 h-5" />}
+                    >
+                      {t('auth.send_otp_btn', 'Send Verification Code')}
+                    </Button>
+                  </div>
                 </form>
               ) : (
                 /* Step 2: Enter OTP */
                 <form onSubmit={handleVerifyOtp} className="space-y-4">
                   <div>
                     <div className="flex items-center justify-between mb-1.5">
-                      <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider">
-                        Enter 6-Digit OTP
+                      <label
+                        htmlFor="patient-otp"
+                        className="block text-sm font-semibold text-[#1C252E]"
+                      >
+                        {t('auth.otp_label', 'Enter 6-digit code')} <span className="text-[#BE123C]">*</span>
                       </label>
                       <button
                         type="button"
-                        onClick={() => setOtpSent(false)}
-                        className="text-xs font-medium text-teal-700 hover:text-teal-800 underline"
+                        onClick={() => {
+                          setOtpSent(false);
+                          setError(null);
+                        }}
+                        className="text-xs font-semibold text-[#0F5147] hover:underline cursor-pointer"
                       >
-                        Change Number
+                        {t('auth.change_number', 'Change mobile number')}
                       </button>
                     </div>
 
-                    <div className="relative">
-                      <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                        <KeyRound className="w-4 h-4" />
+                    <div className="relative flex items-center">
+                      <div className="absolute left-3.5 text-stone-500 pointer-events-none">
+                        <KeyRound className="w-5 h-5" aria-hidden="true" />
                       </div>
                       <input
-                        type="text"
+                        id="patient-otp"
+                        type="tel"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        autoComplete="one-time-code"
                         required
                         maxLength={6}
                         value={otp}
                         onChange={(e) => setOtp(e.target.value.replace(/\D/g, ''))}
-                        className="w-full pl-10 pr-4 py-2.5 text-base tracking-widest font-mono font-bold bg-white border border-slate-300 rounded-xl text-slate-900 focus:outline-none focus:ring-2 focus:ring-teal-600/20 focus:border-teal-600 transition"
+                        className="w-full pl-11 pr-4 py-3 min-h-[52px] text-xl font-bold font-mono tracking-widest bg-white border border-stone-300 rounded-xl text-[#1C252E] placeholder:text-stone-400 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-[#0F5147] focus-visible:border-[#0F5147]"
                         placeholder="123456"
                       />
                     </div>
-                    <div className="mt-2 flex items-center justify-between">
-                      <span className="text-[11px] text-slate-500">Test OTP Code: <strong className="font-mono text-teal-700">123456</strong></span>
+
+                    <div className="mt-3 flex items-center justify-between bg-[#F4F2EC] p-2.5 rounded-xl border border-stone-200">
+                      <span className="text-xs text-stone-700">
+                        Code: <strong className="font-mono text-[#0F5147]">123456</strong>
+                      </span>
                       <button
                         type="button"
                         onClick={() => setOtp('123456')}
-                        className="text-[11px] font-semibold text-teal-800 hover:text-teal-900 bg-teal-50 px-2 py-0.5 rounded border border-teal-200"
+                        className="text-xs font-semibold text-[#0F5147] bg-white px-2.5 py-1 rounded-lg border border-stone-300 hover:bg-[#FAF9F6] cursor-pointer"
                       >
-                        Auto Fill 123456
+                        {t('auth.autofill_btn', 'Autofill 123456')}
                       </button>
                     </div>
                   </div>
 
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="w-full py-2.5 px-4 bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold rounded-xl shadow-xs transition disabled:opacity-50 flex items-center justify-center gap-2"
-                  >
-                    {isSubmitting ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        <span>Verifying Session...</span>
-                      </>
-                    ) : (
-                      <>
-                        <span>Verify & Enter Patient Portal</span>
-                        <CheckCircle2 className="w-4 h-4" />
-                      </>
-                    )}
-                  </button>
+                  <div className="pt-2">
+                    <Button
+                      type="submit"
+                      variant="primary"
+                      size="lg"
+                      isLoading={isSubmitting}
+                      className="w-full min-h-[52px] text-base"
+                      rightIcon={<CheckCircle2 className="w-5 h-5" />}
+                    >
+                      {t('auth.verify_otp_btn', 'Verify Code & View Medicines')}
+                    </Button>
+                  </div>
                 </form>
               )}
-
-              {/* Patient Quick Demo Profiles */}
-              <div className="mt-6 pt-5 border-t border-slate-100">
-                <div className="flex items-center gap-1.5 mb-2.5">
-                  <Sparkles className="w-3.5 h-3.5 text-amber-600" />
-                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                    Quick Demo Profiles
-                  </span>
-                </div>
-                <div className="grid grid-cols-2 gap-2 text-xs">
-                  <button
-                    type="button"
-                    onClick={() => setPatientPreset('9876543210', 'Rahul Verma')}
-                    className="p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-left transition"
-                  >
-                    <span className="font-bold text-slate-900 block text-xs">Rahul Verma</span>
-                    <span className="text-[10px] text-slate-500 font-mono">98765 43210 &bull; PAT-1001</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setPatientPreset('9812345678', 'Pooja Sharma')}
-                    className="p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-left transition"
-                  >
-                    <span className="font-bold text-slate-900 block text-xs">Pooja Sharma</span>
-                    <span className="text-[10px] text-slate-500 font-mono">98123 45678 &bull; PAT-1002</span>
-                  </button>
-                </div>
-              </div>
             </div>
           )}
 
           {/* ================= DOCTOR & STAFF AUTH FLOW ================= */}
           {authMode === 'doctor' && (
-            <div>
-              <form onSubmit={handleDoctorLogin} className="space-y-4">
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                    Doctor / Staff Email
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                      <Mail className="w-4 h-4" />
-                    </div>
-                    <input
-                      type="text"
-                      required
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2.5 text-xs font-medium bg-white border border-slate-300 rounded-xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 transition"
-                      placeholder="e.g. doctor.sharma@prescripto.local"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
-                    Password
-                  </label>
-                  <div className="relative">
-                    <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                      <Lock className="w-4 h-4" />
-                    </div>
-                    <input
-                      type="password"
-                      required
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2.5 text-xs bg-white border border-slate-300 rounded-xl text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-600/20 focus:border-indigo-600 transition"
-                      placeholder="Enter clinical access password"
-                    />
-                  </div>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="w-full mt-2 py-2.5 px-4 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-xl shadow-xs transition disabled:opacity-50 flex items-center justify-center gap-2"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>Authenticating...</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>Sign In to Clinical Console</span>
-                      <ArrowRight className="w-4 h-4" />
-                    </>
-                  )}
-                </button>
-              </form>
-
-              {/* Staff Presets */}
-              <div className="mt-6 pt-5 border-t border-slate-100">
-                <span className="block text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">
-                  Demo Clinical Roles
-                </span>
-                <div className="space-y-1.5 text-xs">
-                  <button
-                    type="button"
-                    onClick={() => setDoctorPreset('doctor.sharma@prescripto.local', 'DoctorPass123!')}
-                    className="w-full p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-left flex items-center justify-between transition"
-                  >
-                    <div>
-                      <span className="font-bold text-slate-900">Dr. Ananya Sharma, MD</span>
-                      <span className="text-[10px] text-slate-500 block">Doctor &bull; Full Clinical Review & Patient History</span>
-                    </div>
-                    <span className="text-[10px] font-semibold text-indigo-800 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200">
-                      Doctor
-                    </span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setDoctorPreset('reviewer@prescripto.local', 'ReviewerPass123!')}
-                    className="w-full p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-left flex items-center justify-between transition"
-                  >
-                    <div>
-                      <span className="font-bold text-slate-900">Clinical Reviewer</span>
-                      <span className="text-[10px] text-slate-500 block">Pharmacist &bull; Review Queue & Audit Sign-Off</span>
-                    </div>
-                    <span className="text-[10px] font-semibold text-blue-800 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
-                      Reviewer
-                    </span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setDoctorPreset('admin@prescripto.local', 'AdminPass123!')}
-                    className="w-full p-2.5 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-left flex items-center justify-between transition"
-                  >
-                    <div>
-                      <span className="font-bold text-slate-900">Hospital Administrator</span>
-                      <span className="text-[10px] text-slate-500 block">Admin &bull; Full System Health, Models & Audit</span>
-                    </div>
-                    <span className="text-[10px] font-semibold text-purple-800 bg-purple-50 px-2 py-0.5 rounded border border-purple-200">
-                      Admin
-                    </span>
-                  </button>
-                </div>
+            <form onSubmit={handleDoctorLogin} className="space-y-4">
+              <div>
+                <Input
+                  label={t('auth.doctor_email', 'Staff Email')}
+                  id="staff-email"
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  leftIcon={<Mail className="w-5 h-5" />}
+                  placeholder="doctor@hospital.org"
+                />
               </div>
-            </div>
+
+              <div>
+                <Input
+                  label={t('auth.doctor_password', 'Password')}
+                  id="staff-password"
+                  type="password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  leftIcon={<Lock className="w-5 h-5" />}
+                  placeholder="••••••••"
+                />
+              </div>
+
+              <div className="pt-2">
+                <Button
+                  type="submit"
+                  variant="primary"
+                  size="lg"
+                  isLoading={isSubmitting}
+                  className="w-full min-h-[52px] text-base"
+                  rightIcon={<ArrowRight className="w-5 h-5" />}
+                >
+                  {t('auth.doctor_login_btn', 'Sign In to Clinical Console')}
+                </Button>
+              </div>
+            </form>
           )}
         </div>
 
-        {/* Footer info */}
-        <div className="mt-6 text-center text-xs text-slate-500 flex items-center justify-center gap-3">
-          <span className="inline-flex items-center gap-1">
-            <ShieldCheck className="w-3.5 h-3.5 text-teal-600" />
-            Secure Authentication
-          </span>
-          <span>&bull;</span>
-          <span>Zero-PHI Transmission</span>
-          <span>&bull;</span>
-          <span>DPDPA 2023 Compliant</span>
+        {/* 3. Calm 3-Step "How It Works" Section */}
+        <div className="bg-white border border-stone-200 rounded-xl p-5 shadow-2xs mb-6">
+          <h3 className="text-sm font-bold uppercase tracking-wider text-stone-600 mb-3">
+            {t('auth.how_it_works_title', 'How Prescripto works')}
+          </h3>
+
+          <div className="space-y-3 text-sm">
+            {/* Step 1 */}
+            <div className="flex items-start gap-3 p-2.5 rounded-xl bg-[#FAF9F6] border border-stone-200">
+              <div className="w-9 h-9 rounded-lg bg-[#E6F0EE] text-[#0F5147] flex items-center justify-center shrink-0">
+                <Camera className="w-5 h-5" aria-hidden="true" />
+              </div>
+              <div>
+                <h4 className="font-bold text-[#1C252E]">{t('auth.step1_title', '1. Upload Prescription')}</h4>
+                <p className="text-xs text-stone-600 mt-0.5 leading-relaxed">
+                  {t('auth.step1_desc', "Take a clear picture of your doctor's slip.")}
+                </p>
+              </div>
+            </div>
+
+            {/* Step 2 */}
+            <div className="flex items-start gap-3 p-2.5 rounded-xl bg-[#FAF9F6] border border-stone-200">
+              <div className="w-9 h-9 rounded-lg bg-[#E6F0EE] text-[#0F5147] flex items-center justify-center shrink-0">
+                <Clock className="w-5 h-5" aria-hidden="true" />
+              </div>
+              <div>
+                <h4 className="font-bold text-[#1C252E]">{t('auth.step2_title', '2. We Organize It')}</h4>
+                <p className="text-xs text-stone-600 mt-0.5 leading-relaxed">
+                  {t('auth.step2_desc', 'We read the names, doses, and times for you.')}
+                </p>
+              </div>
+            </div>
+
+            {/* Step 3 */}
+            <div className="flex items-start gap-3 p-2.5 rounded-xl bg-[#FAF9F6] border border-stone-200">
+              <div className="w-9 h-9 rounded-lg bg-[#E6F0EE] text-[#0F5147] flex items-center justify-center shrink-0">
+                <Volume2 className="w-5 h-5" aria-hidden="true" />
+              </div>
+              <div>
+                <h4 className="font-bold text-[#1C252E]">{t('auth.step3_title', '3. See & Listen')}</h4>
+                <p className="text-xs text-stone-600 mt-0.5 leading-relaxed">
+                  {t('auth.step3_desc', 'Understand morning, afternoon, and night timings with voice.')}
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
+
+        {/* Reassuring Privacy & Safety Note */}
+        <p className="text-xs text-center text-stone-500 leading-relaxed max-w-sm mx-auto mb-4">
+          {t('auth.safety_note', 'Your medical data is private and confidential.')}
+        </p>
       </div>
     </div>
   );

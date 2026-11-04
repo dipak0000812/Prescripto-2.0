@@ -1,3 +1,6 @@
+# Host DATABASE_URL (backend/.env): postgresql+psycopg2://prescripto:prescripto_secret@localhost:5435/prescripto_db
+# Inside these services, DATABASE_URL is overridden to postgres:5432 on the Compose network.
+# GEMINI_MODEL is pinned to gemini-3.5-flash with fallback gemini-3.1-flash-lite. ml-service is disabled (profile: ml-service).
 services:
   postgres:
     image: postgres:16-alpine
@@ -77,6 +80,9 @@ services:
       - PYTHONPATH=/app
       - DATABASE_URL=postgresql+psycopg2://prescripto:prescripto_secret@postgres:5432/prescripto_db
       - S3_ENDPOINT=http://minio:9000
+      - GEMINI_MODEL=gemini-3.5-flash
+      - GEMINI_FALLBACK_MODEL=gemini-3.1-flash-lite
+      - RECOGNITION_PROVIDER=gemini
     depends_on:
       postgres:
         condition: service_healthy
@@ -87,7 +93,10 @@ services:
       migrate:
         condition: service_completed_successfully
 
+  # Disabled by default. Enable only with: docker compose --profile ml-service up
+  # Do not set ML_RUNTIME_MODE=remote; recognition uses Gemini with local RapidOCR fallback.
   ml-service:
+    profiles: ["ml-service"]
     build:
       context: ./ml
       dockerfile: Dockerfile
@@ -117,7 +126,10 @@ services:
       - PYTHONPATH=/app
       - DATABASE_URL=postgresql+psycopg2://prescripto:prescripto_secret@postgres:5432/prescripto_db
       - S3_ENDPOINT=http://minio:9000
-      - ML_SERVICE_URL=http://ml-service:8001
+      - GEMINI_MODEL=gemini-3.5-flash
+      - GEMINI_FALLBACK_MODEL=gemini-3.1-flash-lite
+      - RECOGNITION_PROVIDER=gemini
+      - ML_RUNTIME_MODE=rapidocr
     depends_on:
       postgres:
         condition: service_healthy

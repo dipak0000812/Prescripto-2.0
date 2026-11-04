@@ -48,7 +48,7 @@ The harder problem is that a verification system built carelessly is worse than 
 
 ## Approach
 
-The locked V1 goal is transcription, structured extraction, normalization candidates, and qualified human review. Backend implementation is partially complete and runnable (see [Current Status](#current-status)). No OCR model has been empirically validated yet; the worker defaults to a mock runtime.
+The current application includes a FastAPI backend and React/Vite frontend. The worker supports local OCR and a Gemini vision provider; Gemini extraction is unverified and always requires human review. No recognition accuracy claim is made without evaluation against manually verified prescription images.
 
 Prescripto treats this as a pipeline problem with one governing rule:
 
@@ -67,7 +67,7 @@ Only two of eight pipeline stages use a learned model. Dosage parsing and safety
 
 ## Project Status
 
-Documentation-first. Architecture is written and reviewed before implementation begins.
+Research prototype. The backend, worker, and frontend exist; model performance, deployment readiness, and privacy approval still require validation.
 
 | Phase | Status |
 |---|---|
@@ -76,7 +76,7 @@ Documentation-first. Architecture is written and reviewed before implementation 
 | Backend API + worker (FastAPI, PostgreSQL, MinIO, job queue, fencing) | ✅ Implemented and tested |
 | ML service (FastAPI, PP-OCRv6 adapter, `POST /v1/ocr/recognize`) | ✅ Implemented; PaddleOCR dependency optional |
 | Machine-readable OpenAPI schema (`OPENAPI.yaml`) | ✅ Present (hand-maintained; not yet auto-generated from code) |
-| Frontend (React + Vite) | 🔲 Not started |
+| Frontend (React + Vite) | ✅ Implemented in `web/`; build validation is required before deployment |
 | OCR model selection + Tier B evaluation | 🔲 Blocked — no labeled dataset yet |
 | Calibration startup gate (refuse to start without calibration snapshot) | 🔲 Schema exists; startup enforcement not wired |
 | Legal/licensing review for CDSCO data collection | 🔲 Outstanding |
@@ -96,7 +96,7 @@ graph TD
     C --> E[(Object Storage: MinIO/S3)]
     D -->|FOR UPDATE SKIP LOCKED| F[Fenced Analysis Worker]
     F --> G[Detection: PP-OCRv6]
-    G --> H[Line-Crop Recognition: TrOCR / PP-OCRv6]
+    G --> H[Configured Recognition Provider: Gemini Vision / local OCR]
     H --> I[Rule-Based Structured Extraction]
     I --> J[Medication Master Normalization]
     J --> J1[(CDSCO + Verified Aliases)]
@@ -109,7 +109,7 @@ graph TD
     style M fill:#4dabf7,stroke:#1864ab,color:#fff
 ```
 
-Two images, five compose services (`api`, `worker`, `postgres`, `minio`, `ml-service`). The backend image runs `api` and `worker`; the ML image runs the independent OCR microservice on port 8001. `deletion_worker` is implemented but not yet added as a separate compose service. No Redis, Kafka, Kubernetes, vector database — each is deferred behind a measured trigger documented in the architecture, and none has fired.
+Compose starts `api`, `worker`, `postgres`, `minio`, and `deletion_worker`. The `ml-service` image exists but is disabled (compose profile `ml-service`); do not set `ML_RUNTIME_MODE=remote`. No Redis, Kafka, Kubernetes, vector database — each is deferred behind a measured trigger documented in the architecture, and none has fired.
 
 ## Pipeline Flow
 
@@ -182,7 +182,7 @@ Stated plainly, because a safety tool that overstates its coverage is the failur
 
 **Not supported, by design:** diagnosis, treatment recommendation, autonomous prescribing, comprehensive clinical validation.
 
-The LLM explanation layer is specified and deliberately switched off (`LLM_ENABLED=false`). The structured report is the complete V1 product — and because there's no stochastic stage, the pipeline is fully reproducible: same inputs and same pinned versions produce identical output.
+Gemini image recognition is selected with `RECOGNITION_PROVIDER=gemini`. The separate, optional summary layer is controlled by `LLM_ENABLED`; source transcription remains unverified and distinct from generated commentary.
 
 ---
 
@@ -190,13 +190,13 @@ The LLM explanation layer is specified and deliberately switched off (`LLM_ENABL
 
 | Layer | Technology | Rationale |
 |---|---|---|
-| Frontend | React 18, Tailwind, Vite | Types generated from OpenAPI — no shadow schema |
+| Frontend | React, Tailwind, Vite | TypeScript API client and reviewer UI |
 | API | Python 3.11, FastAPI | OpenAPI generated from Pydantic; spec is canonical |
 | Database | PostgreSQL 16+ | Relational integrity, CHECK constraints as safety invariants, `FOR UPDATE SKIP LOCKED` job queue, JSONB, full-text search |
 | Object storage | MinIO (dev) → S3 (prod) | boto3 only; swap is config |
 | Job queue | PostgreSQL + lease tokens | No second datastore to keep in sync |
 | Detection | PP-OCRv6 candidate | Evaluated on prescription-specific region and line-grouping metrics |
-| Recognition | TrOCR-base / PP-OCRv6 candidates | No winner until Tier B lockbox evaluation |
+| Recognition | Gemini Vision or local OCR | No accuracy claim until manually verified image evaluation |
 | Extraction | Rule-based | Auditable and deterministic where errors are clinical |
 | Deployment | Docker Compose | Same config for dev and deploy |
 
@@ -228,6 +228,7 @@ Evaluation requires a purpose-built, legally approved **Tier B** benchmark with 
 | [`Architecture.md`](docs/Architecture.md) | Components, DDL, ADRs, execution model |
 | [`ML-PIPELINES.md`](docs/ML-PIPELINES.md) and [`EVALUATION-PLAN.md`](docs/EVALUATION-PLAN.md) | OCR-to-report contract and evaluation gates |
 | [`IMPLEMENTATION-PLAN.md`](docs/IMPLEMENTATION-PLAN.md) | Vertical slices and build order |
+| [`DEPLOYMENT.md`](docs/DEPLOYMENT.md) | Backend secrets, Gemini free-tier limits, and deployment configuration |
 
 The machine-readable OpenAPI document, threat model, and test strategy are not present yet and remain implementation gates; no docs-only file substitutes for generated API schemas or verified tests.
 
@@ -235,21 +236,25 @@ The machine-readable OpenAPI document, threat model, and test strategy are not p
 
 ## Current Status
 
-What runs today:
+Implemented surfaces:
 
 ```
-docker compose up          # starts api, worker, postgres, minio, ml-service
-cd backend && pip install -e ".[dev]"
-python -m pytest -q        # 109 passed, 6 skipped (Postgres-only on SQLite)
+docker compose up          # starts api, worker, postgres, minio (ml-service disabled)
+cd backend
+python -m pip install -e ".[dev]"
+python -m pytest -q
+cd ..\web
+npm ci
+npm run build
 ```
 
-The API is reachable at `http://localhost:8000`. Auth, prescription upload, async analysis pipeline (mock OCR by default), medication normalization, duplicate detection, and review routing are all functional. Set `ML_RUNTIME_MODE=remote` to call the real PaddleOCR service (requires `paddleocr` installed in the ml-service container).
+The API is reachable at `http://localhost:8000` and the frontend is in `web/`. Recognition defaults to Gemini (`GEMINI_MODEL=gemini-3.5-flash`, fallback `gemini-3.1-flash-lite`) with a backend-only `GEMINI_API_KEY`. Local RapidOCR runs only if Gemini returns quota, auth, or timeout. The remote `ml-service` path is disabled. Upload and result retrieval are asynchronous; extracted text and any medication candidates remain unverified and require human review.
 
-What is not yet runnable:
-- **Frontend** — no `web/` or `frontend/` directory exists.
-- **Real OCR model** — PaddleOCR weights are downloaded at first use; worker defaults to `MockModelRuntime`.
-- **Calibration startup gate** — `CalibrationSnapshot` table exists in schema but the worker does not validate it at boot.
-- **Rate limiting** — described in `SECURITY.md` but not yet implemented in the API.
+**Authentication is not production-ready.** Patient login currently uses a fixed test OTP and sends no SMS; rate limiting for authentication and uploads is not implemented. Do not deploy this flow for real patient accounts or process real patient data until production authentication, authorization, privacy, and rate-limiting controls are implemented and reviewed.
+
+The Gemini free tier has account-, model-, region-, and time-dependent quotas and may change without notice. Do not send identifiable prescription or patient data to Gemini's free tier unless the organization has approved the applicable privacy, legal, and data-processing terms. Quota, auth, or timeout failures fall back to local RapidOCR; they are not retried against a paid Gemini provider.
+
+The optional `LLM_ENABLED` summary layer is disabled by default. When enabled it also uses Gemini; it does not authoritatively replace the source extraction fields.
 
 ### Planned (not implemented)
 
@@ -257,7 +262,7 @@ The following items are specified in the architecture documents but are not yet 
 
 | Item | Where specified | Gap |
 |---|---|---|
-| Frontend (React 18 + Vite) | `README.md`, `CI-CD.md` | No code |
+| Frontend deployment hosting | `web/` | Build and configure the deployed API base URL |
 | Calibration startup gate | `DEPLOYMENT.md §52-61`, `ML-ARCHITECTURE.md §37` | Schema exists; startup check not wired |
 | Rate limiting on auth + upload | `SECURITY.md §65-67` | Not implemented |
 | `mypy --strict` + ruff + contract CI gates | `CI-CD.md` | CI runs pytest + pyflakes only |
@@ -266,24 +271,32 @@ The following items are specified in the architecture documents but are not yet 
 ## Local Setup
 
 ```bash
-# 1. Copy env template and fill in JWT keys
-cp backend/.env.example backend/.env
-python backend/scripts/generate_keys.py   # writes JWT_PRIVATE_KEY / JWT_PUBLIC_KEY
+# 1. Copy backend/.env.example to backend/.env (PowerShell)
+Copy-Item backend\.env.example backend\.env
 
-# 2. Start all services
+# 2. Install backend dependencies and generate JWT keys
+python -m pip install -e "backend[dev]"
+python backend\scripts\generate_keys.py
+
+# 3. Set GEMINI_API_KEY in backend\.env. Host DATABASE_URL already uses localhost:5435.
+#    Never put the key in web/.env or any VITE_ variable.
+
+# 4. Start backend services
 docker compose up -d
 
-# 3. Run migrations
+# 5. Run migrations
 docker compose exec api alembic upgrade head
 
-# 4. Seed sample medications
+# 6. Seed sample medications
 docker compose exec api python scripts/seed_medications.py
 
-# 5. Create an operator user
+# 7. Create an operator user
 docker compose exec api python scripts/create_user.py
 ```
 
 The API docs are served at `http://localhost:8000/docs`.
+
+Run the frontend separately with `cd web`, `npm ci`, then `npm run dev` (Vite on port 5173; CORS allows that origin). For a separately hosted frontend, set `VITE_API_BASE_URL` to the backend API root (the default is `/api/v1`); never place `GEMINI_API_KEY` in any `VITE_` variable. Deploy with `GEMINI_API_KEY`, `GEMINI_MODEL=gemini-3.5-flash`, and `GEMINI_FALLBACK_MODEL=gemini-3.1-flash-lite` on the API and worker only.
 
 ## Project Structure
 
@@ -323,7 +336,8 @@ India is the intended research context. This specification does not establish DP
 - **Global knowledge preserved.** Deletion purges prescription-scoped records only. The canonical Medication Master and knowledge snapshots are never deleted — one user's erasure must not degrade the system for everyone.
 - **No PHI in logs**, enforced by a whitelist processor that drops any unlisted field and increments a metric. A blacklist would need to predict every field a future developer might add.
 - **Application-mediated storage.** No public bucket. Presigned GET URLs with a 60-second TTL, never logged or stored.
-- **No third-party medication lookup in V1.** Medication names and prescription contents are not sent to openFDA, RxNorm, SIDER, or an LLM provider.
+- **External processing is explicit.** With `RECOGNITION_PROVIDER=gemini` (default), prescription image bytes are sent from the backend to Google Gemini (`gemini-3.5-flash`, fallback `gemini-3.6-flash`) for vision extraction. Do not use identifiable data with the free tier without privacy/legal approval. The API key remains backend-only. Local RapidOCR is used only after Gemini quota, auth, or timeout — not a paid-provider fallback. The remote ml-service is disabled.
+- **Source text and generated summaries are separate.** Image transcription is shown as unverified source extraction; any plain-language summary is labeled generated content and cannot replace clinician or pharmacist review.
 - **Human-in-the-loop.** No auto-approve path exists. No finding is actionable without a qualified reviewer.
 - **Full reproducibility.** Every analysis pins its pipeline version, model version, checkpoint hash, calibration snapshot, and per-finding knowledge snapshot. `"latest"` is banned in production code paths and checked in CI.
 

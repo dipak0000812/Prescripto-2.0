@@ -4,7 +4,7 @@ Strictly matches OPENAPI.yaml canonical contracts.
 """
 import uuid
 from datetime import datetime
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 from pydantic import BaseModel, Field, ConfigDict
 
 
@@ -20,6 +20,13 @@ class AnalysisStatus(BaseModel):
     analysis_id: uuid.UUID
     status: str
     stages: List[AnalysisStageOut] = Field(default_factory=list)
+    error_message: Optional[str] = None
+    provider_used: Optional[str] = None
+    model_used: Optional[str] = None
+    attempts: Optional[int] = None
+    fallback_reason: Optional[str] = None
+    recognition_fallback_used: bool = False
+    recognition_fallback_reason: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -27,7 +34,7 @@ class AnalysisStatus(BaseModel):
 class FieldValue(BaseModel):
     value: Optional[str] = None
     state: str
-    confidence: float = Field(ge=0.0, le=1.0)
+    confidence: Optional[float] = Field(default=None, ge=0.0, le=1.0)
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -70,6 +77,40 @@ class NotEvaluatedItem(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class ExtractedMedicationOrder(BaseModel):
+    original_text: str
+    name: Optional[str] = None
+    strength: Optional[str] = None
+    dose: Optional[str] = None
+    route: Optional[str] = None
+    frequency: Optional[str] = None
+    duration: Optional[str] = None
+    instructions: Optional[str] = None
+    needs_review: bool = True
+
+
+class PrescriptionExtractionOut(BaseModel):
+    processing_status: str = "needs_review"
+    source_type: str = "ocr_transcription_unverified"
+    provider_used: Optional[str] = None
+    model_used: Optional[str] = None
+    attempts: Optional[int] = None
+    fallback_reason: Optional[str] = None
+    recognition_fallback_used: bool = False
+    recognition_fallback_reason: Optional[str] = None
+    hospital_details: List[str] = Field(default_factory=list)
+    patient_details: Dict[str, Any] = Field(default_factory=dict)
+    date: Optional[str] = None
+    symptoms: List[str] = Field(default_factory=list)
+    diagnosis: List[str] = Field(default_factory=list)
+    vitals: List[str] = Field(default_factory=list)
+    medication_orders: List[ExtractedMedicationOrder] = Field(default_factory=list)
+    non_medication_treatments: List[str] = Field(default_factory=list)
+    general_advice: List[str] = Field(default_factory=list)
+    uncertain_items: List[Dict[str, Optional[str]]] = Field(default_factory=list)
+    warnings: List[str] = Field(default_factory=list)
+
+
 class AnalysisResult(BaseModel):
     analysis_id: uuid.UUID
     status: str
@@ -77,9 +118,16 @@ class AnalysisResult(BaseModel):
     model_versions: List[str] = Field(default_factory=list)
     knowledge_snapshots: List[str] = Field(default_factory=list)
     medications: List[MedicationLine] = Field(default_factory=list)
+    document_extraction: Optional[PrescriptionExtractionOut] = None
     findings: List[RiskFindingOut] = Field(default_factory=list)
     not_evaluated: List[NotEvaluatedItem] = Field(default_factory=list)
     coverage_disclaimer: str
+    provider_used: Optional[str] = None
+    model_used: Optional[str] = None
+    attempts: Optional[int] = None
+    fallback_reason: Optional[str] = None
+    recognition_fallback_used: bool = False
+    recognition_fallback_reason: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
 

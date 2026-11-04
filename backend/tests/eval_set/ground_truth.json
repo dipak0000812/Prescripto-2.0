@@ -1,0 +1,226 @@
+{
+  "synthetic_01_clean.png": {
+    "synthetic": true,
+    "medicines": [
+      {
+        "name": "Amoxicillin",
+        "strength": "500mg",
+        "frequency": "three times daily",
+        "duration": "7 days"
+      },
+      {
+        "name": "Paracetamol",
+        "strength": "650mg",
+        "frequency": "three times daily",
+        "duration": "3 days"
+      },
+      {
+        "name": "Cetirizine",
+        "strength": "10mg",
+        "frequency": "once daily at bedtime",
+        "duration": "5 days"
+      }
+    ]
+  },
+  "synthetic_02_blur.png": {
+    "synthetic": true,
+    "medicines": [
+      {
+        "name": "Azithromycin",
+        "strength": "500mg",
+        "frequency": "once daily",
+        "duration": "3 days"
+      },
+      {
+        "name": "Pantoprazole",
+        "strength": "40mg",
+        "frequency": "once daily",
+        "duration": "14 days"
+      },
+      {
+        "name": "Levocetirizine",
+        "strength": "5mg",
+        "frequency": "at bedtime",
+        "duration": "5 days"
+      }
+    ]
+  },
+  "synthetic_03_rot_pos.png": {
+    "synthetic": true,
+    "medicines": [
+      {
+        "name": "Metformin",
+        "strength": "500mg",
+        "frequency": "twice daily",
+        "duration": "30 days"
+      },
+      {
+        "name": "Glimepiride",
+        "strength": "1mg",
+        "frequency": "once daily",
+        "duration": "30 days"
+      },
+      {
+        "name": "Atorvastatin",
+        "strength": "20mg",
+        "frequency": "once daily at night",
+        "duration": "30 days"
+      }
+    ]
+  },
+  "synthetic_04_rot_neg.png": {
+    "synthetic": true,
+    "medicines": [
+      {
+        "name": "Ciprofloxacin",
+        "strength": "500mg",
+        "frequency": "twice daily",
+        "duration": "5 days"
+      },
+      {
+        "name": "Metronidazole",
+        "strength": "400mg",
+        "frequency": "three times daily",
+        "duration": "5 days"
+      },
+      {
+        "name": "Ondansetron",
+        "strength": "4mg",
+        "frequency": "as needed",
+        "duration": "3 days"
+      }
+    ]
+  },
+  "synthetic_05_low_brightness.png": {
+    "synthetic": true,
+    "medicines": [
+      {
+        "name": "Telmisartan",
+        "strength": "40mg",
+        "frequency": "once daily",
+        "duration": "30 days"
+      },
+      {
+        "name": "Amlodipine",
+        "strength": "5mg",
+        "frequency": "once daily",
+        "duration": "30 days"
+      },
+      {
+        "name": "Hydrochlorothiazide",
+        "strength": "12.5mg",
+        "frequency": "once daily",
+        "duration": "30 days"
+      }
+    ]
+  },
+  "synthetic_06_jpeg_compress.jpg": {
+    "synthetic": true,
+    "medicines": [
+      {
+        "name": "Ibuprofen",
+        "strength": "400mg",
+        "frequency": "three times daily",
+        "duration": "3 days"
+      },
+      {
+        "name": "Paracetamol",
+        "strength": "500mg",
+        "frequency": "as needed for fever",
+        "duration": "3 days"
+      },
+      {
+        "name": "Domperidone",
+        "strength": "10mg",
+        "frequency": "twice daily",
+        "duration": "5 days"
+      }
+    ]
+  },
+  "synthetic_07_diabetes_rot.png": {
+    "synthetic": true,
+    "medicines": [
+      {
+        "name": "Dapagliflozin",
+        "strength": "10mg",
+        "frequency": "once daily",
+        "duration": "30 days"
+      },
+      {
+        "name": "Sitagliptin",
+        "strength": "100mg",
+        "frequency": "once daily",
+        "duration": "30 days"
+      }
+    ]
+  },
+  "synthetic_08_pediatric_blur.png": {
+    "synthetic": true,
+    "medicines": [
+      {
+        "name": "Augmentin",
+        "strength": "375mg",
+        "frequency": "three times daily",
+        "duration": "5 days"
+      },
+      {
+        "name": "Paracetamol",
+        "strength": "250mg",
+        "frequency": "as needed for fever",
+        "duration": "3 days"
+      }
+    ]
+  },
+  "synthetic_09_cardio_rot_neg.png": {
+    "synthetic": true,
+    "medicines": [
+      {
+        "name": "Clopidogrel",
+        "strength": "75mg",
+        "frequency": "once daily",
+        "duration": "30 days"
+      },
+      {
+        "name": "Rosuvastatin",
+        "strength": "10mg",
+        "frequency": "once daily at bedtime",
+        "duration": "30 days"
+      },
+      {
+        "name": "Ramipril",
+        "strength": "2.5mg",
+        "frequency": "once daily",
+        "duration": "30 days"
+      }
+    ]
+  },
+  "synthetic_10_multidrug_clean.png": {
+    "synthetic": true,
+    "medicines": [
+      {
+        "name": "Doxycycline",
+        "strength": "100mg",
+        "frequency": "twice daily",
+        "duration": "7 days"
+      },
+      {
+        "name": "Cetirizine",
+        "strength": "10mg",
+        "frequency": "once daily at night",
+        "duration": "10 days"
+      },
+      {
+        "name": "Montelukast",
+        "strength": "10mg",
+        "frequency": "once daily at night",
+        "duration": "10 days"
+      },
+      {
+        "name": "Pantoprazole",
+        "strength": "40mg",
+        "frequency": "once daily",
+        "duration": "7 days"
+      }
+    ]
+  }
+}

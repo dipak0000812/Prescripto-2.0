@@ -8,7 +8,7 @@ interface AuthContextType {
   isLoading: boolean;
   login: (usernameOrEmail: string, password: string) => Promise<void>;
   doctorLogin: (email: string, password: string) => Promise<void>;
-  sendOtp: (phoneNumber: string) => Promise<{ status: string; phone_number: string; message: string; mock_otp: string }>;
+  sendOtp: (phoneNumber: string) => Promise<{ status: string; phone_number: string; message: string; mock_otp?: string }>;
   loginWithOtp: (phoneNumber: string, otp: string, name?: string) => Promise<void>;
   logout: () => void;
   hasRole: (...roles: Role[]) => boolean;

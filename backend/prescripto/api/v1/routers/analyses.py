@@ -7,7 +7,7 @@ Implements:
 """
 import uuid
 from typing import Dict, Any
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, status, HTTPException
 from sqlalchemy.orm import Session
 
 from prescripto.db.session import get_db
@@ -132,8 +132,7 @@ def get_analysis_clinical_summary(
     Returns AI-generated or deterministic clinical summary,
     safety warnings in plain language, and patient dosing guidance.
     """
-    from fastapi import HTTPException
-    from prescripto.db.models.analysis import Analysis
+    from prescripto.db.models.analysis import Analysis, AnalysisStage
     from prescripto.db.models.document import PrescriptionDocument
     from prescripto.db.models.medication import PrescriptionMedication
     from prescripto.db.models.safety import RiskFinding
@@ -195,10 +194,20 @@ def get_analysis_clinical_summary(
         for f in findings
     ]
 
+    stage_extraction = db.query(AnalysisStage).filter(
+        AnalysisStage.analysis_id == id,
+        AnalysisStage.stage_name == "STRUCTURED_EXTRACTION",
+    ).first()
+    document_context = stage_extraction.output_json if stage_extraction and stage_extraction.output_json else {}
+
+    if not patient_info and document_context.get("patient_details"):
+        patient_info = document_context["patient_details"]
+
     return llm_explainer.explain(
         medications=med_dicts,
         findings=finding_dicts,
         patient_info=patient_info,
+        document_context=document_context,
     )
 
 

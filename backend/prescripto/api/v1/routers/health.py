@@ -2,7 +2,7 @@
 Health Check Router matching OPENAPI.yaml.
 """
 from datetime import datetime, timedelta, timezone
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Response, status
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 import boto3
@@ -23,7 +23,7 @@ router = APIRouter(tags=["Health"])
     summary="System health check",
     operation_id="getHealth",
 )
-def get_health(db: Session = Depends(get_db)) -> HealthStatus:
+def get_health(response: Response, db: Session = Depends(get_db)) -> HealthStatus:
     # 1. Database Probe
     db_status = "ok"
     try:
@@ -73,6 +73,9 @@ def get_health(db: Session = Depends(get_db)) -> HealthStatus:
             worker_status = "stale" if stale_jobs else "ok"
     except Exception:
         worker_status = "down"
+
+    if db_status == "down" or s3_status == "down":
+        response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
 
     return HealthStatus(
         database=db_status,

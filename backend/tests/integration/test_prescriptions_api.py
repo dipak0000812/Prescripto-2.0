@@ -4,13 +4,20 @@ Validates idempotency, format verification, security rules, 404-over-403, and pr
 """
 import io
 import uuid
+from PIL import Image
 from prescripto.db.models.users import User
 from prescripto.db.models.enums import Role
 from prescripto.auth.crypto import hash_password
 
 
-VALID_JPEG_BYTES = b"\xFF\xD8\xFF\xE0\x00\x10JFIF" + b"\x00" * 100
-VALID_PNG_BYTES = b"\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR" + b"\x00" * 100
+def _image_bytes(image_format: str) -> bytes:
+    stream = io.BytesIO()
+    Image.new("RGB", (8, 8), "white").save(stream, format=image_format)
+    return stream.getvalue()
+
+
+VALID_JPEG_BYTES = _image_bytes("JPEG")
+VALID_PNG_BYTES = _image_bytes("PNG")
 VALID_PDF_BYTES = b"%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj"
 MALICIOUS_PDF_BYTES = b"%PDF-1.4\n<< /S /JavaScript /JS (app.alert('evil');) >>"
 
@@ -104,6 +111,17 @@ def test_upload_pdf_rejected_as_unsupported(client, seeded_users):
     res = client.post("/api/v1/prescriptions", headers=headers, files=files)
     assert res.status_code == 415
     assert res.json()["error"]["code"] == "UNSUPPORTED_MEDIA_TYPE"
+
+
+def test_upload_malformed_image_rejected(client, seeded_users):
+    headers = get_auth_header(client, "test_operator", "OperatorPass123!")
+    headers["Idempotency-Key"] = f"malformed-image-{uuid.uuid4()}"
+    files = {"file": ("rx.jpg", io.BytesIO(b"\xff\xd8\xffnot-a-readable-image"), "image/jpeg")}
+
+    response = client.post("/api/v1/prescriptions", headers=headers, files=files)
+
+    assert response.status_code == 400
+    assert response.json()["error"]["code"] == "MALFORMED_REQUEST"
 
 
 def test_get_prescription_detail_success(client, seeded_users):

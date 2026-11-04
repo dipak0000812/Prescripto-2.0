@@ -22,7 +22,7 @@ class SendOtpResponse(BaseModel):
     status: str
     phone_number: str
     message: str
-    mock_otp: str = Field(default="123456", description="Pre-filled test OTP for quick MVP verification")
+    mock_otp: Optional[str] = Field(default=None, description="Pre-filled test OTP for quick MVP verification")
 
 
 class VerifyOtpRequest(BaseModel):

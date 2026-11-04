@@ -128,6 +128,14 @@ class GetPrescriptionDetailUseCase:
             for a in analyses_rows
         ]
 
+        patient_name = None
+        if doc.patient_ref:
+            p = self.db.query(Patient).filter(
+                (Patient.patient_id == doc.patient_ref) | (Patient.phone_number == doc.patient_ref)
+            ).first()
+            if p:
+                patient_name = p.name
+
         return PrescriptionDetailDTO(
             prescription_id=doc.id,
             status=doc.status,
@@ -135,6 +143,7 @@ class GetPrescriptionDetailUseCase:
             mime_type=doc.mime_type,
             file_size_bytes=doc.file_size_bytes,
             patient_ref=doc.patient_ref,
+            patient_name=patient_name,
             image_url=image_url,
             analyses=analyses_dto,
         )

@@ -5,7 +5,10 @@ persists document and analysis jobs atomically, and stores object in MinIO/S3.
 """
 import hashlib
 import uuid
+import warnings
+from io import BytesIO
 from typing import Tuple
+from PIL import Image, UnidentifiedImageError
 from sqlalchemy.orm import Session
 
 from prescripto.config.settings import settings
@@ -48,11 +51,11 @@ def detect_file_format_and_validate(file_bytes: bytes) -> Tuple[str, str]:
 
     # Magic byte matching
     if file_bytes.startswith(b"\xFF\xD8\xFF"):
-        return "image/jpeg", "jpg"
+        mime_type, extension = "image/jpeg", "jpg"
     elif file_bytes.startswith(b"\x89PNG\r\n\x1a\n"):
-        return "image/png", "png"
+        mime_type, extension = "image/png", "png"
     elif file_bytes.startswith(b"II*\x00") or file_bytes.startswith(b"MM\x00*"):
-        return "image/tiff", "tiff"
+        mime_type, extension = "image/tiff", "tiff"
     elif file_bytes.startswith(b"%PDF-"):
         raise UnsupportedMediaTypeException(
             "PDF uploads are not supported. Upload a JPEG, PNG or TIFF image."
@@ -61,6 +64,29 @@ def detect_file_format_and_validate(file_bytes: bytes) -> Tuple[str, str]:
         raise UnsupportedMediaTypeException(
             "Unsupported file format: magic bytes do not match JPEG, PNG or TIFF"
         )
+
+    try:
+        with warnings.catch_warnings():
+            warnings.simplefilter("error", Image.DecompressionBombWarning)
+            with Image.open(BytesIO(file_bytes)) as image:
+                expected_format = {
+                    "image/jpeg": "JPEG",
+                    "image/png": "PNG",
+                    "image/tiff": "TIFF",
+                }[mime_type]
+                if image.format != expected_format:
+                    raise MalformedRequestException(
+                        "Uploaded image content does not match its file signature"
+                    )
+                image.verify()
+    except MalformedRequestException:
+        raise
+    except (UnidentifiedImageError, OSError, Image.DecompressionBombError, Image.DecompressionBombWarning) as error:
+        raise MalformedRequestException(
+            "Uploaded file is not a valid, readable prescription image"
+        ) from error
+
+    return mime_type, extension
 
 
 def get_or_create_active_model_version(db: Session) -> ModelVersion:

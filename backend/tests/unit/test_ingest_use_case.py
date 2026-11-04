@@ -1,7 +1,8 @@
-"""
-Unit tests for IngestPrescription Use Case and file validation.
-"""
+"""Unit tests for upload image validation and IngestPrescription."""
+import io
+
 import pytest
+from PIL import Image
 
 from prescripto.application.use_cases.ingest_prescription import (
     detect_file_format_and_validate,
@@ -13,29 +14,38 @@ from prescripto.application.exceptions import (
 )
 
 
+def make_image_bytes(image_format: str) -> bytes:
+    buffer = io.BytesIO()
+    Image.new("RGB", (4, 4), "white").save(buffer, format=image_format)
+    return buffer.getvalue()
+
+
 def test_magic_bytes_detection_jpeg():
-    raw_jpeg = b"\xFF\xD8\xFF\xE0" + b"\x00" * 50
+    raw_jpeg = make_image_bytes("JPEG")
     mime, ext = detect_file_format_and_validate(raw_jpeg)
     assert mime == "image/jpeg"
     assert ext == "jpg"
 
 
 def test_magic_bytes_detection_png():
-    raw_png = b"\x89PNG\r\n\x1a\n" + b"\x00" * 50
+    raw_png = make_image_bytes("PNG")
     mime, ext = detect_file_format_and_validate(raw_png)
     assert mime == "image/png"
     assert ext == "png"
 
 
 def test_magic_bytes_detection_tiff_little_endian():
-    raw_tiff = b"II*\x00" + b"\x00" * 50
+    raw_tiff = make_image_bytes("TIFF")
+    assert raw_tiff.startswith(b"II*\x00")
     mime, ext = detect_file_format_and_validate(raw_tiff)
     assert mime == "image/tiff"
     assert ext == "tiff"
 
 
 def test_magic_bytes_detection_tiff_big_endian():
-    raw_tiff = b"MM\x00*" + b"\x00" * 50
+    buffer = io.BytesIO()
+    Image.new("RGB", (4, 4), "white").save(buffer, format="TIFF", byteorder=">")
+    raw_tiff = buffer.getvalue()
     mime, ext = detect_file_format_and_validate(raw_tiff)
     assert mime == "image/tiff"
     assert ext == "tiff"
@@ -63,6 +73,11 @@ def test_magic_bytes_detection_unsupported():
 def test_empty_file_rejected():
     with pytest.raises(MalformedRequestException):
         detect_file_format_and_validate(b"")
+
+
+def test_invalid_image_with_jpeg_signature_is_rejected():
+    with pytest.raises(MalformedRequestException, match="valid, readable"):
+        detect_file_format_and_validate(b"\xFF\xD8\xFFnot-a-real-jpeg")
 
 
 def test_oversized_file_rejected():

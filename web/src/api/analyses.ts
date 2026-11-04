@@ -24,12 +24,47 @@ export async function submitReviewApi(
   return response.data;
 }
 
+export interface PatientMedicineItem {
+  name: string;
+  original_text: string;
+  plain_explanation: string;
+  strength?: string | null;
+  dose?: string | null;
+  route?: string | null;
+  frequency?: string | null;
+  duration?: string | null;
+  instructions?: string | null;
+  missing_details?: string[];
+  needs_confirmation?: boolean;
+}
+
+export interface DoctorWrittenSection {
+  symptoms?: string[];
+  clinical_impression?: string[];
+  vitals?: string[];
+}
+
+export interface RecognitionMetadata {
+  provider_used?: string;
+  fallback_occurred?: boolean;
+  fallback_reason?: string | null;
+}
+
 export interface ClinicalSummaryResponse {
   engine: string;
+  summary_source?: string;
+  summary_warning?: string;
+  prescription_summary?: string;
   executive_summary: string;
+  what_doctor_wrote?: DoctorWrittenSection;
+  medicines_and_treatments?: PatientMedicineItem[];
   patient_instructions: string[];
+  other_advice?: string[];
+  needs_confirmation?: string[];
+  safety_notice?: string;
   clinical_alerts: string[];
   doctor_recommendations: string[];
+  recognition_metadata?: RecognitionMetadata;
   llm_ready: boolean;
   note?: string;
 }

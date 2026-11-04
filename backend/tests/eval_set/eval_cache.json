@@ -1,0 +1,213 @@
+{
+  "gemini": {
+    "total_expected": 29,
+    "detected": 29,
+    "true_positives": 29,
+    "hallucinated": 0,
+    "missed": 0,
+    "precision_pct": 100.0,
+    "recall_pct": 100.0,
+    "f1_score": 100.0
+  },
+  "rapidocr": {
+    "total_expected": 29,
+    "detected": 23,
+    "true_positives": 19,
+    "hallucinated": 4,
+    "missed": 10,
+    "precision_pct": 82.6,
+    "recall_pct": 65.5,
+    "f1_score": 73.1
+  },
+  "details": [
+    {
+      "image": "synthetic_01_clean.png",
+      "expected": [
+        "amoxicillin",
+        "paracetamol",
+        "cetirizine"
+      ],
+      "gemini_found": [
+        "amoxicillin",
+        "paracetamol",
+        "cetirizine"
+      ],
+      "rapidocr_found": [
+        "amoxicillin",
+        "paracetamol650mg tablet",
+        "cetirizine"
+      ],
+      "gemini_tp": 3,
+      "rapid_tp": 3
+    },
+    {
+      "image": "synthetic_02_blur.png",
+      "expected": [
+        "azithromycin",
+        "pantoprazole",
+        "levocetirizine"
+      ],
+      "gemini_found": [
+        "azithromycin",
+        "pantoprazole",
+        "levocetirizine"
+      ],
+      "rapidocr_found": [],
+      "gemini_tp": 3,
+      "rapid_tp": 0
+    },
+    {
+      "image": "synthetic_03_rot_pos.png",
+      "expected": [
+        "metformin",
+        "glimepiride",
+        "atorvastatin"
+      ],
+      "gemini_found": [
+        "metformin",
+        "glimepiride",
+        "atorvastatin"
+      ],
+      "rapidocr_found": [
+        "mefomin",
+        "glimepitide mg tablet1 tabonce dailybefore breakfast for30 days",
+        "atorvastatin"
+      ],
+      "gemini_tp": 3,
+      "rapid_tp": 1
+    },
+    {
+      "image": "synthetic_04_rot_neg.png",
+      "expected": [
+        "ciprofloxacin",
+        "metronidazole",
+        "ondansetron"
+      ],
+      "gemini_found": [
+        "ciprofloxacin",
+        "metronidazole",
+        "ondansetron"
+      ],
+      "rapidocr_found": [
+        "ciprofloxacin",
+        "metronidazole",
+        "ondansetron"
+      ],
+      "gemini_tp": 3,
+      "rapid_tp": 3
+    },
+    {
+      "image": "synthetic_05_low_brightness.png",
+      "expected": [
+        "telmisartan",
+        "amlodipine",
+        "hydrochlorothiazide"
+      ],
+      "gemini_found": [
+        "telmisartan",
+        "amlodipine",
+        "hydrochlorothiazide"
+      ],
+      "rapidocr_found": [
+        "telmisartan",
+        "amlodipine",
+        "hydrochlorothiazide"
+      ],
+      "gemini_tp": 3,
+      "rapid_tp": 3
+    },
+    {
+      "image": "synthetic_06_jpeg_compress.jpg",
+      "expected": [
+        "ibuprofen",
+        "paracetamol",
+        "domperidone"
+      ],
+      "gemini_found": [
+        "ibuprofen",
+        "paracetamol",
+        "domperidone"
+      ],
+      "rapidocr_found": [
+        "ibuprofen",
+        "2paracetamol500mg tablet-1 tabasneeded for fever for3 days",
+        "domperidone10mg tablet"
+      ],
+      "gemini_tp": 3,
+      "rapid_tp": 3
+    },
+    {
+      "image": "synthetic_07_diabetes_rot.png",
+      "expected": [
+        "dapagliflozin",
+        "sitagliptin"
+      ],
+      "gemini_found": [
+        "dapagliflozin",
+        "sitagliptin"
+      ],
+      "rapidocr_found": [
+        "dapaglilozin",
+        "sitagliptin"
+      ],
+      "gemini_tp": 2,
+      "rapid_tp": 1
+    },
+    {
+      "image": "synthetic_08_pediatric_blur.png",
+      "expected": [
+        "augmentin",
+        "paracetamol"
+      ],
+      "gemini_found": [
+        "augmentin",
+        "paracetamol"
+      ],
+      "rapidocr_found": [],
+      "gemini_tp": 2,
+      "rapid_tp": 0
+    },
+    {
+      "image": "synthetic_09_cardio_rot_neg.png",
+      "expected": [
+        "clopidogrel",
+        "rosuvastatin",
+        "ramipril"
+      ],
+      "gemini_found": [
+        "clopidogrel",
+        "rosuvastatin",
+        "ramipril"
+      ],
+      "rapidocr_found": [
+        "rosuvastatin f0mg tablet-1 tbonce cailyat bedtie for30 days",
+        "ramijpril"
+      ],
+      "gemini_tp": 3,
+      "rapid_tp": 1
+    },
+    {
+      "image": "synthetic_10_multidrug_clean.png",
+      "expected": [
+        "doxycycline",
+        "cetirizine",
+        "montelukast",
+        "pantoprazole"
+      ],
+      "gemini_found": [
+        "doxycycline",
+        "cetirizine",
+        "montelukast",
+        "pantoprazole"
+      ],
+      "rapidocr_found": [
+        "doxycycline",
+        "cetirizine",
+        "montelukast",
+        "pantoprazole"
+      ],
+      "gemini_tp": 4,
+      "rapid_tp": 4
+    }
+  ]
+}
