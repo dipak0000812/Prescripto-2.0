@@ -1,7 +1,8 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { ApiError, TokenResponse } from '../types/api';
 
-const rawBase = import.meta.env.VITE_API_BASE_URL || '/api/v1';
+const DEFAULT_API_BASE = 'https://prescripto-2-0.onrender.com';
+const rawBase = import.meta.env.VITE_API_BASE_URL || (import.meta.env.PROD ? DEFAULT_API_BASE : '/api/v1');
 const API_BASE_URL = rawBase.endsWith('/api/v1') ? rawBase : `${rawBase.replace(/\/+$/, '')}/api/v1`;
 
 export const apiClient = axios.create({
