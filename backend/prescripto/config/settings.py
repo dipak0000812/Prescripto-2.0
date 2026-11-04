@@ -2,6 +2,7 @@
 Prescripto AI 2.0 — Central Application Settings.
 Validates environment configuration on startup per docs/DEPLOYMENT.md.
 """
+import os
 from typing import List, Optional
 from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -98,6 +99,11 @@ class Settings(BaseSettings):
     @classmethod
     def normalize_database_url(cls, v: str) -> str:
         if isinstance(v, str):
+            v = v.strip()
+            # If a Windows local SQLite path was copied into a Linux container on Render/Cloud
+            if v.startswith("sqlite:") and os.name != "nt":
+                if ":/" in v[8:] or ":\\" in v or "\\" in v or "users" in v.lower():
+                    return "sqlite:///prescripto.db"
             if v.startswith("postgres://"):
                 return v.replace("postgres://", "postgresql+psycopg2://", 1)
             elif v.startswith("postgresql://") and not v.startswith("postgresql+"):
