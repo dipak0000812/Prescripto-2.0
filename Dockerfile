@@ -29,5 +29,5 @@ WORKDIR /app/backend
 ENV PORT=8000
 EXPOSE 8000
 
-CMD ["sh", "-c", "alembic upgrade head && python scripts/seed_medications.py && python scripts/create_user.py && uvicorn prescripto.api.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+CMD ["sh", "-c", "alembic upgrade head && python scripts/seed_medications.py && python scripts/seed_users.py && python scripts/create_user.py && uvicorn prescripto.api.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
 

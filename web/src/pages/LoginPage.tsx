@@ -396,16 +396,39 @@ export const LoginPage: React.FC = () => {
           {/* ================= DOCTOR & STAFF AUTH FLOW ================= */}
           {authMode === 'doctor' && (
             <form onSubmit={handleDoctorLogin} className="space-y-4">
+              {/* Demo credentials helper card */}
+              <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-900 flex flex-col gap-2">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold flex items-center gap-1.5 text-emerald-800">
+                    <Stethoscope className="w-4 h-4 text-emerald-700" /> Demo Doctor Credentials
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEmail('doctor.sharma@prescripto.local');
+                      setPassword('DoctorPass123!');
+                    }}
+                    className="text-xs font-semibold text-[#0F5147] hover:underline cursor-pointer bg-white px-2.5 py-1 rounded-md border border-emerald-300 shadow-2xs transition hover:bg-emerald-100"
+                  >
+                    Click to Autofill
+                  </button>
+                </div>
+                <div className="text-stone-600 font-mono text-[11px] leading-tight bg-white/70 p-2 rounded-lg border border-emerald-100">
+                  <div>Email / User: <strong className="text-stone-900">doctor.sharma@prescripto.local</strong> (or <strong className="text-stone-900">admin</strong>)</div>
+                  <div className="mt-0.5">Password: <strong className="text-stone-900">DoctorPass123!</strong> (or <strong className="text-stone-900">AdminPass123!</strong>)</div>
+                </div>
+              </div>
+
               <div>
                 <Input
-                  label={t('auth.doctor_email', 'Staff Email')}
+                  label={t('auth.doctor_email', 'Staff Email or Username')}
                   id="staff-email"
-                  type="email"
+                  type="text"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   leftIcon={<Mail className="w-5 h-5" />}
-                  placeholder="doctor@hospital.org"
+                  placeholder="doctor.sharma@prescripto.local or doctor"
                 />
               </div>
 

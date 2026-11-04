@@ -49,8 +49,14 @@ def seed_users():
 
         created_count = 0
         for u_data in users_to_seed:
-            existing = db.query(User).filter(User.username == u_data["username"]).first()
-            if not existing:
+            existing = db.query(User).filter(
+                (User.username == u_data["username"]) | (User.email == u_data["email"])
+            ).first()
+            if existing:
+                existing.hashed_password = hash_password(u_data["password"])
+                existing.role = u_data["role"]
+                existing.is_active = True
+            else:
                 user = User(
                     id=uuid.uuid4(),
                     username=u_data["username"],
