@@ -5,8 +5,10 @@ Conforms strictly to docs/API-CONTRACT.md and docs/ERROR-CONTRACT.md.
 import uuid
 import time
 from typing import Callable, Optional
+from pathlib import Path
 from fastapi import FastAPI, Request, Response, status
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
@@ -33,15 +35,18 @@ app = FastAPI(
     openapi_url="/openapi.json",
 )
 
-# CORS Middleware
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.cors_origins_list,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-    expose_headers=["X-Request-ID"],
-)
+# CORS Middleware supporting explicit origins, localhost, and Vercel domains
+cors_origins = settings.cors_origins_list
+cors_kwargs = {
+    "allow_origins": cors_origins,
+    "allow_credentials": True,
+    "allow_methods": ["*"],
+    "allow_headers": ["*"],
+    "expose_headers": ["X-Request-ID"],
+}
+if "*" in cors_origins:
+    cors_kwargs["allow_origin_regex"] = r"https?://.*"
+app.add_middleware(CORSMiddleware, **cors_kwargs)
 
 
 @app.middleware("http")
@@ -61,7 +66,7 @@ async def request_middleware(request: Request, call_next: Callable) -> Response:
     duration_ms = round((time.time() - start_time) * 1000, 2)
     response.headers["X-Request-ID"] = str(request_id)
     response.headers["X-Content-Type-Options"] = "nosniff"
-    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-Frame-Options"] = "SAMEORIGIN"
     response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
     response.headers["X-XSS-Protection"] = "1; mode=block"
 
@@ -171,12 +176,91 @@ async def application_exception_handler(request: Request, exc: ApplicationExcept
     )
 
 
-# Register API v1 Routers
+def _find_frontend_dist() -> Optional[Path]:
+    """Locate built frontend assets across local dev and container layouts."""
+    candidates = [
+        Path(__file__).resolve().parent.parent.parent.parent / "web" / "dist",
+        Path(__file__).resolve().parent.parent.parent / "web" / "dist",
+        Path("/app/web/dist"),
+        Path("/app/backend/web/dist"),
+        Path("web/dist"),
+        Path("../web/dist"),
+    ]
+    for c in candidates:
+        if c.exists() and (c / "index.html").is_file():
+            return c
+    return None
+
+
+def get_api_discovery_payload() -> dict:
+    """Returns top-level metadata, status, health URLs, and API endpoints."""
+    return {
+        "name": "Prescripto AI 2.0 API",
+        "version": "1.0.0",
+        "status": "healthy",
+        "environment": settings.ENVIRONMENT,
+        "docs_url": "/docs",
+        "redoc_url": "/redoc",
+        "openapi_url": "/openapi.json",
+        "health_url": "/health",
+        "database_health_url": "/health/db",
+        "readiness_url": "/health/ready",
+        "api_v1_base": "/api/v1",
+        "endpoints": {
+            "auth": "/api/v1/auth",
+            "prescriptions": "/api/v1/prescriptions",
+            "analyses": "/api/v1/analyses",
+            "patients": "/api/v1/patients",
+            "health": "/api/v1/health",
+        },
+    }
+
+
+# Register API Routers
+# Root health endpoints (/health, /health/db, /health/ready) for cloud orchestrators (Render, K8s)
+app.include_router(health_router, tags=["Health"])
+
+# Versioned v1 Routers (/api/v1/*)
 app.include_router(auth_router, prefix="/api/v1")
 app.include_router(health_router, prefix="/api/v1")
 app.include_router(prescriptions_router, prefix="/api/v1")
 app.include_router(analyses_router, prefix="/api/v1")
 app.include_router(patients_router, prefix="/api/v1")
+
+
+@app.get("/api", tags=["System"], summary="API Discovery Index")
+@app.get("/api/v1", tags=["System"], summary="API v1 Discovery Index")
+def api_discovery():
+    return JSONResponse(content=get_api_discovery_payload())
+
+
+@app.get("/docs/", include_in_schema=False)
+def docs_slash_redirect():
+    return RedirectResponse(url="/docs")
+
+
+@app.get("/redoc/", include_in_schema=False)
+def redoc_slash_redirect():
+    return RedirectResponse(url="/redoc")
+
+
+@app.get("/", tags=["System"], summary="Root Application Entrypoint & Discovery")
+def root_endpoint(request: Request):
+    """
+    Serves the React frontend application to web browsers,
+    or API discovery JSON to API clients and automated scrapers.
+    """
+    accept = request.headers.get("accept", "")
+    wants_html = "text/html" in accept
+    force_json = request.query_params.get("format") == "json"
+
+    dist_dir = _find_frontend_dist()
+    if dist_dir and wants_html and not force_json:
+        index_file = dist_dir / "index.html"
+        if index_file.is_file():
+            return FileResponse(index_file)
+
+    return JSONResponse(content=get_api_discovery_payload())
 
 
 @app.get("/api/v1/storage/{key:path}", tags=["Storage"], include_in_schema=False)
@@ -229,6 +313,68 @@ def get_storage_file(
             status_code=404,
             content={"error": {"code": "RESOURCE_NOT_FOUND", "message": f"Object {key} not found", "request_id": str(uuid.uuid4())}},
         )
+
+
+# Mount static assets if frontend distribution exists
+frontend_dist = _find_frontend_dist()
+if frontend_dist:
+    assets_dir = frontend_dist / "assets"
+    if assets_dir.is_dir():
+        app.mount("/assets", StaticFiles(directory=str(assets_dir)), name="assets")
+
+
+@app.get("/{full_path:path}", include_in_schema=False)
+def serve_spa(full_path: str):
+    """
+    SPA client-side routing fallback:
+    Serves index.html for client routes (e.g. /login, /prescriptions),
+    serves static files if present, or returns 404 for missing API/system routes.
+    """
+    dist_dir = _find_frontend_dist()
+    if not dist_dir:
+        return JSONResponse(
+            status_code=404,
+            content={
+                "error": {
+                    "code": "RESOURCE_NOT_FOUND",
+                    "message": f"Endpoint /{full_path} not found",
+                    "request_id": str(uuid.uuid4()),
+                }
+            },
+        )
+
+    # API and docs routes should not fall back to index.html
+    reserved_prefixes = ("api/", "docs", "redoc", "openapi.json", "health")
+    if full_path.startswith(reserved_prefixes):
+        return JSONResponse(
+            status_code=404,
+            content={
+                "error": {
+                    "code": "RESOURCE_NOT_FOUND",
+                    "message": f"Endpoint /{full_path} not found",
+                    "request_id": str(uuid.uuid4()),
+                }
+            },
+        )
+
+    static_file = dist_dir / full_path
+    if static_file.is_file():
+        return FileResponse(static_file)
+
+    index_file = dist_dir / "index.html"
+    if index_file.is_file():
+        return FileResponse(index_file)
+
+    return JSONResponse(
+        status_code=404,
+        content={
+            "error": {
+                "code": "RESOURCE_NOT_FOUND",
+                "message": f"Resource /{full_path} not found",
+                "request_id": str(uuid.uuid4()),
+            }
+        },
+    )
 
 
 import threading

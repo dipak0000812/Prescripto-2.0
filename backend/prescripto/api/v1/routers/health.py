@@ -82,3 +82,79 @@ def get_health(response: Response, db: Session = Depends(get_db)) -> HealthStatu
         object_storage=s3_status,
         worker_heartbeat=worker_status,
     )
+
+
+@router.get(
+    "/health/db",
+    summary="PostgreSQL / Database Connectivity Check",
+    operation_id="getDatabaseHealth",
+)
+def get_db_health(response: Response, db: Session = Depends(get_db)) -> dict:
+    """Verifies active connectivity, dialect, driver, and connection pool status."""
+    try:
+        # Ping database
+        result = db.execute(text("SELECT 1")).scalar()
+        if result != 1:
+            raise RuntimeError(f"Unexpected query result: {result}")
+
+        dialect_name = getattr(db.bind.dialect, "name", "unknown")
+        driver_name = getattr(db.bind.dialect, "driver", "unknown")
+        server_version_info = getattr(db.bind.dialect, "server_version_info", None)
+
+        pool = getattr(db.bind, "pool", None)
+        pool_info = {}
+        if pool:
+            for attr in ("size", "checkedin", "checkedout", "overflow"):
+                method = getattr(pool, attr, None)
+                if callable(method):
+                    try:
+                        pool_info[attr] = method()
+                    except Exception:
+                        pass
+
+        return {
+            "status": "healthy",
+            "database": "connected",
+            "dialect": dialect_name,
+            "driver": driver_name,
+            "server_version": ".".join(map(str, server_version_info)) if server_version_info else "unknown",
+            "pool": pool_info,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
+    except Exception as exc:
+        response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+        return {
+            "status": "unhealthy",
+            "database": "disconnected",
+            "error": str(exc),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
+
+
+@router.get(
+    "/health/ready",
+    summary="Application Readiness Probe",
+    operation_id="getReadiness",
+)
+def get_readiness(response: Response, db: Session = Depends(get_db)) -> dict:
+    """Readiness probe verifying core persistence before receiving traffic."""
+    db_ok = True
+    try:
+        db.execute(text("SELECT 1"))
+    except Exception:
+        db_ok = False
+
+    if not db_ok:
+        response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+        return {
+            "ready": False,
+            "database": "unavailable",
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
+
+    return {
+        "ready": True,
+        "database": "available",
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+    }
+

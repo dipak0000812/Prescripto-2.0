@@ -3,7 +3,7 @@ Prescripto AI 2.0 — Central Application Settings.
 Validates environment configuration on startup per docs/DEPLOYMENT.md.
 """
 from typing import List, Optional
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -110,6 +110,28 @@ class Settings(BaseSettings):
         if v.lower() == "latest":
             raise ValueError("OCR_MODEL_VERSION must be an exact pinned version, never 'latest'.")
         return v
+
+    @model_validator(mode="after")
+    def ensure_jwt_keys(self) -> "Settings":
+        """Auto-generate valid RSA keys if missing, preventing 500 errors on authentication."""
+        has_priv = bool((self.JWT_PRIVATE_KEY or "").strip())
+        has_pub = bool((self.JWT_PUBLIC_KEY or "").strip())
+        if not has_priv or not has_pub:
+            from cryptography.hazmat.primitives.asymmetric import rsa
+            from cryptography.hazmat.primitives import serialization
+            priv = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+            priv_pem = priv.private_bytes(
+                encoding=serialization.Encoding.PEM,
+                format=serialization.PrivateFormat.PKCS8,
+                encryption_algorithm=serialization.NoEncryption(),
+            ).decode("utf-8")
+            pub_pem = priv.public_key().public_bytes(
+                encoding=serialization.Encoding.PEM,
+                format=serialization.PublicFormat.SubjectPublicKeyInfo,
+            ).decode("utf-8")
+            self.JWT_PRIVATE_KEY = priv_pem
+            self.JWT_PUBLIC_KEY = pub_pem
+        return self
 
     def log_missing_gemini_api_key(self) -> None:
         """Logs once when GEMINI_API_KEY is unset. Does not print the key."""
