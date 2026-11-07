@@ -119,3 +119,33 @@ Nothing is added before its trigger fires: second worker at sustained queue dept
 ## Not in V1
 
 Kubernetes, multi-node, autoscaling, blue-green, CDN, managed secrets (Vault/KMS), multi-region. Each has a documented trigger in Arch §20; none has fired.
+
+
+## Medicine Reminders Engine & Web Push (VAPID)
+
+Prescripto 2.0 includes an automated medicine reminder scheduler and standard Web Push notification engine.
+
+### Configuration & Keys
+1. **Generate VAPID Keypair**:
+   ```bash
+   python backend/scripts/generate_vapid_keys.py
+   ```
+   This generates an uncompressed P-256 keypair formatted for Web Push.
+2. **Environment Variables**:
+   - `VAPID_PUBLIC_KEY`: Base64URL-encoded public key shared with the browser.
+   - `VAPID_PRIVATE_KEY`: Secret private key for signing push headers.
+   - `VAPID_CLAIMS_SUB`: Subject contact (e.g. `mailto:support@prescripto.local`).
+
+### Architecture & Worker Scheduler
+- **Worker Dispatch Loop**:
+  The background worker process (`prescripto.worker.main:WorkerRunner`) runs a scheduled dispatch loop (`dispatch_reminders_if_due(interval_seconds=30.0)`).
+- **Execution Flow**:
+  1. Queries all due doses (`status IN ('PENDING', 'SNOOZED')` and `due_at <= now_utc`).
+  2. For users with registered push subscriptions (`push_subscriptions` table), securely encrypts the payload and delivers it via `pywebpush`.
+  3. Events older than 2 hours without patient response are transitioned to `MISSED`.
+  4. Snoozed events automatically create a new dose event scheduled 10 minutes later.
+- **Calendar (.ics) Integration**:
+  Provides RFC 5545 iCalendar feeds (`GET /api/v1/reminders/plans/{id}/calendar.ics`) with embedded alarms (`VALARM`) for offline Google Calendar, Apple Calendar, and Outlook sync.
+- **PWA Service Worker**:
+  - `web/public/sw.js` handles push events and background notifications with interactive action buttons (`Taken`, `Snooze 10m`, `Skip`).
+  - `web/public/manifest.json` enables Add-to-Home-Screen PWA support (mandatory for Web Push on iOS 16.4+).

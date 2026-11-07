@@ -1,6 +1,18 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { UserSession, Role, TokenResponse } from '../types/api';
-import { loginApi, refreshApi, sendOtpApi, verifyOtpApi, doctorLoginApi } from '../api/auth';
+import {
+  loginApi,
+  refreshApi,
+  requestPatientOtpApi,
+  registerPatientApi,
+  loginPatientApi,
+  doctorLoginApi,
+  registerDoctorApi,
+  forgotPasswordApi,
+  resetPasswordApi,
+  getMeApi,
+  verifyOtpApi,
+} from '../api/auth';
 
 interface AuthContextType {
   session: UserSession | null;
@@ -8,10 +20,26 @@ interface AuthContextType {
   isLoading: boolean;
   login: (usernameOrEmail: string, password: string) => Promise<void>;
   doctorLogin: (email: string, password: string) => Promise<void>;
-  sendOtp: (phoneNumber: string) => Promise<{ status: string; phone_number: string; message: string; mock_otp?: string }>;
-  loginWithOtp: (phoneNumber: string, otp: string, name?: string) => Promise<void>;
+  doctorRegister: (data: {
+    email: string;
+    password: string;
+    name: string;
+    specialization?: string;
+    license_number?: string;
+    clinic_name?: string;
+    clinic_address?: string;
+    phone_number?: string;
+    bio?: string;
+  }) => Promise<void>;
+  requestPatientOtp: (email: string, purpose?: string) => Promise<{ status: string; email: string; message: string }>;
+  registerPatient: (email: string, otp: string, name: string, password?: string) => Promise<void>;
+  loginPatient: (email: string, otp: string) => Promise<void>;
+  verifyOtp: (email: string, otp: string, purpose?: string) => Promise<void>;
+  forgotPassword: (email: string) => Promise<void>;
+  resetPassword: (email: string, token: string, newPassword: string) => Promise<void>;
   logout: () => void;
   hasRole: (...roles: Role[]) => boolean;
+  refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -103,6 +131,33 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const refreshProfile = async () => {
+    try {
+      const data = await getMeApi();
+      if (data && session) {
+        const updatedSession = { ...session };
+        if (data.patient) {
+          updatedSession.patient_id = data.patient.patient_id;
+          updatedSession.patient_name = data.patient.name;
+          updatedSession.phone_number = data.patient.phone_number;
+          updatedSession.is_patient = true;
+        }
+        if (data.doctor) {
+          // Doctor info available
+        }
+        if (data.email) {
+          // Email is available
+        }
+        if (data.is_verified !== undefined) {
+          // is_verified available
+        }
+        setSession(updatedSession);
+      }
+    } catch {
+      // Ignore profile refresh errors
+    }
+  };
+
   useEffect(() => {
     initSession();
 
@@ -126,13 +181,56 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setSessionFromTokens(data);
   };
 
-  const sendOtp = async (phoneNumber: string) => {
-    return await sendOtpApi(phoneNumber);
+  const doctorRegister = async (data: {
+    email: string;
+    password: string;
+    name: string;
+    specialization?: string;
+    license_number?: string;
+    clinic_name?: string;
+    clinic_address?: string;
+    phone_number?: string;
+    bio?: string;
+  }): Promise<void> => {
+    const result = await registerDoctorApi(
+      data.email,
+      data.password,
+      data.name,
+      data.specialization,
+      data.license_number,
+      data.clinic_name,
+      data.clinic_address,
+      data.phone_number,
+      data.bio,
+    );
+    setSessionFromTokens(result);
   };
 
-  const loginWithOtp = async (phoneNumber: string, otp: string, name?: string): Promise<void> => {
-    const data = await verifyOtpApi(phoneNumber, otp, name);
+  const requestPatientOtp = async (email: string, purpose: string = 'LOGIN') => {
+    return await requestPatientOtpApi(email, purpose);
+  };
+
+  const registerPatient = async (email: string, otp: string, name: string, password?: string): Promise<void> => {
+    const data = await registerPatientApi(email, otp, name, password);
     setSessionFromTokens(data);
+  };
+
+  const loginPatient = async (email: string, otp: string): Promise<void> => {
+    const data = await loginPatientApi(email, otp);
+    setSessionFromTokens(data);
+  };
+
+  const verifyOtp = async (email: string, otp: string, purpose: string = 'LOGIN'): Promise<void> => {
+    const data = await verifyOtpApi(email, otp, purpose);
+    setSessionFromTokens(data);
+  };
+
+  const forgotPassword = async (email: string): Promise<void> => {
+    await forgotPasswordApi(email);
+  };
+
+  const resetPassword = async (email: string, token: string, newPassword: string): Promise<void> => {
+    await resetPasswordApi(email, token, newPassword);
   };
 
   const logout = () => {
@@ -154,10 +252,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         isLoading,
         login,
         doctorLogin,
-        sendOtp,
-        loginWithOtp,
+        doctorRegister,
+        requestPatientOtp,
+        registerPatient,
+        loginPatient,
+        verifyOtp,
+        forgotPassword,
+        resetPassword,
         logout,
         hasRole,
+        refreshProfile,
       }}
     >
       {children}

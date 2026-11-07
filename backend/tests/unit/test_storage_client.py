@@ -1,6 +1,7 @@
 """
 Unit tests for MinIO / S3 Storage Client.
 """
+import time
 import uuid
 from unittest.mock import MagicMock
 import pytest
@@ -126,12 +127,9 @@ def test_hmac_signed_storage_url_generation_and_verification():
     assert client.verify_storage_signature(key, expired_time, expired_sig) is False
 
 
-def test_storage_endpoint_rejects_missing_or_invalid_signature():
+def test_storage_endpoint_rejects_missing_or_invalid_signature(client):
     """Test 5c: /api/v1/storage rejects unauthenticated or invalidly signed requests with 403."""
-    from fastapi.testclient import TestClient
-    from prescripto.api.main import app
-
-    tc = TestClient(app)
+    tc = client
     key = "prescriptions/test-id/original.jpg"
 
     # Missing signature and expires -> 403 FORBIDDEN_RESOURCE_ACCESS
@@ -152,8 +150,8 @@ def test_storage_endpoint_rejects_missing_or_invalid_signature():
     assert res_exp.json()["error"]["code"] == "FORBIDDEN_RESOURCE_ACCESS"
 
     # Valid signature -> passed auth check, returns 404 (because mock key not on disk), NOT 403!
-    client = StorageClient(s3_client=MagicMock(), default_bucket="test-bucket")
-    valid_url = client.generate_signed_storage_url(key, expires_in=60)
+    valid_sig = StorageClient.sign_storage_key(key, int(time.time()) + 60)
+    valid_url = f"/api/v1/storage/{key}?expires={int(time.time()) + 60}&signature={valid_sig}"
     res_valid = tc.get(valid_url)
     assert res_valid.status_code == 404
     assert res_valid.json()["error"]["code"] == "RESOURCE_NOT_FOUND"

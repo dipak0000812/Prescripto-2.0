@@ -1,98 +1,220 @@
+# Render Blueprint for Prescripto AI 2.0
+# This file defines the production infrastructure on Render
+# Deploy via: Render Dashboard > Blueprints > New Blueprint Instance
+
 services:
-  # ============================================================================
-  # 1. FastAPI Backend API
-  # ============================================================================
-  - type: web
-    name: prescripto-backend
-    runtime: python
-    rootDir: backend
-    plan: free
+  # PostgreSQL Database
+  - type: pserv
+    name: prescripto-postgres
+    plan: starter
     region: oregon
-    buildCommand: pip install -r requirements.txt && alembic upgrade head && python scripts/seed_medications.py && python scripts/seed_users.py && python scripts/create_user.py
-    startCommand: uvicorn prescripto.api.main:app --host 0.0.0.0 --port $PORT --proxy-headers --forwarded-allow-ips='*'
+    envVars:
+      - key: POSTGRES_DB
+        value: prescripto_db
+      - key: POSTGRES_USER
+        value: prescripto
+      - key: POSTGRES_PASSWORD
+        generateValue: true
+    disks:
+      - name: data
+        mountPath: /var/lib/postgresql/data
+        sizeGB: 10
+
+  # Redis for caching/sessions (optional)
+  - type: redis
+    name: prescripto-redis
+    plan: starter
+    region: oregon
+    maxmemoryPolicy: allkeys-lru
+
+  # Backend API Service
+  - type: web
+    name: prescripto-api
+    plan: standard
+    region: oregon
+    runtime: docker
+    dockerfilePath: ./backend/docker/Dockerfile.prod
     healthCheckPath: /health
     envVars:
-      - key: DATABASE_URL
-        fromDatabase:
-          name: prescripto-db
-          property: connectionString
       - key: ENVIRONMENT
         value: production
       - key: LOG_LEVEL
         value: INFO
-      - key: RECOGNITION_PROVIDER
-        value: gemini
-      - key: GEMINI_MODEL
-        value: gemini-3.5-flash
-      - key: GEMINI_FALLBACK_MODEL
-        value: gemini-3.1-flash-lite
-      - key: GEMINI_API_KEY
+      - key: DATABASE_URL
+        fromService:
+          name: prescripto-postgres
+          type: pserv
+          property: connectionString
+      - key: DB_POOL_SIZE
+        value: "20"
+      - key: DB_MAX_OVERFLOW
+        value: "30"
+      - key: CORS_ORIGINS
+        value: https://prescripto-2-0.onrender.com,https://prescripto.ai,https://www.prescripto.ai
+      - key: S3_ENDPOINT
+        value: https://s3.amazonaws.com
+      - key: S3_BUCKET
+        value: prescripto-prod
+      - key: S3_ACCESS_KEY
         sync: false
+      - key: S3_SECRET_KEY
+        sync: false
+      - key: S3_REGION
+        value: us-east-1
+      - key: RETENTION_VAULT_BUCKET
+        value: prescripto-retention-prod
       - key: JWT_PRIVATE_KEY
         sync: false
       - key: JWT_PUBLIC_KEY
         sync: false
-      - key: CORS_ORIGINS
-        value: "*"
+      - key: JWT_ACCESS_TTL
+        value: "900"
+      - key: JWT_REFRESH_TTL
+        value: "604800"
+      - key: OCR_MODEL_NAME
+        value: pp-ocrv6
+      - key: OCR_MODEL_VERSION
+        value: "1.0.0"
+      - key: MODEL_CACHE_DIR
+        value: /tmp/prescripto_models
+      - key: ML_RUNTIME_MODE
+        value: rapidocr
+      - key: ML_SERVICE_URL
+        value: http://localhost:8001
+      - key: RECOGNITION_PROVIDER
+        value: gemini
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GEMINI_MODEL
+        value: gemini-3.5-flash
+      - key: GEMINI_FALLBACK_MODEL
+        value: gemini-3.1-flash-lite
+      - key: LLM_ENABLED
+        value: "false"
+      - key: ENABLED_KNOWLEDGE_PROVIDERS
+        value: openfda,cdsco
+      - key: LICENSE_MODE_ALLOWED
+        value: COMMERCIAL_PERMISSIVE
+      - key: OPENFDA_API_KEY
+        sync: false
+      - key: RETENTION_DAYS
+        value: "90"
+      - key: MAX_UPLOAD_BYTES
+        value: "20971520"
+      - key: WORKER_ID
+        value: prod-worker-1
+      - key: WORKER_POLL_INTERVAL
+        value: "2.0"
+      - key: WORKER_LEASE_SECONDS
+        value: "600"
+      - key: WORKER_HEARTBEAT_SECONDS
+        value: "30"
+      - key: WORKER_MAX_RETRIES
+        value: "3"
+      - key: VAPID_PUBLIC_KEY
+        sync: false
+      - key: VAPID_PRIVATE_KEY
+        sync: false
+      - key: VAPID_CLAIMS_SUB
+        value: mailto:support@prescripto.ai
+    autoDeploy: true
 
-  # ============================================================================
-  # 2. Asynchronous Queue Worker
-  # ============================================================================
+  # Background Worker Service
   - type: worker
     name: prescripto-worker
-    runtime: python
-    rootDir: backend
-    plan: free
+    plan: standard
     region: oregon
-    buildCommand: pip install -r requirements.txt
-    startCommand: python -m prescripto.worker.main
+    runtime: docker
+    dockerfilePath: ./backend/docker/Dockerfile.prod
     envVars:
-      - key: DATABASE_URL
-        fromDatabase:
-          name: prescripto-db
-          property: connectionString
       - key: ENVIRONMENT
         value: production
-      - key: RECOGNITION_PROVIDER
-        value: gemini
+      - key: LOG_LEVEL
+        value: INFO
+      - key: DATABASE_URL
+        fromService:
+          name: prescripto-postgres
+          type: pserv
+          property: connectionString
+      - key: DB_POOL_SIZE
+        value: "20"
+      - key: DB_MAX_OVERFLOW
+        value: "30"
+      - key: S3_ENDPOINT
+        value: https://s3.amazonaws.com
+      - key: S3_BUCKET
+        value: prescripto-prod
+      - key: S3_ACCESS_KEY
+        sync: false
+      - key: S3_SECRET_KEY
+        sync: false
+      - key: S3_REGION
+        value: us-east-1
       - key: GEMINI_MODEL
         value: gemini-3.5-flash
       - key: GEMINI_FALLBACK_MODEL
         value: gemini-3.1-flash-lite
+      - key: RECOGNITION_PROVIDER
+        value: gemini
       - key: GEMINI_API_KEY
         sync: false
-      - key: JWT_PRIVATE_KEY
-        sync: false
-      - key: JWT_PUBLIC_KEY
-        sync: false
+      - key: ML_RUNTIME_MODE
+        value: rapidocr
+      - key: WORKER_ID
+        value: prod-worker-1
+      - key: WORKER_POLL_INTERVAL
+        value: "2.0"
+      - key: WORKER_LEASE_SECONDS
+        value: "600"
+      - key: WORKER_HEARTBEAT_SECONDS
+        value: "30"
+      - key: WORKER_MAX_RETRIES
+        value: "3"
+    autoDeploy: true
 
-  # ============================================================================
-  # 3. React Vite Frontend (Static Site SPA)
-  # ============================================================================
-  - type: web
-    name: prescripto-web
-    runtime: static
-    rootDir: web
-    buildCommand: npm install && npm run build
-    staticPublishPath: ./dist
+  # Deletion Worker Service
+  - type: worker
+    name: prescripto-deletion-worker
+    plan: starter
+    region: oregon
+    runtime: docker
+    dockerfilePath: ./backend/docker/Dockerfile.prod
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: LOG_LEVEL
+        value: INFO
+      - key: DATABASE_URL
+        fromService:
+          name: prescripto-postgres
+          type: pserv
+          property: connectionString
+      - key: S3_ENDPOINT
+        value: https://s3.amazonaws.com
+      - key: S3_BUCKET
+        value: prescripto-prod
+      - key: S3_ACCESS_KEY
+        sync: false
+      - key: S3_SECRET_KEY
+        sync: false
+      - key: S3_REGION
+        value: us-east-1
+    autoDeploy: true
+
+  # Frontend Static Site
+  - type: static
+    name: prescripto-frontend
+    plan: starter
+    region: oregon
+    buildCommand: npm ci && npm run build
+    staticPublishPath: ./web/dist
     envVars:
       - key: VITE_API_BASE_URL
-        fromService:
-          type: web
-          name: prescripto-backend
-          property: host
+        value: https://prescripto-2-0.onrender.com/api/v1
+      - key: VITE_PRODUCTION
+        value: "true"
     routes:
       - type: rewrite
         source: /*
         destination: /index.html
-
-# ==============================================================================
-# Managed PostgreSQL Database
-# ==============================================================================
-databases:
-  - name: prescripto-db
-    databaseName: prescripto_db
-    user: prescripto
-    plan: free
-    region: oregon
-
+    autoDeploy: true

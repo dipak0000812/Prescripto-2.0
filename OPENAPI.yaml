@@ -187,6 +187,51 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/ErrorResponse' }
 
+  /analyses/{id}/medications:
+    patch:
+      summary: Update or correct medication lines for an analysis
+      operationId: updateAnalysisMedications
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/MedicationUpdateRequest' }
+      responses:
+        '200':
+          description: Updated analysis result
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AnalysisResult' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409':
+          description: Analysis not in an editable state
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
+  /analyses/{id}/retry:
+    post:
+      summary: Retry a failed prescription analysis
+      operationId: retryAnalysis
+      parameters:
+        - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: Analysis reset to QUEUED
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AnalysisStatus' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409':
+          description: Analysis is not in FAILED status
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ErrorResponse' }
+
   /health:
     get:
       summary: System health check
@@ -198,6 +243,162 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/HealthStatus' }
+
+  /reminders/plans:
+    post:
+      summary: Create reminder plans from confirmed prescription medications
+      operationId: createReminderPlans
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreatePlansRequest' }
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/ReminderPlanOut' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /reminders/today:
+    get:
+      summary: Get today's upcoming, overdue, and completed medicine doses
+      operationId: getTodayReminders
+      parameters:
+        - name: timezone
+          in: query
+          required: false
+          schema: { type: string, default: "Asia/Kolkata" }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TodayRemindersResponse' }
+
+  /reminders/events/{event_id}:
+    patch:
+      summary: Action a dose event (TAKEN, SNOOZE, SKIP)
+      operationId: actOnReminderEvent
+      parameters:
+        - name: event_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateEventRequest' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ReminderEventOut' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /reminders/plans/{plan_id}:
+    patch:
+      summary: Update plan schedule times or pause/resume status
+      operationId: updateReminderPlan
+      parameters:
+        - name: plan_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdatePlanRequest' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ReminderPlanOut' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    delete:
+      summary: Delete a reminder plan
+      operationId: deleteReminderPlan
+      parameters:
+        - name: plan_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '204':
+          description: No Content
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /reminders/plans/{plan_id}/calendar.ics:
+    get:
+      summary: Download RFC 5545 iCalendar feed for phone calendar with alarms
+      operationId: downloadPlanIcs
+      parameters:
+        - name: plan_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        '200':
+          description: OK
+          content:
+            text/calendar:
+              schema: { type: string }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  /reminders/vapid-public-key:
+    get:
+      summary: Get VAPID public key for Web Push subscription
+      operationId: getVapidPublicKey
+      security: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/VapidPublicKeyResponse' }
+
+  /reminders/push/subscribe:
+    post:
+      summary: Register browser Web Push subscription
+      operationId: subscribeWebPush
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PushSubscribeRequest' }
+      responses:
+        '204':
+          description: No Content
+    delete:
+      summary: Unregister browser Web Push subscription
+      operationId: unsubscribeWebPush
+      parameters:
+        - name: endpoint
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        '204':
+          description: No Content
+
+  /reminders/adherence:
+    get:
+      summary: Get patient medication adherence log
+      operationId: getAdherenceReport
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AdherenceReportResponse' }
 
 components:
   securitySchemes:
@@ -420,6 +621,135 @@ components:
         database: { type: string, enum: [ok, degraded, down] }
         object_storage: { type: string, enum: [ok, degraded, down] }
         worker_heartbeat: { type: string, enum: [ok, stale, down] }
+
+    MedicationUpdateItem:
+      type: object
+      required: [line_index]
+      properties:
+        line_index: { type: integer }
+        name: { type: string, nullable: true }
+        strength: { type: string, nullable: true }
+        dose: { type: string, nullable: true }
+        frequency: { type: string, nullable: true }
+        route: { type: string, nullable: true }
+        duration: { type: string, nullable: true }
+        instructions: { type: string, nullable: true }
+
+    MedicationUpdateRequest:
+      type: object
+      required: [medications]
+      properties:
+        medications:
+          type: array
+          items: { $ref: '#/components/schemas/MedicationUpdateItem' }
+
+    CreatePlanItem:
+      type: object
+      required: [medicine_name]
+      properties:
+        medication_line_id: { type: string, format: uuid, nullable: true }
+        medicine_name: { type: string }
+        dosage_text: { type: string, nullable: true }
+        local_times: { type: array, items: { type: string } }
+        duration_days: { type: integer, nullable: true }
+
+    CreatePlansRequest:
+      type: object
+      required: [analysis_id, medications]
+      properties:
+        analysis_id: { type: string, format: uuid }
+        timezone: { type: string, default: "Asia/Kolkata" }
+        medications:
+          type: array
+          items: { $ref: '#/components/schemas/CreatePlanItem' }
+
+    ReminderPlanOut:
+      type: object
+      required: [id, user_id, analysis_id, medicine_name, local_times, start_date, timezone, status, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        user_id: { type: string, format: uuid }
+        patient_id: { type: string, format: uuid, nullable: true }
+        analysis_id: { type: string, format: uuid }
+        prescription_med_id: { type: string, format: uuid, nullable: true }
+        medicine_name: { type: string }
+        dosage_text: { type: string, nullable: true }
+        local_times: { type: array, items: { type: string } }
+        start_date: { type: string, format: date-time }
+        end_date: { type: string, format: date-time, nullable: true }
+        timezone: { type: string }
+        status: { type: string, enum: [ACTIVE, PAUSED, COMPLETED] }
+        created_at: { type: string, format: date-time }
+
+    ReminderEventOut:
+      type: object
+      required: [id, plan_id, medicine_name, due_at, status]
+      properties:
+        id: { type: string, format: uuid }
+        plan_id: { type: string, format: uuid }
+        medicine_name: { type: string }
+        dosage_text: { type: string, nullable: true }
+        due_at: { type: string, format: date-time }
+        status: { type: string, enum: [PENDING, SENT, TAKEN, SNOOZED, SKIPPED, MISSED] }
+        acted_at: { type: string, format: date-time, nullable: true }
+
+    UpdateEventRequest:
+      type: object
+      required: [action]
+      properties:
+        action: { type: string, enum: [TAKEN, SNOOZE, SKIP] }
+
+    UpdatePlanRequest:
+      type: object
+      properties:
+        local_times: { type: array, items: { type: string } }
+        status: { type: string, enum: [ACTIVE, PAUSED] }
+
+    PushSubscribeRequest:
+      type: object
+      required: [endpoint, keys_p256dh, keys_auth]
+      properties:
+        endpoint: { type: string }
+        keys_p256dh: { type: string }
+        keys_auth: { type: string }
+        user_agent: { type: string, nullable: true }
+
+    VapidPublicKeyResponse:
+      type: object
+      required: [public_key]
+      properties:
+        public_key: { type: string }
+
+    TodayRemindersResponse:
+      type: object
+      required: [today_date, total_due, taken_count, pending_count, upcoming, overdue, completed]
+      properties:
+        today_date: { type: string }
+        total_due: { type: integer }
+        taken_count: { type: integer }
+        pending_count: { type: integer }
+        upcoming: { type: array, items: { $ref: '#/components/schemas/ReminderEventOut' } }
+        overdue: { type: array, items: { $ref: '#/components/schemas/ReminderEventOut' } }
+        completed: { type: array, items: { $ref: '#/components/schemas/ReminderEventOut' } }
+
+    AdherenceItem:
+      type: object
+      required: [medicine_name, plan_id, total_doses, taken, missed, skipped, adherence_rate]
+      properties:
+        medicine_name: { type: string }
+        plan_id: { type: string, format: uuid }
+        total_doses: { type: integer }
+        taken: { type: integer }
+        missed: { type: integer }
+        skipped: { type: integer }
+        adherence_rate: { type: number, format: float }
+
+    AdherenceReportResponse:
+      type: object
+      required: [overall_adherence_rate, items]
+      properties:
+        overall_adherence_rate: { type: number, format: float }
+        items: { type: array, items: { $ref: '#/components/schemas/AdherenceItem' } }
 
 security:
   - bearerAuth: []

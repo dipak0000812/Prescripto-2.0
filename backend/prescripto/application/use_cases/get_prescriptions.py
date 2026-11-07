@@ -37,9 +37,17 @@ class ListPrescriptionsUseCase:
     ) -> Tuple[List[PrescriptionSummaryDTO], int]:
         query = self.db.query(PrescriptionDocument)
 
-        # Scoping rule: OPERATOR only sees their own documents. ADMIN and REVIEWER see all.
+        # Scoping rule: OPERATOR sees documents they uploaded or that are linked to their patient record. ADMIN and REVIEWER see all.
         if caller.role not in (Role.ADMIN.value, Role.REVIEWER.value):
-            query = query.filter(PrescriptionDocument.uploader_id == caller.id)
+            pat = self.db.query(Patient).filter(Patient.user_id == caller.id).first()
+            if pat:
+                query = query.filter(
+                    (PrescriptionDocument.uploader_id == caller.id)
+                    | (PrescriptionDocument.patient_ref == pat.patient_id)
+                    | (PrescriptionDocument.patient_ref == pat.phone_number)
+                )
+            else:
+                query = query.filter(PrescriptionDocument.uploader_id == caller.id)
 
         # Exclude completely deleted records
         query = query.filter(PrescriptionDocument.status != DocumentStatus.DELETED.value)
@@ -62,12 +70,28 @@ class ListPrescriptionsUseCase:
                 .first()
             )
             patient_name = None
+            p = None
             if doc.patient_ref:
+                clean_ref = str(doc.patient_ref).strip()
+                alt_ref = clean_ref.replace("PT-", "PAT-") if clean_ref.startswith("PT-") else clean_ref.replace("PAT-", "PT-")
                 p = self.db.query(Patient).filter(
-                    (Patient.patient_id == doc.patient_ref) | (Patient.phone_number == doc.patient_ref)
+                    (Patient.patient_id == clean_ref)
+                    | (Patient.patient_id == alt_ref)
+                    | (Patient.phone_number == clean_ref)
                 ).first()
-                if p:
-                    patient_name = p.name
+            if not p and doc.uploader_id:
+                p = self.db.query(Patient).filter(Patient.user_id == doc.uploader_id).first()
+
+            if p:
+                patient_name = p.name
+            elif doc.patient_ref:
+                ref_str = str(doc.patient_ref).strip()
+                if "DEMO" in ref_str.upper():
+                    patient_name = "Demo Patient"
+                elif "TEST" in ref_str.upper():
+                    patient_name = "Test Patient"
+                else:
+                    patient_name = f"Patient {ref_str}"
 
             items.append(
                 PrescriptionSummaryDTO(
@@ -98,8 +122,12 @@ class GetPrescriptionDetailUseCase:
         if not doc:
             raise ResourceNotFoundException("Prescription document not found")
 
-        if caller.role not in (Role.ADMIN.value, Role.REVIEWER.value) and doc.uploader_id != caller.id:
-            raise ResourceNotFoundException("Prescription document not found")
+        if caller.role not in (Role.ADMIN.value, Role.REVIEWER.value):
+            pat = self.db.query(Patient).filter(Patient.user_id == caller.id).first()
+            is_owner = (doc.uploader_id == caller.id)
+            is_own_patient = (pat is not None and doc.patient_ref in (pat.patient_id, pat.phone_number, str(pat.id)))
+            if not (is_owner or is_own_patient):
+                raise ResourceNotFoundException("Prescription document not found")
 
         if doc.status == DocumentStatus.DELETION_IN_PROGRESS.value:
             raise DeletionInProgressException()
@@ -129,12 +157,28 @@ class GetPrescriptionDetailUseCase:
         ]
 
         patient_name = None
+        p = None
         if doc.patient_ref:
+            clean_ref = str(doc.patient_ref).strip()
+            alt_ref = clean_ref.replace("PT-", "PAT-") if clean_ref.startswith("PT-") else clean_ref.replace("PAT-", "PT-")
             p = self.db.query(Patient).filter(
-                (Patient.patient_id == doc.patient_ref) | (Patient.phone_number == doc.patient_ref)
+                (Patient.patient_id == clean_ref)
+                | (Patient.patient_id == alt_ref)
+                | (Patient.phone_number == clean_ref)
             ).first()
-            if p:
-                patient_name = p.name
+        if not p and doc.uploader_id:
+            p = self.db.query(Patient).filter(Patient.user_id == doc.uploader_id).first()
+
+        if p:
+            patient_name = p.name
+        elif doc.patient_ref:
+            ref_str = str(doc.patient_ref).strip()
+            if "DEMO" in ref_str.upper():
+                patient_name = "Demo Patient"
+            elif "TEST" in ref_str.upper():
+                patient_name = "Test Patient"
+            else:
+                patient_name = f"Patient {ref_str}"
 
         return PrescriptionDetailDTO(
             prescription_id=doc.id,

@@ -72,6 +72,25 @@ class WorkerRunner:
         self.storage_client = storage_client or get_storage_client()
         self.ocr_runtime = _build_ocr_runtime(ocr_runtime)
         self._running = False
+        self._last_reminder_check: float = 0.0
+
+    def dispatch_reminders_if_due(self, interval_seconds: float = 30.0) -> None:
+        """Periodic background dispatch for due medicine reminders and Web Push."""
+        now = time.time()
+        if now - self._last_reminder_check < interval_seconds:
+            return
+        self._last_reminder_check = now
+        db: Session = self.session_factory()
+        try:
+            from prescripto.application.services.reminder_service import ReminderService
+            sent = ReminderService.dispatch_due_reminders(db)
+            if sent > 0:
+                logger.info("reminders_dispatched", count=sent)
+        except Exception as e:
+            logger.warning("reminder_dispatch_failed", error=str(e))
+        finally:
+            if self.close_session:
+                db.close()
 
     def run_once(self) -> bool:
         """
@@ -171,6 +190,7 @@ class WorkerRunner:
         while self._running:
             try:
                 processed = self.run_once()
+                self.dispatch_reminders_if_due()
                 if not processed:
                     time.sleep(self.poll_interval)
             except KeyboardInterrupt:

@@ -17,6 +17,10 @@ const translations: Record<Language, Record<string, string>> = {
     'nav.home': 'Home',
     'nav.prescriptions': 'Prescriptions',
     'nav.my_prescriptions': 'My Prescriptions',
+    'nav.today_doses': "Today's Doses",
+    'portal.today_schedule_title': "Today's Medicine Schedule",
+    'portal.today_schedule_desc': 'Check dose alarms, mark taken, or adjust reminder times.',
+    'portal.open_today_btn': "Open Today's Doses",
     'nav.help': 'Help',
     'help.modal_title': 'Need Help?',
     'help.modal_desc': 'Prescripto helps you understand your prescription and medication timings simply.',
@@ -227,6 +231,10 @@ const translations: Record<Language, Record<string, string>> = {
     'nav.prescriptions': 'पर्चे (Prescriptions)',
     // TODO: Native speaker review for Indic translations
     'nav.my_prescriptions': 'मेरी दवाइयाँ',
+    'nav.today_doses': 'आज की दवाइयाँ',
+    'portal.today_schedule_title': 'आज की दवाइयों का समय',
+    'portal.today_schedule_desc': 'अलार्म चेक करें, ली गई दवा मार्क करें और समय बदलें।',
+    'portal.open_today_btn': 'आज की दवाइयाँ देखें',
     'nav.help': 'मदद',
     'help.modal_title': 'मदद चाहिए?',
     'help.modal_desc': 'प्रिस्क्रिप्टो आपके डॉक्टर के पर्चे को पढ़कर दवा लेने का सही समय सरल भाषा में बताता है।',
@@ -441,6 +449,10 @@ const translations: Record<Language, Record<string, string>> = {
     'nav.prescriptions': 'પ્રિસ્ક્રિપ્શન્સ (દવાનું લિસ્ટ)',
     // TODO: Native speaker review for Indic translations
     'nav.my_prescriptions': 'મારી દવાઓ',
+    'nav.today_doses': 'આજની દવાઓ',
+    'portal.today_schedule_title': 'આજની દવાઓનું શિડ્યુલ',
+    'portal.today_schedule_desc': 'એલાર્મ તપાસો, લીધેલ દવા ચિહ્નિત કરો અને સમય બદલો.',
+    'portal.open_today_btn': 'આજની દવાઓ જુઓ',
     'nav.help': 'મદદ',
     'help.modal_title': 'મદદ જોઈએ છે?',
     'help.modal_desc': 'પ્રિસ્ક્રિપ્ટો તમારા ડોક્ટરના પ્રિસ્ક્રિપ્શનને સરળ ભાષામાં સમજાવવામાં મદદ કરે છે.',
@@ -655,6 +667,10 @@ const translations: Record<Language, Record<string, string>> = {
     'nav.prescriptions': 'औषध चिठ्ठ्या (Prescriptions)',
     // TODO: Native speaker review for Indic translations
     'nav.my_prescriptions': 'माझी औषधे',
+    'nav.today_doses': 'आजची औषधे',
+    'portal.today_schedule_title': 'आजच्या औषधांचे वेळापत्रक',
+    'portal.today_schedule_desc': 'डोस अलार्म तपासा, घेतलेली औषधे नोंदवा आणि वेळ बदला.',
+    'portal.open_today_btn': 'आजची औषधे पहा',
     'nav.help': 'मदत',
     'help.modal_title': 'मदत हवी आहे?',
     'help.modal_desc': 'प्रिस्क्रिप्टो तुमच्या डॉक्टरांच्या चिठ्ठीनुसार औषधे घेण्याची वेळ सोप्या भाषेत सांगते.',
@@ -877,6 +893,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   useEffect(() => {
     localStorage.setItem('prescripto_lang', language);
+    document.documentElement.lang = language;
   }, [language]);
 
   const setLanguage = (lang: Language) => {

@@ -97,6 +97,7 @@ class Role(str, Enum):
     REVIEWER = "REVIEWER"
     ADMIN = "ADMIN"
     PATIENT = "PATIENT"
+    DOCTOR = "DOCTOR"
 
 
 class LicenseMode(str, Enum):

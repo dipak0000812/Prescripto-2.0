@@ -128,6 +128,9 @@ export interface MedicationLine {
   instructions: FieldValue;
   resolved_medication_id: string | null;
   resolution_status: ResolutionStatus;
+  is_edited?: boolean;
+  original_name_raw?: string | null;
+  edited_at?: string | null;
 }
 
 export interface RiskFindingOut {
@@ -296,4 +299,93 @@ export interface ApiError {
 
 export interface ApiErrorResponse {
   error: ApiError;
+}
+
+// ---------------------------------------------------------------------------
+// Medicine Reminders & Web Push Types
+// ---------------------------------------------------------------------------
+
+export interface CreatePlanItem {
+  medication_line_id?: string | null;
+  medicine_name: string;
+  dosage_text?: string | null;
+  local_times: string[];
+  duration_days?: number | null;
+}
+
+export interface CreatePlansRequest {
+  analysis_id: string;
+  timezone?: string;
+  medications: CreatePlanItem[];
+}
+
+export interface ReminderPlanOut {
+  id: string;
+  user_id: string;
+  patient_id?: string | null;
+  analysis_id: string;
+  prescription_med_id?: string | null;
+  medicine_name: string;
+  dosage_text?: string | null;
+  local_times: string[];
+  start_date: string;
+  end_date?: string | null;
+  timezone: string;
+  status: 'ACTIVE' | 'PAUSED' | 'COMPLETED';
+  created_at: string;
+}
+
+export interface ReminderEventOut {
+  id: string;
+  plan_id: string;
+  medicine_name: string;
+  dosage_text?: string | null;
+  due_at: string;
+  status: 'PENDING' | 'SENT' | 'TAKEN' | 'SNOOZED' | 'SKIPPED' | 'MISSED';
+  acted_at?: string | null;
+}
+
+export interface TodayRemindersResponse {
+  today_date: string;
+  total_due: number;
+  taken_count: number;
+  pending_count: number;
+  upcoming: ReminderEventOut[];
+  overdue: ReminderEventOut[];
+  completed: ReminderEventOut[];
+}
+
+export interface UpdateEventRequest {
+  action: 'TAKEN' | 'SNOOZE' | 'SKIP';
+}
+
+export interface UpdatePlanRequest {
+  local_times?: string[];
+  status?: 'ACTIVE' | 'PAUSED';
+}
+
+export interface PushSubscribeRequest {
+  endpoint: string;
+  keys_p256dh: string;
+  keys_auth: string;
+  user_agent?: string | null;
+}
+
+export interface VapidPublicKeyResponse {
+  public_key: string;
+}
+
+export interface AdherenceItem {
+  medicine_name: string;
+  plan_id: string;
+  total_doses: number;
+  taken: number;
+  missed: number;
+  skipped: number;
+  adherence_rate: number;
+}
+
+export interface AdherenceReportResponse {
+  overall_adherence_rate: number;
+  items: AdherenceItem[];
 }

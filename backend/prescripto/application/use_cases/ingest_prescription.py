@@ -20,6 +20,7 @@ from prescripto.db.models.document import PrescriptionDocument
 from prescripto.db.models.analysis import Analysis, AnalysisJob
 from prescripto.db.models.registry import ModelVersion
 from prescripto.db.models.idempotency import IdempotencyRecord
+from prescripto.db.models.patient import Patient
 from prescripto.application.dtos.prescription import (
     IngestPrescriptionInput,
     IngestPrescriptionOutput,
@@ -182,12 +183,19 @@ class IngestPrescriptionUseCase:
             logger.error("storage_upload_failed", error_code="STORAGE_UNAVAILABLE")
             raise StorageUnavailableException(str(err)) from err
 
+        # Resolve patient_ref if not explicitly provided
+        resolved_patient_ref = cmd.patient_external_id
+        if not resolved_patient_ref:
+            patient_rec = self.db.query(Patient).filter(Patient.user_id == cmd.uploader_id).first()
+            if patient_rec:
+                resolved_patient_ref = patient_rec.patient_id
+
         # 7. Atomic DB Transaction
         try:
             doc = PrescriptionDocument(
                 id=document_id,
                 uploader_id=cmd.uploader_id,
-                patient_ref=cmd.patient_external_id,
+                patient_ref=resolved_patient_ref,
                 storage_key=storage_key,
                 file_hash_sha256=file_hash,
                 mime_type=mime_type,

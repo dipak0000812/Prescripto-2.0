@@ -1,0 +1,19 @@
+{
+  "name": "Prescripto 2.0 — Prescription & Medicine Reminders",
+  "short_name": "Prescripto",
+  "description": "Smart prescription reading, medicine schedules, and daily dose alarms",
+  "start_url": "/today",
+  "display": "standalone",
+  "background_color": "#FAF9F6",
+  "theme_color": "#0F5147",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
+

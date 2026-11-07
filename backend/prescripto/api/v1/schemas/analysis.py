@@ -5,7 +5,7 @@ Strictly matches OPENAPI.yaml canonical contracts.
 import uuid
 from datetime import datetime
 from typing import Any, Dict, List, Optional
-from pydantic import BaseModel, Field, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict, field_validator
 
 
 class AnalysisStageOut(BaseModel):
@@ -51,6 +51,9 @@ class MedicationLine(BaseModel):
     instructions: FieldValue
     resolved_medication_id: Optional[uuid.UUID] = None
     resolution_status: str
+    is_edited: bool = False
+    original_name_raw: Optional[str] = None
+    edited_at: Optional[datetime] = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -161,6 +164,35 @@ class MedicationUpdateItem(BaseModel):
     route: Optional[str] = None
     duration: Optional[str] = None
     instructions: Optional[str] = None
+
+    @field_validator("name")
+    @classmethod
+    def validate_name(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None:
+            v_stripped = v.strip()
+            if not v_stripped:
+                raise ValueError("Medicine name cannot be empty.")
+            return v_stripped
+        return v
+
+    @field_validator("duration")
+    @classmethod
+    def validate_duration(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None:
+            v_stripped = v.strip()
+            if not v_stripped:
+                return None
+            if v_stripped.lower() in ("as needed", "sos", "prn"):
+                return v_stripped
+            import re
+            m = re.match(r"^(\d+)\s*(days?|weeks?|months?|d)?$", v_stripped, re.IGNORECASE)
+            if m:
+                count = int(m.group(1))
+                if count <= 0:
+                    raise ValueError("Duration must be a positive number of days or 'as needed'.")
+                return v_stripped
+            raise ValueError("Duration must be a positive number of days (e.g. '5 days') or 'as needed'.")
+        return v
 
 
 class MedicationUpdateRequest(BaseModel):

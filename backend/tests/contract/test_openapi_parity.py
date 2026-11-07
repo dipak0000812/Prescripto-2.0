@@ -28,6 +28,8 @@ def test_full_openapi_contract_parity():
         "/api/v1/analyses/{id}": [("get", "getAnalysisStatus")],
         "/api/v1/analyses/{id}/result": [("get", "getAnalysisResult")],
         "/api/v1/analyses/{id}/review": [("post", "submitReview")],
+        "/api/v1/analyses/{id}/medications": [("patch", "updateAnalysisMedications")],
+        "/api/v1/analyses/{id}/retry": [("post", "retryAnalysis")],
     }
 
     # 3. Verify each endpoint exists and matches operationId exactly

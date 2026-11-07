@@ -6,7 +6,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional
 from sqlalchemy import (
     String, Float, Integer, DateTime, CheckConstraint, ForeignKey,
-    UniqueConstraint, Index, JSON, ARRAY
+    UniqueConstraint, Index, JSON, ARRAY, Boolean
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID, JSONB
@@ -154,6 +154,20 @@ class PrescriptionMedication(Base):
         nullable=False,
     )
     instructions_confidence: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+
+    # 9. Audit Trail (Bug 2 Fix)
+    original_name_raw: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    original_strength_raw: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    original_dose_raw: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    original_frequency_raw: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    original_route_raw: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    original_duration_raw: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    original_instructions_raw: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
+    is_edited: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    edited_by_user_id: Mapped[Optional[uuid.UUID]] = mapped_column(
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+    edited_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
 
     analysis = relationship("Analysis", backref="prescription_medications")
 

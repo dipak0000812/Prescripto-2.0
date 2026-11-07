@@ -94,3 +94,8 @@ export async function updateAnalysisMedicationsApi(
   });
   return response.data;
 }
+
+export async function retryAnalysisApi(id: string): Promise<AnalysisStatusResponse> {
+  const response = await apiClient.post<AnalysisStatusResponse>(`/analyses/${id}/retry`);
+  return response.data;
+}

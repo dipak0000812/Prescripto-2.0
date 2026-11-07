@@ -12,7 +12,12 @@ import { SystemHealthPage } from './pages/SystemHealthPage';
 import { PatientSearchPage } from './pages/PatientSearchPage';
 import { PatientTimelinePage } from './pages/PatientTimelinePage';
 import { PatientPortalPage } from './pages/PatientPortalPage';
+import { TodayRemindersPage } from './pages/TodayRemindersPage';
 import { HelpPage } from './pages/HelpPage';
+import { StyleguidePage } from './pages/StyleguidePage';
+import { NotFoundPage } from './pages/NotFoundPage';
+import { DoctorDashboardPage } from './pages/DoctorDashboardPage';
+import { AnalyticsDashboardPage } from './pages/AnalyticsDashboardPage';
 import { Role } from './types/api';
 import { ShieldAlert, RefreshCw } from 'lucide-react';
 
@@ -68,97 +73,126 @@ const ProtectedRoute: React.FC<{
 
 import { LanguageProvider } from './context/LanguageContext';
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { ToastProvider } from './components/ui/Toast';
 
 export const App: React.FC = () => {
   return (
     <ErrorBoundary>
       <LanguageProvider>
         <AuthProvider>
-          <BrowserRouter>
-            <Routes>
-          {/* Public Modern 3D Dynamic Landing Page */}
-          <Route path="/" element={<HomePage />} />
+          <ToastProvider>
+            <BrowserRouter>
+              <Routes>
+                {/* Public Modern 3D Dynamic Landing Page */}
+                <Route path="/" element={<HomePage />} />
 
-          {/* Unified Login (Patient OTP + Doctor Credential) */}
-          <Route path="/login" element={<LoginPage />} />
+                {/* Dev-only Design System Styleguide */}
+                <Route path="/styleguide" element={<StyleguidePage />} />
 
-          {/* Protected Clinical Workflows */}
-          <Route
-            element={
-              <ProtectedRoute>
-                <Layout />
-              </ProtectedRoute>
-            }
-          >
-            {/* Dedicated Patient Portal Dashboard */}
-            <Route
-              path="patient-portal"
-              element={
-                <ProtectedRoute patientsOnly>
-                  <PatientPortalPage />
-                </ProtectedRoute>
-              }
-            />
+                {/* Unified Login (Patient OTP + Doctor Credential) */}
+                <Route path="/login" element={<LoginPage />} />
 
-            {/* Doctor & Clinical Staff Prescriptions Ledger */}
-            <Route
-              path="prescriptions"
-              element={
-                <ProtectedRoute disallowPatient>
-                  <PrescriptionsListPage />
-                </ProtectedRoute>
-              }
-            />
+                {/* Protected Clinical Workflows */}
+                <Route
+                  element={
+                    <ProtectedRoute>
+                      <Layout />
+                    </ProtectedRoute>
+                  }
+                >
+                  {/* Dedicated Patient Portal Dashboard */}
+                  <Route
+                    path="patient-portal"
+                    element={
+                      <ProtectedRoute patientsOnly>
+                        <PatientPortalPage />
+                      </ProtectedRoute>
+                    }
+                  />
 
-            {/* Prescriptions Upload Intake */}
-            <Route path="upload" element={<UploadPrescriptionPage />} />
+                  {/* Daily Medicine Doses & Reminders */}
+                  <Route path="today" element={<TodayRemindersPage />} />
 
-            {/* Help & FAQ Screen */}
-            <Route path="help" element={<HelpPage />} />
+                  {/* Doctor Dashboard - Primary clinical workspace */}
+                  <Route
+                    path="doctor"
+                    element={
+                      <ProtectedRoute disallowPatient allowedRoles={['DOCTOR', 'REVIEWER', 'ADMIN']}>
+                        <DoctorDashboardPage />
+                      </ProtectedRoute>
+                    }
+                  />
 
-            {/* Doctor-Wide Patient Search & Lookup */}
-            <Route
-              path="patients"
-              element={
-                <ProtectedRoute disallowPatient allowedRoles={['DOCTOR', 'REVIEWER', 'ADMIN']}>
-                  <PatientSearchPage />
-                </ProtectedRoute>
-              }
-            />
+                  {/* Doctor & Clinical Staff Prescriptions Ledger */}
+                  <Route
+                    path="prescriptions"
+                    element={
+                      <ProtectedRoute disallowPatient>
+                        <PrescriptionsListPage />
+                      </ProtectedRoute>
+                    }
+                  />
 
-            {/* Patient Medical Timeline Dossier */}
-            <Route path="patients/:id" element={<PatientTimelinePage />} />
+                  {/* Prescriptions Upload Intake */}
+                  <Route path="upload" element={<UploadPrescriptionPage />} />
 
-            {/* Analysis & In-Line Prescription Correction */}
-            <Route path="analyses/:id" element={<AnalysisDetailPage />} />
+                  {/* Help & FAQ Screen */}
+                  <Route path="help" element={<HelpPage />} />
 
-            {/* Clinical Reviewer Sign-Off Queue */}
-            <Route
-              path="review-queue"
-              element={
-                <ProtectedRoute disallowPatient allowedRoles={['REVIEWER', 'ADMIN']}>
-                  <ReviewQueuePage />
-                </ProtectedRoute>
-              }
-            />
+                  {/* Doctor-Wide Patient Search & Lookup */}
+                  <Route
+                    path="patients"
+                    element={
+                      <ProtectedRoute disallowPatient allowedRoles={['DOCTOR', 'REVIEWER', 'ADMIN']}>
+                        <PatientSearchPage />
+                      </ProtectedRoute>
+                    }
+                  />
 
-            {/* Diagnostics & Architecture Probes (Admin Only) */}
-            <Route
-              path="health"
-              element={
-                <ProtectedRoute disallowPatient allowedRoles={['ADMIN']}>
-                  <SystemHealthPage />
-                </ProtectedRoute>
-              }
-            />
-          </Route>
+                  {/* Patient Medical Timeline Dossier */}
+                  <Route path="patients/:id" element={<PatientTimelinePage />} />
 
-          {/* Fallback */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </BrowserRouter>
-    </AuthProvider>
-    </LanguageProvider>
+                  {/* Analysis & In-Line Prescription Correction */}
+                  <Route path="analyses/:id" element={<AnalysisDetailPage />} />
+
+                  {/* Clinical Reviewer Sign-Off Queue */}
+                  <Route
+                    path="review-queue"
+                    element={
+                      <ProtectedRoute disallowPatient allowedRoles={['REVIEWER', 'ADMIN']}>
+                        <ReviewQueuePage />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  {/* Analytics Dashboard (Admin/Reviewer) */}
+                  <Route
+                    path="analytics"
+                    element={
+                      <ProtectedRoute disallowPatient allowedRoles={['ADMIN', 'REVIEWER']}>
+                        <AnalyticsDashboardPage />
+                      </ProtectedRoute>
+                    }
+                  />
+
+                  {/* Diagnostics & Architecture Probes (Admin Only) */}
+                  <Route
+                    path="health"
+                    element={
+                      <ProtectedRoute disallowPatient allowedRoles={['ADMIN']}>
+                        <SystemHealthPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                </Route>
+
+                {/* Fallback 404 */}
+                <Route path="*" element={<NotFoundPage />} />
+              </Routes>
+            </BrowserRouter>
+          </ToastProvider>
+        </AuthProvider>
+      </LanguageProvider>
     </ErrorBoundary>
   );
 };

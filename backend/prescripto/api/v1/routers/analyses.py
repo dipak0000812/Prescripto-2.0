@@ -12,6 +12,8 @@ from sqlalchemy.orm import Session
 
 from prescripto.db.session import get_db
 from prescripto.db.models.users import User
+from prescripto.db.models.analysis import Analysis
+from prescripto.db.models.document import PrescriptionDocument
 from prescripto.db.models.enums import Role
 from prescripto.auth.dependencies import get_current_user, require_role
 from prescripto.api.v1.schemas.analysis import (
@@ -26,6 +28,7 @@ from prescripto.application.use_cases.get_analysis import (
     GetAnalysisResultUseCase,
 )
 from prescripto.application.use_cases.submit_review import SubmitReviewUseCase
+from prescripto.application.services.authorization import AuthorizationService
 
 router = APIRouter(prefix="/analyses", tags=["Analyses"])
 
@@ -43,6 +46,11 @@ def get_analysis_status(
     db: Session = Depends(get_db),
 ) -> AnalysisStatus:
     """Returns current analysis status and stage progress breakdown."""
+    analysis = db.query(Analysis).filter(Analysis.id == id).first()
+    if not analysis:
+        raise HTTPException(status_code=404, detail="Analysis not found")
+    AuthorizationService.enforce_analysis_access(db, current_user, analysis)
+
     use_case = GetAnalysisStatusUseCase(db=db)
     return use_case.execute(analysis_id=id, caller=current_user)
 
@@ -77,6 +85,11 @@ def get_analysis_result(
     Returns full analysis result payload.
     Enforces result gating: returns 404 ANALYSIS_NOT_READY for QUEUED, PROCESSING, FAILED.
     """
+    analysis = db.query(Analysis).filter(Analysis.id == id).first()
+    if not analysis:
+        raise HTTPException(status_code=404, detail="Analysis not found")
+    AuthorizationService.enforce_analysis_access(db, current_user, analysis)
+
     use_case = GetAnalysisResultUseCase(db=db)
     return use_case.execute(analysis_id=id, caller=current_user)
 
@@ -132,8 +145,8 @@ def get_analysis_clinical_summary(
     Returns AI-generated or deterministic clinical summary,
     safety warnings in plain language, and patient dosing guidance.
     """
-    from prescripto.db.models.analysis import Analysis, AnalysisStage
     from prescripto.db.models.document import PrescriptionDocument
+    from prescripto.db.models.analysis import AnalysisStage
     from prescripto.db.models.medication import PrescriptionMedication
     from prescripto.db.models.safety import RiskFinding
     from prescripto.db.models.patient import Patient
@@ -143,11 +156,11 @@ def get_analysis_clinical_summary(
     if not analysis:
         raise HTTPException(status_code=404, detail="Analysis not found")
 
+    AuthorizationService.enforce_analysis_access(db, current_user, analysis)
+
     doc = db.query(PrescriptionDocument).filter(
         PrescriptionDocument.id == analysis.document_id
     ).first()
-    if current_user.role == Role.OPERATOR.value and doc and doc.uploader_id != current_user.id:
-        raise HTTPException(status_code=404, detail="Analysis not found")
 
     meds = db.query(PrescriptionMedication).filter(
         PrescriptionMedication.analysis_id == id
@@ -215,20 +228,22 @@ def get_analysis_clinical_summary(
     "/{id}/medications",
     response_model=AnalysisResult,
     status_code=status.HTTP_200_OK,
-    summary="Update or correct medication lines for an analysis (Doctor editing)",
+    summary="Update or correct medication lines for an analysis (Doctor or Patient editing)",
     operation_id="updateAnalysisMedications",
 )
 def update_analysis_medications(
     id: uuid.UUID,
     update_req: MedicationUpdateRequest,
-    current_user: User = Depends(require_role(Role.REVIEWER, Role.ADMIN)),
+    current_user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ) -> AnalysisResult:
     """
-    Allows authorized clinicians to edit recognized medication fields (correct OCR misreads),
+    Allows authorized clinicians or the uploading patient to edit recognized medication fields,
     re-runs canonical normalization and safety screening, and recalculates review triggers.
+    Preserves original raw values in an audit trail.
     """
     from fastapi import HTTPException
+    from prescripto.db.base import utc_now
     from prescripto.db.models.analysis import Analysis
     from prescripto.db.models.document import PrescriptionDocument
     from prescripto.db.models.medication import PrescriptionMedication
@@ -243,19 +258,43 @@ def update_analysis_medications(
     if not analysis:
         raise HTTPException(status_code=404, detail="Analysis not found")
 
-    if analysis.status not in ["REQUIRES_REVIEW", "REVIEWING", "COMPLETED", "REVIEWED_COMPLETE", "REVIEWED_ESCALATED"]:
-        raise HTTPException(status_code=409, detail=f"Cannot edit medications when analysis is in status '{analysis.status}'")
-
     doc = db.query(PrescriptionDocument).filter(
         PrescriptionDocument.id == analysis.document_id
     ).first()
 
+    # Authorization: Staff or document owner
+    is_staff = current_user.role in (Role.REVIEWER.value, Role.ADMIN.value, "DOCTOR", "CLINICIAN")
+    is_owner = (doc is not None and doc.uploader_id == current_user.id)
+    if not (is_staff or is_owner):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You are not authorized to edit medications for this analysis",
+        )
+
+    if analysis.status not in ["REQUIRES_REVIEW", "REVIEWING", "COMPLETED", "REVIEWED_COMPLETE", "REVIEWED_ESCALATED"]:
+        raise HTTPException(status_code=409, detail=f"Cannot edit medications when analysis is in status '{analysis.status}'")
+
+    now = utc_now()
     for item in update_req.medications:
         med = db.query(PrescriptionMedication).filter(
             PrescriptionMedication.analysis_id == id,
             PrescriptionMedication.line_index == item.line_index,
         ).first()
         if med:
+            # Preserve original extracted raw values on first edit
+            if not getattr(med, "is_edited", False):
+                med.original_name_raw = med.name_raw
+                med.original_strength_raw = med.strength_raw
+                med.original_dose_raw = med.dose_raw
+                med.original_frequency_raw = med.frequency_raw
+                med.original_route_raw = med.route_raw
+                med.original_duration_raw = med.duration_raw
+                med.original_instructions_raw = med.instructions_raw
+
+            med.is_edited = True
+            med.edited_by_user_id = current_user.id
+            med.edited_at = now
+
             if item.name is not None:
                 med.name_raw = item.name
                 med.name_state = "CLEAR"
@@ -300,4 +339,84 @@ def update_analysis_medications(
     db.commit()
 
     use_case = GetAnalysisResultUseCase(db=db)
+    return use_case.execute(analysis_id=id, caller=current_user)
+
+
+@router.post(
+    "/{id}/retry",
+    response_model=AnalysisStatus,
+    status_code=status.HTTP_200_OK,
+    summary="Retry a failed prescription analysis",
+    operation_id="retryAnalysis",
+)
+def retry_analysis(
+    id: uuid.UUID,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
+) -> AnalysisStatus:
+    """
+    Retries an analysis that is in 'FAILED' status.
+    Resets status to 'QUEUED', clears error_detail, and enqueues a new pending job.
+    """
+    from prescripto.db.base import utc_now
+    from prescripto.db.models.analysis import Analysis, AnalysisJob
+    from prescripto.db.models.document import PrescriptionDocument
+
+    analysis = db.query(Analysis).filter(Analysis.id == id).first()
+    if not analysis:
+        raise HTTPException(status_code=404, detail="Analysis not found")
+
+    doc = db.query(PrescriptionDocument).filter(
+        PrescriptionDocument.id == analysis.document_id
+    ).first()
+
+    # Security check: owner or clinician/reviewer/admin
+    is_staff = current_user.role in (Role.REVIEWER.value, Role.ADMIN.value, "DOCTOR", "CLINICIAN")
+    is_owner = (doc is not None and doc.uploader_id == current_user.id)
+    if not (is_staff or is_owner):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You are not authorized to retry this analysis",
+        )
+
+    if analysis.status != "FAILED":
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Cannot retry analysis in status '{analysis.status}'. Only FAILED analyses can be retried.",
+        )
+
+    # Reset analysis to QUEUED
+    analysis.status = "QUEUED"
+    analysis.error_detail = None
+    analysis.started_at = None
+    analysis.completed_at = None
+
+    # Reset existing job or add new job
+    job = db.query(AnalysisJob).filter(AnalysisJob.analysis_id == id).first()
+    now = utc_now()
+    if job:
+        job.status = "PENDING"
+        job.retry_count = 0
+        job.lease_owner = None
+        job.lease_token = 0
+        job.lease_expires_at = None
+        job.heartbeat_at = None
+        job.backoff_until = None
+        job.last_error = None
+        job.updated_at = now
+    else:
+        job = AnalysisJob(
+            id=uuid.uuid4(),
+            analysis_id=id,
+            status="PENDING",
+            retry_count=0,
+            max_retries=3,
+            created_at=now,
+            updated_at=now,
+        )
+        db.add(job)
+
+    db.commit()
+
+    use_case = GetAnalysisStatusUseCase(db=db)
     return use_case.execute(analysis_id=id, caller=current_user)

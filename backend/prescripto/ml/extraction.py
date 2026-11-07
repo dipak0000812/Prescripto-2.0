@@ -105,22 +105,75 @@ def extract_patient_name(lines: list[str]) -> str | None:
 
 
 PATTERNS: dict[str, re.Pattern[str]] = {
-    "strength": re.compile(r"\b\d+(?:\.\d+)?\s?(?:mg|mcg|g|ml|%|ing|ong)\b", re.IGNORECASE),
+    "strength": re.compile(
+        r"\b\d+(?:\.\d+)?(?:\s*mg)?\s*\/\s*\d+(?:\.\d+)?(?:\s*ml)?\b|\b\d+(?:\.\d+)?\s?(?:mg|mcg|g|ml|%|ing|ong)\b|(?<=[A-Za-z]\s)\b\d{2,4}\b",
+        re.IGNORECASE,
+    ),
     "dose": re.compile(
-        r"\b\d+(?:\.\d+)?\s?(?:tablets?|tabs?|capsules?|caps?|drops?|ml|puffs?|barlet|ta6|tupp|supp)\b",
+        r"\b\d+(?:\.\d+)?\s?(?:tablets?|tabs?|capsules?|caps?|drops?|ml|tsp|puffs?|barlet|ta6|tupp|supp)\b",
         re.IGNORECASE,
     ),
     "frequency": re.compile(
-        r"\b(?:OD|BD|BID|TDS|TID|QID|QDS|once daily|twice daily|three times daily|four times daily|at night|s\s?\d+\s?dd\s?\d+)\b",
+        r"\b(?:[012]-[012]-[012](?:-[012])?|q\d+h|every\s+\d+\s+hours?|OD|BD|BID|TDS|TID|QID|QDS|SOS|PRN|HS|at bedtime|once daily|twice daily|thrice daily|four times daily|daily|at night|s\s?\d+\s?dd\s?\d+)\b",
         re.IGNORECASE,
     ),
     "route": re.compile(r"\b(?:oral|PO|topical|top|IM|IV|inhaled|ophthalmic)\b", re.IGNORECASE),
-    "duration": re.compile(r"\b(?:for\s+)?\d+\s?(?:days?|weeks?)\b", re.IGNORECASE),
+    "duration": re.compile(r"(?:(?:for|x)\s+)?\b\d+\s?(?:days?|weeks?|months?)\b", re.IGNORECASE),
     "instructions": re.compile(
         r"\b(?:after food|after meals|before food|before meals|before breakfast|with food|empty stomach|at bedtime|SOS|PRN)\b",
         re.IGNORECASE,
     ),
 }
+
+
+def derive_medicine_form(text: str) -> str | None:
+    """Detects physical dosage form of medicine without guessing or defaulting to tablet."""
+    t = text.lower()
+    # 1. Liquid / Syrup concentrations like "250/5", "120/5", "20/5", "250mg/5ml"
+    if re.search(r"\b\d+(?:\.\d+)?(?:\s*mg)?\s*\/\s*5(?:\s*ml)?\b", t):
+        return "syrup"
+    if re.search(r"\b(mucaine\s+gel|antacid\s+gel|oral\s+gel)\b", t):
+        return "syrup"
+    if re.search(r"\b(syp|syr|syrup|susp|suspension|liquid|solution|elixir|linctus)\b", t):
+        return "syrup"
+    # 2. Inhalers
+    if re.search(r"\b(inhaler|rotahaler|respule|respules|nebulizer|puffs?|inhalation)\b", t):
+        return "inhaler"
+    # 3. Drops
+    if re.search(r"\b(drop|drops|eye drop|ear drop|nasal drop|eye drops|ear drops|nasal drops)\b", t):
+        return "drops"
+    # 4. Injections
+    if re.search(r"\b(inj|injection|amp|vial|iv|im)\b", t):
+        return "injection"
+    # 5. Capsules
+    if re.search(r"\b(cap|capsule|caps|capsules)\b", t):
+        return "capsule"
+    # 6. Tablets (markers or common Indian solid dosage brand names)
+    if re.search(r"\b(tab|tablet|tabs|tablets|caplet|chewable)\b", t):
+        return "tablet"
+    if re.search(r"\b(augmentin|azithral|pan\s*\d+|dolo|combiflam|meftal|zincovit|cpm)\b", t):
+        return "tablet"
+    # 7. Ointments
+    if re.search(r"\b(cream|oint|ointment|lotion|paste|liniment|local application|gel)\b", t):
+        return "ointment"
+    return None
+
+
+def clean_medicine_name(raw_name: str) -> str:
+    """Strips leading form markers (Tab, Cap, Syp, Inj) and trailing dosage form suffixes."""
+    cleaned = re.sub(
+        r"^(?:tab\.?|tablet|tabs\.?|cap\.?|capsule|caps\.?|syp\.?|syrup|inj\.?|injection|drop\.?|drops|ointment|cream)\s+",
+        "",
+        raw_name,
+        flags=re.IGNORECASE,
+    ).strip(" ,;:-")
+    cleaned = re.sub(
+        r"\s+\b(gel|cream|oint|ointment|susp|suspension|drops?|inhaler|syrup|syp)\b$",
+        "",
+        cleaned,
+        flags=re.IGNORECASE,
+    ).strip(" ,;:-")
+    return cleaned
 
 
 def _field(value: str | None, unreadable: bool = False) -> dict[str, Any]:
@@ -178,6 +231,7 @@ def extract_prescription_fields(text: str) -> dict[str, dict[str, Any]]:
         unit_value = unit_match.group(0) if unit_match else None
 
     output = {name: _field(value) for name, value in value_by_name.items()}
-    output["name"] = _field(name_value)
+    output["name"] = _field(clean_medicine_name(name_value) if name_value else None)
     output["unit"] = _field(unit_value)
+    output["form"] = _field(derive_medicine_form(line))
     return output

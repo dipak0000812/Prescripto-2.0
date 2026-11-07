@@ -17,6 +17,28 @@ No endpoint exists without a row here. No row exists without an endpoint. Change
 | View document + image | `GET /prescriptions/{id}` | `PrescriptionRouter.get` | `PrescriptionService.get()` + `StorageService.presign()` | read + presign |
 | Poll status | `GET /analyses/{id}` | `AnalysisRouter.status` | `AnalysisService.get_status()` | `analyses` + `analysis_stages` read |
 | View result | `GET /analyses/{id}/result` | `AnalysisRouter.result` | `AnalysisService.get_result()` | `analyses` + `prescription_medications` + `medication_candidates` + `risk_findings` read |
+| Correct medication lines | PATCH /analyses/{id}/medications | AnalysisRouter.update_medications | UpdateAnalysisMedications | prescription_medications audit update + pipeline re-run |
+| Retry failed scan | POST /analyses/{id}/retry | AnalysisRouter.retry | RetryAnalysis | analyses status reset to QUEUED + analysis_jobs reset to PENDING |
+| Create reminder plans | POST /reminders/plans | ReminderRouter.create_reminder_plans | ReminderService.create_plans_from_analysis() | 
+eminder_plans + 
+eminder_events insert |
+| Get today's reminders | GET /reminders/today | ReminderRouter.get_today_reminders | ReminderService.get_today_reminders() | 
+eminder_events read |
+| Action reminder event | PATCH /reminders/events/{event_id} | ReminderRouter.act_on_reminder_event | ReminderService.act_on_event() | 
+eminder_events status update |
+| Update reminder plan | PATCH /reminders/plans/{plan_id} | ReminderRouter.update_reminder_plan | ReminderService.update_plan() | 
+eminder_plans update + events re-generation |
+| Delete reminder plan | DELETE /reminders/plans/{plan_id} | ReminderRouter.delete_reminder_plan | ReminderService.delete_plan() | 
+eminder_plans + 
+eminder_events delete |
+| Download calendar (.ics) | GET /reminders/plans/{plan_id}/calendar.ics | ReminderRouter.download_plan_ics | ReminderService.export_plan_ics() | 
+eminder_plans + 
+eminder_events read |
+| Get VAPID public key | GET /reminders/vapid-public-key | ReminderRouter.get_vapid_public_key | Settings distribution | none |
+| Subscribe Web Push | POST /reminders/push/subscribe | ReminderRouter.subscribe_web_push | ReminderService.subscribe_push() | push_subscriptions upsert |
+| Unsubscribe Web Push | DELETE /reminders/push/subscribe | ReminderRouter.unsubscribe_web_push | ReminderService.unsubscribe_push() | push_subscriptions delete |
+| View adherence log | GET /reminders/adherence | ReminderRouter.get_adherence_report | ReminderService.get_adherence_report() | 
+eminder_events read |
 | Submit review | `POST /analyses/{id}/review` | `ReviewRouter.submit` | `ReviewService.submit()` | `reviews` insert + `analyses` status update |
 | Delete | `DELETE /prescriptions/{id}` | `PrescriptionRouter.delete` | `TombstoneDocument` use case | `deletion_jobs` insert + status update |
 | *(no endpoint — async)* | — | `AnalysisWorker` | full pipeline | stage/line/candidate/finding writes |

@@ -6,7 +6,7 @@ import uuid
 import time
 from typing import Callable, Optional
 from pathlib import Path
-from fastapi import FastAPI, Request, Response, status
+from fastapi import FastAPI, Request, Response, status, Depends
 from fastapi.responses import JSONResponse, FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
@@ -21,6 +21,11 @@ from prescripto.api.v1.routers.health import router as health_router
 from prescripto.api.v1.routers.prescriptions import router as prescriptions_router
 from prescripto.api.v1.routers.analyses import router as analyses_router
 from prescripto.api.v1.routers.patients import router as patients_router
+from prescripto.api.v1.routers.reminders import router as reminders_router
+from prescripto.api.v1.routers.doctor_patients import router as doctor_patients_router
+from prescripto.api.v1.routers.analytics import router as analytics_router
+from prescripto.api.v1.routers.notifications import router as notifications_router
+from prescripto.storage.client import get_storage_client
 
 # Configure zero-PHI logging on startup
 configure_logging(settings.LOG_LEVEL)
@@ -226,6 +231,10 @@ app.include_router(health_router, prefix="/api/v1")
 app.include_router(prescriptions_router, prefix="/api/v1")
 app.include_router(analyses_router, prefix="/api/v1")
 app.include_router(patients_router, prefix="/api/v1")
+app.include_router(reminders_router, prefix="/api/v1")
+app.include_router(doctor_patients_router, prefix="/api/v1")
+app.include_router(analytics_router, prefix="/api/v1")
+app.include_router(notifications_router, prefix="/api/v1")
 
 
 @app.get("/api", tags=["System"], summary="API Discovery Index")
@@ -268,10 +277,11 @@ def get_storage_file(
     key: str,
     expires: Optional[int] = None,
     signature: Optional[str] = None,
+    storage_client: Optional[object] = Depends(get_storage_client),
 ) -> Response:
     """Serves stored prescription images with HMAC signature and expiry check."""
     import mimetypes
-    from prescripto.storage.client import StorageClient, get_storage_client
+    from prescripto.storage.client import StorageClient
     from prescripto.storage.exceptions import StorageObjectNotFoundException
 
     if not expires or not signature:
@@ -298,7 +308,7 @@ def get_storage_file(
             },
         )
 
-    sc = get_storage_client()
+    sc = storage_client
     try:
         content = sc.get_object(key)
         media_type, _ = mimetypes.guess_type(key)
@@ -392,8 +402,13 @@ def _run_worker_daemon():
 def startup_event():
     # Only spawn worker thread if not in test suite environment
     import os
+    import sys
     settings.log_missing_gemini_api_key()
-    if os.environ.get("PYTEST_CURRENT_TEST") is None:
+    if (
+        os.environ.get("PYTEST_CURRENT_TEST") is None
+        and os.environ.get("TESTING") != "true"
+        and "pytest" not in sys.modules
+    ):
         t = threading.Thread(target=_run_worker_daemon, daemon=True)
         t.start()
 

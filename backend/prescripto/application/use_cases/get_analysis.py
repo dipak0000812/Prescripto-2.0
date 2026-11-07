@@ -11,6 +11,7 @@ from prescripto.db.models.document import PrescriptionDocument
 from prescripto.db.models.medication import PrescriptionMedication, MedicationCandidate
 from prescripto.db.models.safety import RiskFinding
 from prescripto.db.models.registry import KnowledgeSnapshot
+from prescripto.db.models.patient import Patient
 from prescripto.db.models.users import User
 from prescripto.db.models.enums import Role
 from prescripto.domain.review.models import MANDATORY_COVERAGE_DISCLAIMER
@@ -48,8 +49,12 @@ class GetAnalysisStatusUseCase:
         ).first()
 
         # 404-over-403 security rule
-        if caller.role == Role.OPERATOR.value and doc and doc.uploader_id != caller.id:
-            raise ResourceNotFoundException(f"Analysis {analysis_id} not found")
+        if caller.role == Role.OPERATOR.value and doc:
+            pat = self.db.query(Patient).filter(Patient.user_id == caller.id).first()
+            is_owner = (doc.uploader_id == caller.id)
+            is_own_patient = (pat is not None and doc.patient_ref in (pat.patient_id, pat.phone_number, str(pat.id)))
+            if not (is_owner or is_own_patient):
+                raise ResourceNotFoundException(f"Analysis {analysis_id} not found")
 
         stages = self.db.query(AnalysisStage).filter(
             AnalysisStage.analysis_id == analysis_id
@@ -98,6 +103,12 @@ class GetAnalysisStatusUseCase:
     def _user_facing_error(error_detail: str | None) -> str | None:
         if not error_detail:
             return None
+        if "Uploaded image cannot be decoded" in error_detail:
+            return "The uploaded file could not be decoded as a valid image. Please ensure you upload a clear JPEG, PNG, or WebP photo."
+        if "Storage connection error" in error_detail or "Connect timeout" in error_detail:
+            return "Storage service is temporarily unavailable. Click 'Try again' to retry processing."
+        if "lease expired" in error_detail or "max retries exceeded" in error_detail:
+            return "Processing took longer than expected and timed out. Click 'Try again' to re-analyze."
         if error_detail.startswith("GEMINI_QUOTA_EXCEEDED:"):
             return "Gemini's current free-tier rate or quota limit was reached. Please retry later."
         if error_detail.startswith("GEMINI_TIMEOUT:"):
@@ -132,8 +143,12 @@ class GetAnalysisResultUseCase:
         ).first()
 
         # 404-over-403 rule
-        if caller.role == Role.OPERATOR.value and doc and doc.uploader_id != caller.id:
-            raise ResourceNotFoundException(f"Analysis {analysis_id} not found")
+        if caller.role == Role.OPERATOR.value and doc:
+            pat = self.db.query(Patient).filter(Patient.user_id == caller.id).first()
+            is_owner = (doc.uploader_id == caller.id)
+            is_own_patient = (pat is not None and doc.patient_ref in (pat.patient_id, pat.phone_number, str(pat.id)))
+            if not (is_owner or is_own_patient):
+                raise ResourceNotFoundException(f"Analysis {analysis_id} not found")
 
         # Result gating check (API-CONTRACT §Behavior not in the schema)
         if analysis.status in ["QUEUED", "PROCESSING", "FAILED"]:
@@ -168,6 +183,9 @@ class GetAnalysisResultUseCase:
                     instructions=FieldValue(value=m.instructions_raw, state=m.instructions_state, confidence=m.instructions_confidence),
                     resolved_medication_id=res_id,
                     resolution_status=res_status,
+                    is_edited=getattr(m, "is_edited", False),
+                    original_name_raw=getattr(m, "original_name_raw", None),
+                    edited_at=getattr(m, "edited_at", None),
                 )
             )
 

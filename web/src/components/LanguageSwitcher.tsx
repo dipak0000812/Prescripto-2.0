@@ -58,7 +58,7 @@ export const LanguageSwitcher: React.FC = () => {
         type="button"
         onClick={() => setShowGlossary(true)}
         title="Plain Language & Medicine Timing Guide"
-        className="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-[#1C252E] bg-white border border-stone-300 rounded-xl hover:bg-[#FAF9F6] transition-colors cursor-pointer min-h-[36px]"
+        className="hidden md:flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-[#1C252E] bg-white border border-stone-300 rounded-xl hover:bg-[#FAF9F6] transition-colors cursor-pointer min-h-[36px]"
       >
         <HelpCircle className="w-4 h-4 text-[#0F5147]" aria-hidden="true" />
         <span className="hidden lg:inline">गाइड / Guide</span>

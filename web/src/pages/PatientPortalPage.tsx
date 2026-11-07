@@ -5,38 +5,41 @@ import { useLanguage } from '../context/LanguageContext';
 import { getPatientTimelineApi, PatientDetail, TimelineEvent } from '../api/patients';
 import {
   FileText,
-  UploadCloud,
-  Volume2,
-  Square,
-  ShieldCheck,
-  AlertTriangle,
+  Camera,
   ArrowRight,
   Clock,
   User,
   HeartPulse,
-  Pill,
   RefreshCw,
   AlertCircle,
-  Eye,
+  Bell,
+  HelpCircle,
   CheckCircle2,
 } from 'lucide-react';
 import { Button } from '../components/ui/Button';
-import { StatusChip } from '../components/ui/StatusChip';
-import { AlertBanner } from '../components/ui/AlertBanner';
+import { Card } from '../components/ui/Card';
+import { Badge } from '../components/ui/Badge';
 import { EmptyState } from '../components/ui/EmptyState';
-import { parseMedicationSchedule, buildMedicationSpokenText } from '../utils/medicationSchedule';
+import { parseMedicationSchedule } from '../utils/medicationSchedule';
+import { formatLocaleDate, getTimeBasedGreeting } from '../utils/dateUtils';
+import {
+  TabletIcon,
+  SunriseIcon,
+  MiddaySunIcon,
+  MoonIcon,
+  getMedicineFormIcon,
+} from '../components/icons/HealthcareIcons';
 
 type MedicationRecord = TimelineEvent['medications'][number];
 
 export const PatientPortalPage: React.FC = () => {
   const { session } = useAuth();
-  const { t, language, speak, stopSpeaking, isSpeaking } = useLanguage();
+  const { t, language } = useLanguage();
 
   const [patientData, setPatientData] = useState<PatientDetail | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState<number>(0);
-  const [speakingId, setSpeakingId] = useState<string | null>(null);
 
   const patientId = session?.patient_id;
 
@@ -73,28 +76,6 @@ export const PatientPortalPage: React.FC = () => {
       isMounted = false;
     };
   }, [patientId, retryCount]);
-
-  const handleSpeakSingleMed = (med: MedicationRecord, idKey: string) => {
-    if (isSpeaking && speakingId === idKey) {
-      stopSpeaking();
-      setSpeakingId(null);
-      return;
-    }
-
-    setSpeakingId(idKey);
-    const schedule = parseMedicationSchedule(
-      med.name || 'Medicine',
-      med.frequency,
-      med.instructions,
-      med.dose,
-      med.strength,
-      med.duration,
-      undefined,
-      med.state !== 'CLEAR'
-    );
-    const spokenText = buildMedicationSpokenText(schedule, language);
-    speak(spokenText);
-  };
 
   if (isLoading) {
     return (
@@ -141,247 +122,229 @@ export const PatientPortalPage: React.FC = () => {
   }
 
   const patient = patientData;
+  const patientDisplayName = patient.name || session?.patient_name || 'Patient';
+  const greeting = getTimeBasedGreeting(patientDisplayName, language);
+
+  // Identify next dose due based on time of day
+  const hour = new Date().getHours();
+  const currentSlot: 'morning' | 'afternoon' | 'night' =
+    hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : 'night';
+
+  // Find medicines from the newest prescription that have a dose in currentSlot
+  const latestEvent = patient.timeline && patient.timeline.length > 0 ? patient.timeline[0] : null;
+  const activeMedsInCurrentSlot = latestEvent?.medications.filter((med) => {
+    const sched = parseMedicationSchedule(
+      med.name || '',
+      med.frequency,
+      med.instructions,
+      med.dose,
+      med.strength,
+      med.duration,
+      undefined,
+      med.state !== 'CLEAR'
+    );
+    const countKey = `${currentSlot}Count` as 'morningCount' | 'afternoonCount' | 'nightCount';
+    return sched[countKey] > 0;
+  }) || [];
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 pb-16 text-left animate-in fade-in duration-150">
-      {/* 1. WELCOME & PATIENT DOSSIER CARD */}
+    <div className="space-y-6 text-left animate-in fade-in duration-150">
+      {/* 1. Time-Based Greeting Card */}
       <section className="bg-white border border-stone-200 rounded-2xl p-6 sm:p-7 shadow-2xs space-y-4">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-stone-100">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#E6F0EE] text-[#0F5147] border border-[#9DC1BB]">
-              <HeartPulse className="w-3.5 h-3.5 text-[#0F5147]" aria-hidden="true" />
-              <span>{t('portal.my_prescriptions', 'My Prescriptions')}</span>
-            </div>
-
             <h1 className="text-2xl sm:text-3xl font-extrabold text-[#1C252E] tracking-tight">
-              {patient.name || session?.patient_name || 'My Health Guide'}
+              {greeting}
             </h1>
-
-            <div className="flex flex-wrap items-center gap-2 pt-1 text-xs text-stone-600">
-              {patient.patient_id && (
-                <span className="inline-flex items-center gap-1 bg-[#F4F2EC] px-2.5 py-1 rounded-lg border border-stone-200 font-mono">
-                  <User className="w-3.5 h-3.5 text-stone-500" />
-                  ID: {patient.patient_id}
-                </span>
-              )}
-              {patient.phone_number && (
-                <span className="bg-[#F4F2EC] px-2.5 py-1 rounded-lg border border-stone-200 font-semibold">
-                  +91 {patient.phone_number}
-                </span>
-              )}
-            </div>
+            <p className="text-sm text-stone-600">
+              Welcome back to your prescription guide.
+            </p>
           </div>
 
-          {/* Primary Action Button: Upload New Prescription */}
+          {/* Big "Scan a prescription" Primary Action */}
           <Link to="/upload" className="shrink-0">
             <Button
               variant="primary"
               size="lg"
-              className="w-full sm:w-auto min-h-[52px] text-base font-bold bg-[#0F5147] hover:bg-[#0A3831]"
-              rightIcon={<UploadCloud className="w-5 h-5 text-white" />}
+              className="w-full sm:w-auto min-h-[52px] text-base font-bold bg-[#0F5147] hover:bg-[#0A3831] shadow-xs"
+              leftIcon={<Camera className="w-5 h-5 text-white" />}
             >
-              {t('portal.upload_new', 'Upload New Prescription')}
+              Scan a prescription
             </Button>
           </Link>
         </div>
-
-        {/* Calm, Always-Visible Safety Reminder */}
-        <div className="p-3.5 rounded-xl bg-[#FAF9F6] border border-stone-200 text-xs sm:text-sm text-stone-700 flex items-start gap-3">
-          <ShieldCheck className="w-5 h-5 text-[#0F5147] shrink-0 mt-0.5" aria-hidden="true" />
-          <span className="leading-relaxed">
-            <strong>{t('safety.title', 'Safety reminder')}: </strong>
-            {t(
-              'portal.safety_reminder',
-              'Always talk to your doctor or chemist before taking medicines.'
-            )}
-          </span>
-        </div>
       </section>
 
-      {/* 2. PRESCRIPTION DOSSIER LIST */}
+      {/* 2. "Next Medicine" Card if Due */}
+      {activeMedsInCurrentSlot.length > 0 && (
+        <section className="bg-white border-l-4 border-l-[#0F5147] border border-stone-200 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="p-1.5 rounded-lg bg-[#E6F0EE] text-[#0F5147]">
+                {currentSlot === 'morning' ? (
+                  <SunriseIcon size={20} />
+                ) : currentSlot === 'afternoon' ? (
+                  <MiddaySunIcon size={20} />
+                ) : (
+                  <MoonIcon size={20} />
+                )}
+              </span>
+              <span className="text-xs uppercase font-bold tracking-wider text-[#0F5147]">
+                Due this {currentSlot}
+              </span>
+            </div>
+
+            <Link
+              to="/today"
+              className="text-xs font-semibold text-[#0F5147] hover:underline flex items-center gap-1"
+            >
+              <span>See schedule</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+            {activeMedsInCurrentSlot.slice(0, 2).map((med, idx) => {
+              const sched = parseMedicationSchedule(
+                med.name || 'Medicine',
+                med.frequency,
+                med.instructions,
+                med.dose,
+                med.strength,
+                med.duration,
+                undefined,
+                med.state !== 'CLEAR'
+              );
+              const FormIcon = getMedicineFormIcon(sched.form);
+
+              return (
+                <div
+                  key={idx}
+                  className="p-3.5 rounded-xl bg-[#FAF9F6] border border-stone-200 flex items-center justify-between gap-3"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="w-10 h-10 rounded-lg bg-white border border-stone-200 flex items-center justify-center text-[#0F5147] shrink-0">
+                      <FormIcon size={20} />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="font-bold text-sm text-[#1C252E] truncate">
+                        {sched.cleanName}
+                      </div>
+                      <div className="text-xs text-stone-500">
+                        {sched[currentSlot]} · {sched.foodTiming.replace('_', ' ')}
+                      </div>
+                    </div>
+                  </div>
+                  <Badge variant="brand" size="sm">
+                    {sched[currentSlot]}
+                  </Badge>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {/* 3. Recent Prescriptions List (Readable Rows) */}
       <section className="space-y-4" aria-label="Prescriptions list">
         <div className="flex items-center justify-between px-1">
           <h2 className="text-base sm:text-lg font-bold text-[#1C252E] flex items-center gap-2">
             <FileText className="w-5 h-5 text-[#0F5147]" />
-            <span>Prescription Records ({patient.timeline.length})</span>
+            <span>Recent Prescriptions</span>
           </h2>
-          <span className="text-xs text-stone-500 font-medium">Sorted by newest first</span>
+          {patient.timeline.length > 3 && (
+            <Link
+              to={`/patients/${patient.id}`}
+              className="text-xs font-semibold text-[#0F5147] hover:underline"
+            >
+              View all ({patient.timeline.length})
+            </Link>
+          )}
         </div>
 
         {patient.timeline.length > 0 ? (
-          <div className="space-y-4">
-            {patient.timeline.map((event, eventIdx) => {
-              const formattedDate = event.uploaded_at
-                ? new Date(event.uploaded_at).toLocaleDateString(undefined, {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric',
-                  })
-                : 'Date unavailable';
-
+          <div className="space-y-3">
+            {patient.timeline.slice(0, 3).map((event, eventIdx) => {
+              const formattedDate = formatLocaleDate(event.uploaded_at, language);
               const isCompleted =
                 event.analysis_status === 'COMPLETED' ||
                 event.analysis_status === 'REVIEWED_COMPLETE';
 
+              const medNames = event.medications
+                .map((m) => m.name)
+                .filter(Boolean)
+                .slice(0, 3)
+                .join(', ');
+
               return (
-                <article
+                <div
                   key={event.document_id || eventIdx}
-                  className="bg-white border border-stone-200 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4 hover:border-stone-300 transition"
+                  className="bg-white border border-stone-200 rounded-xl p-4 sm:p-5 shadow-2xs hover:border-stone-300 transition flex flex-col sm:flex-row sm:items-center justify-between gap-4"
                 >
-                  {/* Prescription Header */}
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-stone-100">
-                    <div className="space-y-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-base text-[#1C252E]">
-                          {event.file_name || `Prescription #${eventIdx + 1}`}
-                        </span>
-                        <StatusChip
-                          variant={isCompleted ? 'success' : 'warning'}
-                          label={
-                            isCompleted
-                              ? t('common.completed', 'Ready')
-                              : t('common.pending', 'Needs Check')
-                          }
-                        />
-                      </div>
-                      <p className="text-xs text-stone-500 flex items-center gap-2">
-                        <Clock className="w-3.5 h-3.5 text-stone-400" />
-                        <span>Uploaded on {formattedDate}</span>
-                        <span>•</span>
-                        <span className="font-semibold text-stone-700">
-                          {event.medications.length} {t('portal.medicines_count', 'medicines identified')}
-                        </span>
-                      </p>
+                  <div className="space-y-1.5 flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-bold text-base text-[#1C252E]">
+                        {event.file_name || `Prescription #${eventIdx + 1}`}
+                      </span>
+                      <Badge variant={isCompleted ? 'success' : 'warning'} size="sm" dot>
+                        {isCompleted ? 'Ready' : 'Doctor Checking'}
+                      </Badge>
                     </div>
 
-                    {/* Primary Button: View Medicines & Timings */}
-                    {event.analysis_id && (
-                      <Link to={`/analyses/${event.analysis_id}`}>
-                        <Button
-                          variant="primary"
-                          size="md"
-                          className="w-full sm:w-auto min-h-[48px] text-sm font-bold bg-[#0F5147] hover:bg-[#0A3831]"
-                          rightIcon={<ArrowRight className="w-4 h-4 text-white" />}
-                        >
-                          {t('portal.view_medicines', 'View Medicines & Timings')}
-                        </Button>
-                      </Link>
+                    <div className="text-xs text-stone-500 flex items-center gap-2 flex-wrap">
+                      <span>{formattedDate}</span>
+                      <span>•</span>
+                      <span className="text-stone-700 font-medium">
+                        {event.medications.length} {event.medications.length === 1 ? 'medicine' : 'medicines'}
+                      </span>
+                    </div>
+
+                    {medNames && (
+                      <p className="text-xs text-stone-600 truncate">
+                        {medNames}
+                        {event.medications.length > 3 ? '...' : ''}
+                      </p>
                     )}
                   </div>
 
-                  {/* Medicines Summary Chips */}
-                  {event.medications.length > 0 ? (
-                    <div className="space-y-2.5">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {event.medications.map((med, medIdx) => {
-                          const medIdKey = `${event.document_id}-${med.line_index || medIdx}`;
-                          const isSpeakingThis = isSpeaking && speakingId === medIdKey;
-
-                          const schedule = parseMedicationSchedule(
-                            med.name || 'Medicine',
-                            med.frequency,
-                            med.instructions,
-                            med.dose,
-                            med.strength,
-                            med.duration,
-                            undefined,
-                            med.state !== 'CLEAR'
-                          );
-
-                          return (
-                            <div
-                              key={medIdKey}
-                              className="p-3.5 bg-[#FAF9F6] border border-stone-200 rounded-xl flex items-start justify-between gap-3 text-left"
-                            >
-                              <div className="min-w-0">
-                                <div className="flex items-center gap-1.5">
-                                  <Pill className="w-4 h-4 text-[#0F5147] shrink-0" />
-                                  <span className="font-bold text-sm text-[#1C252E] truncate">
-                                    {schedule.cleanName}
-                                  </span>
-                                </div>
-
-                                <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-stone-600">
-                                  {schedule.strength && (
-                                    <span className="font-semibold text-stone-800">
-                                      {schedule.strength}
-                                    </span>
-                                  )}
-                                  <span>•</span>
-                                  <span>
-                                    {schedule.isOnlyIfNeeded
-                                      ? 'If needed'
-                                      : `M: ${schedule.morning} | A: ${schedule.afternoon} | N: ${schedule.night}`}
-                                  </span>
-                                </div>
-
-                                {schedule.foodTiming !== 'unspecified' && (
-                                  <span className="inline-block mt-1 text-[11px] font-semibold text-[#0F5147]">
-                                    {schedule.foodTiming.replace('_', ' ')}
-                                  </span>
-                                )}
-                              </div>
-
-                              {/* Voice Button per medicine */}
-                              <button
-                                type="button"
-                                onClick={() => handleSpeakSingleMed(med, medIdKey)}
-                                className={`p-2 rounded-lg border transition shrink-0 cursor-pointer min-h-[40px] min-w-[40px] flex items-center justify-center ${
-                                  isSpeakingThis
-                                    ? 'bg-[#FFE4E6] text-[#BE123C] border-[#FDA4AF]'
-                                    : 'bg-white text-[#0F5147] border-stone-200 hover:bg-[#E6F0EE]'
-                                }`}
-                                aria-label={`Listen to ${med.name || 'medicine'} directions`}
-                                title="Listen in your language"
-                              >
-                                {isSpeakingThis ? (
-                                  <Square className="w-4 h-4 animate-pulse" />
-                                ) : (
-                                  <Volume2 className="w-4 h-4" />
-                                )}
-                              </button>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  ) : (
-                    <p className="text-xs text-stone-500 italic p-3 bg-stone-50 rounded-xl">
-                      No medication lines recorded on this prescription document.
-                    </p>
+                  {event.analysis_id && (
+                    <Link to={`/analyses/${event.analysis_id}`} className="shrink-0">
+                      <Button
+                        variant="secondary"
+                        size="md"
+                        className="w-full sm:w-auto min-h-[44px] text-xs sm:text-sm font-semibold"
+                        rightIcon={<ArrowRight className="w-4 h-4" />}
+                      >
+                        View Medicines
+                      </Button>
+                    </Link>
                   )}
-                </article>
+                </div>
               );
             })}
           </div>
         ) : (
-          /* Empty State: Warm, encouraging */
-          <div className="bg-white border border-stone-200 rounded-2xl p-8 sm:p-12 text-center space-y-4 shadow-2xs">
-            <div className="w-14 h-14 rounded-2xl bg-[#E6F0EE] text-[#0F5147] flex items-center justify-center mx-auto">
-              <FileText className="w-7 h-7" aria-hidden="true" />
-            </div>
-
-            <h3 className="text-lg font-bold text-[#1C252E]">
-              {t('portal.no_prescriptions', 'No prescriptions uploaded yet')}
-            </h3>
-
-            <p className="text-sm text-stone-600 max-w-md mx-auto leading-relaxed">
-              {t(
-                'portal.no_prescriptions_sub',
-                'Take a clear photo of your doctor slip to organize timings simply.'
-              )}
-            </p>
-
-            <div className="pt-2">
-              <Link to="/upload">
-                <Button variant="primary" size="lg" className="min-h-[52px]">
-                  {t('portal.upload_new', 'Upload New Prescription')}
-                </Button>
-              </Link>
-            </div>
-          </div>
+          <EmptyState
+            title={t('portal.no_prescriptions', 'No prescriptions uploaded yet')}
+            description="Take a clear photo of your doctor's slip to see medicines and daily timings."
+            actionLabel="Scan your first prescription"
+            onAction={() => {
+              window.location.href = '/upload';
+            }}
+          />
         )}
       </section>
+
+      {/* 4. Quiet "Need help?" Link */}
+      <div className="pt-2 text-center">
+        <Link
+          to="/help"
+          className="inline-flex items-center gap-1.5 text-xs text-stone-500 hover:text-[#0F5147] transition py-2 px-3 rounded-lg hover:bg-[#F4F2EC]"
+        >
+          <HelpCircle className="w-4 h-4 text-stone-400" />
+          <span>Need help understanding your prescription? Read our simple guide.</span>
+        </Link>
+      </div>
     </div>
   );
 };

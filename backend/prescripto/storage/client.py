@@ -237,6 +237,22 @@ class StorageClient:
                 return self._resolve_safe_path(key, bucket).is_file()
             raise StorageUnavailableException(f"Storage connection error: {e}") from e
 
+    def _is_s3_reachable(self) -> bool:
+        """Performs a non-blocking 50ms socket check to determine if S3 endpoint is alive."""
+        if not settings.S3_ENDPOINT:
+            return False
+        try:
+            from urllib.parse import urlparse
+            import socket
+            parsed = urlparse(settings.S3_ENDPOINT)
+            host = parsed.hostname or "localhost"
+            port = parsed.port or (443 if parsed.scheme == "https" else 80)
+            sock = socket.create_connection((host, port), timeout=0.05)
+            sock.close()
+            return True
+        except Exception:
+            return False
+
     def generate_presigned_url(
         self,
         key: str,
@@ -248,6 +264,9 @@ class StorageClient:
         Per security guidelines: bearer capability, NEVER persisted or logged.
         """
         bucket = bucket_name or self.default_bucket
+        if not self._is_mock_s3 and not self._is_s3_reachable():
+            return self.generate_signed_storage_url(key, expires_in=expires_in)
+
         try:
             url = self._client.generate_presigned_url(
                 ClientMethod="get_object",

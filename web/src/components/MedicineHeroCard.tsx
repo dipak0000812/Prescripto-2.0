@@ -1,24 +1,25 @@
 import React from 'react';
 import {
-  Sun,
-  SunMedium,
-  Moon,
-  Pill,
-  FlaskConical,
-  Droplets,
-  Syringe,
-  Sparkles,
-  Volume2,
   Square,
   Edit3,
-  AlertTriangle,
   Eye,
   Clock,
-  UtensilsCrossed,
+  MessageSquare,
 } from 'lucide-react';
 import { Button } from './ui/Button';
-import { DerivedSchedule, MedicineForm } from '../utils/medicationSchedule';
+import { DerivedSchedule } from '../utils/medicationSchedule';
 import { useLanguage } from '../context/LanguageContext';
+import {
+  SunriseIcon,
+  MiddaySunIcon,
+  MoonIcon,
+  BeforeFoodIcon,
+  AfterFoodIcon,
+  WithFoodIcon,
+  AlertAmberIcon,
+  ListenIcon,
+  getMedicineFormIcon,
+} from './icons/HealthcareIcons';
 
 interface MedicineHeroCardProps {
   schedule: DerivedSchedule;
@@ -27,6 +28,7 @@ interface MedicineHeroCardProps {
   isSpeaking: boolean;
   onEdit: () => void;
   onShowPhoto: () => void;
+  onAsk?: () => void;
 }
 
 export const MedicineHeroCard: React.FC<MedicineHeroCardProps> = ({
@@ -36,46 +38,30 @@ export const MedicineHeroCard: React.FC<MedicineHeroCardProps> = ({
   isSpeaking,
   onEdit,
   onShowPhoto,
+  onAsk,
 }) => {
   const { t } = useLanguage();
 
-  // Helper for medicine form icon & label
-  const renderFormIcon = (form: MedicineForm) => {
-    switch (form) {
-      case 'syrup':
-        return <FlaskConical className="w-5 h-5 text-[#0F5147]" aria-hidden="true" />;
-      case 'drops':
-        return <Droplets className="w-5 h-5 text-[#0F5147]" aria-hidden="true" />;
-      case 'injection':
-        return <Syringe className="w-5 h-5 text-[#0F5147]" aria-hidden="true" />;
-      case 'ointment':
-        return <Sparkles className="w-5 h-5 text-[#0F5147]" aria-hidden="true" />;
-      case 'capsule':
-      case 'tablet':
-      default:
-        return <Pill className="w-5 h-5 text-[#0F5147]" aria-hidden="true" />;
-    }
-  };
-
-  const formLabel = t(`hero.${schedule.form}`, schedule.form);
+  const FormIcon = getMedicineFormIcon(schedule.form);
+  const formLabel = schedule.form ? t(`hero.${schedule.form}`, schedule.form) : null;
 
   return (
     <article
-      className={`rounded-2xl p-5 sm:p-6 transition shadow-xs text-left ${
+      className={`rounded-2xl p-5 sm:p-6 transition shadow-xs text-left bg-white border ${
         schedule.isUncertain
-          ? 'bg-[#FFFBEB] border-2 border-[#FCD34D] ring-2 ring-[#FEF3C7]'
-          : 'bg-white border border-stone-200 hover:border-stone-300'
+          ? 'border-l-4 border-l-[#B45309] border-stone-200 shadow-2xs'
+          : 'border-stone-200 hover:border-stone-300'
       }`}
     >
-      {/* 1. TOP BAR: Unsure Alert (if applicable) */}
+      {/* 1. TOP BAR: Uncertain / Unsure Alert with Calm Amber Left Accent */}
       {schedule.isUncertain && (
-        <div className="mb-4 p-3 rounded-xl bg-[#FEF3C7] border border-[#FCD34D] flex flex-wrap items-center justify-between gap-2">
+        <div className="mb-4 p-3 rounded-xl bg-[#FEF3C7]/60 border border-[#FCD34D] flex flex-wrap items-center justify-between gap-2">
           <div className="flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 text-[#B45309] shrink-0" aria-hidden="true" />
+            <AlertAmberIcon className="text-[#B45309] shrink-0" size={18} />
             <span className="text-xs font-bold text-[#78350F]">
               {t('hero.please_check', 'Please check this')}
               {schedule.uncertainReason && (
-                <span className="font-normal block sm:inline sm:ml-1">
+                <span className="font-normal block sm:inline sm:ml-1 text-stone-700">
                   — {schedule.uncertainReason}
                 </span>
               )}
@@ -85,7 +71,7 @@ export const MedicineHeroCard: React.FC<MedicineHeroCardProps> = ({
           <button
             type="button"
             onClick={onShowPhoto}
-            className="text-xs font-bold text-[#0F5147] hover:underline flex items-center gap-1 cursor-pointer bg-white px-2.5 py-1 rounded-lg border border-amber-300 shadow-2xs"
+            className="text-xs font-bold text-[#0F5147] hover:underline flex items-center gap-1.5 cursor-pointer bg-white px-2.5 py-1.5 rounded-lg border border-amber-300 shadow-2xs min-h-[36px]"
           >
             <Eye className="w-3.5 h-3.5" aria-hidden="true" />
             <span>{t('hero.show_on_photo', 'Show on photo')}</span>
@@ -93,65 +79,99 @@ export const MedicineHeroCard: React.FC<MedicineHeroCardProps> = ({
         </div>
       )}
 
-      {/* 2. MEDICINE NAME (Large), STRENGTH & FORM */}
+      {/* 2. MEDICINE NAME (Large), STRENGTH, FORM ONLY IF KNOWN */}
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 pb-4 border-b border-stone-100">
         <div className="min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            <div className="w-8 h-8 rounded-lg bg-[#E6F0EE] border border-[#9DC1BB] flex items-center justify-center shrink-0">
-              {renderFormIcon(schedule.form)}
+          <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+            <div className="w-8 h-8 rounded-lg bg-[#E6F0EE] border border-[#9DC1BB] flex items-center justify-center text-[#0F5147] shrink-0">
+              <FormIcon size={18} />
             </div>
-            <span className="text-xs font-bold uppercase tracking-wider text-[#0F5147] bg-[#E6F0EE] px-2 py-0.5 rounded-md">
-              {formLabel}
-            </span>
+
+            {/* Form badge ONLY if known */}
+            {formLabel && (
+              <span className="text-xs font-bold uppercase tracking-wider text-[#0F5147] bg-[#E6F0EE] px-2 py-0.5 rounded-md">
+                {formLabel}
+              </span>
+            )}
+
+            {/* Strength */}
             {schedule.strength && (
               <span className="text-xs font-semibold text-stone-700 bg-[#F4F2EC] px-2 py-0.5 rounded-md border border-stone-200">
                 {schedule.strength}
               </span>
             )}
+
+            {/* Interval badge if q6h/q8h */}
+            {schedule.intervalHours && (
+              <span className="text-xs font-semibold text-[#0F5147] bg-[#E6F0EE] px-2 py-0.5 rounded-md">
+                Every {schedule.intervalHours} hours
+              </span>
+            )}
           </div>
 
-          <h3 className="text-xl sm:text-2xl font-extrabold text-[#1C252E] tracking-tight leading-tight">
+          <h3 className="text-xl sm:text-2xl font-bold text-[#1C252E] tracking-tight leading-tight">
             {schedule.cleanName}
           </h3>
 
-          {originalText && originalText !== schedule.cleanName && (
+          {originalText && originalText.trim().toLowerCase() !== schedule.cleanName.trim().toLowerCase() && (
             <p className="text-xs text-stone-500 mt-0.5 font-mono truncate">
               Prescription line: &quot;{originalText}&quot;
             </p>
           )}
         </div>
 
-        {/* Action Buttons: Listen & Edit (Touch target >= 48px) */}
+        {/* Action Buttons: Listen (Primary Green), Edit, Ask */}
         <div className="flex items-center gap-2 shrink-0 pt-1 sm:pt-0">
+          {/* Primary Action Button: Listen */}
           <Button
             type="button"
-            variant="outline"
+            variant="primary"
             size="sm"
             onClick={onListen}
             leftIcon={
               isSpeaking ? (
-                <Square className="w-4 h-4 text-[#BE123C] animate-pulse" />
+                <Square className="w-4 h-4 text-white animate-pulse" />
               ) : (
-                <Volume2 className="w-4 h-4 text-[#0F5147]" />
+                <ListenIcon size={18} className="text-white" />
               )
             }
-            className={`min-h-[44px] ${isSpeaking ? 'bg-[#FFE4E6] text-[#BE123C] border-[#FDA4AF]' : ''}`}
+            className={`min-h-[44px] ${
+              isSpeaking
+                ? 'bg-[#BE123C] hover:bg-[#9F1239]'
+                : 'bg-[#0F5147] hover:bg-[#0A3831]'
+            }`}
             aria-label={`Listen to ${schedule.cleanName} directions`}
           >
             <span>{isSpeaking ? t('hero.stop_voice', 'Stop') : t('hero.listen', 'Listen')}</span>
           </Button>
 
+          {/* Secondary Action: Edit */}
           <Button
             type="button"
-            variant="ghost"
+            variant="outline"
             size="sm"
             onClick={onEdit}
             leftIcon={<Edit3 className="w-4 h-4 text-stone-600" />}
-            className="min-h-[44px] text-stone-700 hover:bg-[#F4F2EC]"
+            className="min-h-[44px] text-stone-700 hover:bg-[#FAF9F6]"
             aria-label={`Edit ${schedule.cleanName} details`}
           >
             <span>{t('hero.edit', 'Edit')}</span>
           </Button>
+
+          {/* Optional Action: Ask Assistant */}
+          {onAsk && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={onAsk}
+              leftIcon={<MessageSquare className="w-4 h-4 text-[#0F5147]" />}
+              className="min-h-[44px] text-[#0F5147] hover:bg-[#E6F0EE]"
+              aria-label={`Ask assistant about ${schedule.cleanName}`}
+            >
+              <span>Ask</span>
+            </Button>
+          )}
         </div>
       </div>
 
@@ -163,14 +183,16 @@ export const MedicineHeroCard: React.FC<MedicineHeroCardProps> = ({
 
         {schedule.isOnlyIfNeeded ? (
           /* SOS / PRN Notice */
-          <div className="p-4 rounded-xl bg-[#FEF3C7] border border-[#FCD34D] text-xs sm:text-sm text-[#78350F] flex items-center gap-3">
-            <Clock className="w-5 h-5 text-[#B45309] shrink-0" aria-hidden="true" />
+          <div className="p-4 rounded-xl bg-[#FAF9F6] border border-stone-200 text-xs sm:text-sm text-stone-700 flex items-center gap-3">
+            <Clock className="w-5 h-5 text-amber-600 shrink-0" aria-hidden="true" />
             <div>
-              <span className="font-bold text-sm block">
+              <span className="font-bold text-sm text-[#1C252E] block">
                 {t('hero.only_if_needed', 'Only if needed (fever / pain)')}
               </span>
-              <span className="text-xs text-stone-700">
-                Do not take on a daily fixed schedule. Take only when symptom occurs.
+              <span className="text-xs text-stone-600">
+                {schedule.asNeededReason
+                  ? `Take only for ${schedule.asNeededReason}. Do not take on a daily fixed schedule.`
+                  : 'Do not take on a daily fixed schedule. Take only when symptom occurs.'}
               </span>
             </div>
           </div>
@@ -179,20 +201,21 @@ export const MedicineHeroCard: React.FC<MedicineHeroCardProps> = ({
           <div className="grid grid-cols-3 gap-2 sm:gap-3">
             {/* Slot 1: Morning */}
             <div
-              className={`p-3 rounded-xl border text-center transition ${
-                schedule.morningCount > 0
-                  ? 'bg-[#E6F0EE] border-[#9DC1BB] text-[#0F5147]'
-                  : 'bg-[#FAF9F6] border-stone-200 text-stone-400'
-              }`}
+              className={`p-3 rounded-xl border text-center transition ${schedule.morningCount > 0
+                ? 'bg-[#E6F0EE] border-[#9DC1BB] text-[#0F5147]'
+                : 'bg-[#FAF9F6] border-stone-200 text-stone-400'
+                }`}
             >
-              <div className="flex items-center justify-center gap-1 text-xs font-bold uppercase tracking-wider mb-1">
-                <Sun className={`w-4 h-4 ${schedule.morningCount > 0 ? 'text-[#0F5147]' : 'text-stone-400'}`} aria-hidden="true" />
+              <div className="flex items-center justify-center gap-1.5 text-xs font-bold uppercase tracking-wider mb-1">
+                <SunriseIcon
+                  size={18}
+                  className={schedule.morningCount > 0 ? 'text-[#0F5147]' : 'text-stone-400'}
+                />
                 <span>{t('hero.morning', 'Morning')}</span>
               </div>
               <p
-                className={`text-sm sm:text-base font-extrabold ${
-                  schedule.morningCount > 0 ? 'text-[#0F5147]' : 'text-stone-400 font-normal'
-                }`}
+                className={`text-sm sm:text-base font-extrabold ${schedule.morningCount > 0 ? 'text-[#0F5147]' : 'text-stone-400 font-normal'
+                  }`}
               >
                 {schedule.morning}
               </p>
@@ -200,20 +223,21 @@ export const MedicineHeroCard: React.FC<MedicineHeroCardProps> = ({
 
             {/* Slot 2: Afternoon */}
             <div
-              className={`p-3 rounded-xl border text-center transition ${
-                schedule.afternoonCount > 0
-                  ? 'bg-[#E6F0EE] border-[#9DC1BB] text-[#0F5147]'
-                  : 'bg-[#FAF9F6] border-stone-200 text-stone-400'
-              }`}
+              className={`p-3 rounded-xl border text-center transition ${schedule.afternoonCount > 0
+                ? 'bg-[#E6F0EE] border-[#9DC1BB] text-[#0F5147]'
+                : 'bg-[#FAF9F6] border-stone-200 text-stone-400'
+                }`}
             >
-              <div className="flex items-center justify-center gap-1 text-xs font-bold uppercase tracking-wider mb-1">
-                <SunMedium className={`w-4 h-4 ${schedule.afternoonCount > 0 ? 'text-[#0F5147]' : 'text-stone-400'}`} aria-hidden="true" />
+              <div className="flex items-center justify-center gap-1.5 text-xs font-bold uppercase tracking-wider mb-1">
+                <MiddaySunIcon
+                  size={18}
+                  className={schedule.afternoonCount > 0 ? 'text-[#0F5147]' : 'text-stone-400'}
+                />
                 <span>{t('hero.afternoon', 'Afternoon')}</span>
               </div>
               <p
-                className={`text-sm sm:text-base font-extrabold ${
-                  schedule.afternoonCount > 0 ? 'text-[#0F5147]' : 'text-stone-400 font-normal'
-                }`}
+                className={`text-sm sm:text-base font-extrabold ${schedule.afternoonCount > 0 ? 'text-[#0F5147]' : 'text-stone-400 font-normal'
+                  }`}
               >
                 {schedule.afternoon}
               </p>
@@ -221,20 +245,21 @@ export const MedicineHeroCard: React.FC<MedicineHeroCardProps> = ({
 
             {/* Slot 3: Night */}
             <div
-              className={`p-3 rounded-xl border text-center transition ${
-                schedule.nightCount > 0
-                  ? 'bg-[#E6F0EE] border-[#9DC1BB] text-[#0F5147]'
-                  : 'bg-[#FAF9F6] border-stone-200 text-stone-400'
-              }`}
+              className={`p-3 rounded-xl border text-center transition ${schedule.nightCount > 0
+                ? 'bg-[#E6F0EE] border-[#9DC1BB] text-[#0F5147]'
+                : 'bg-[#FAF9F6] border-stone-200 text-stone-400'
+                }`}
             >
-              <div className="flex items-center justify-center gap-1 text-xs font-bold uppercase tracking-wider mb-1">
-                <Moon className={`w-4 h-4 ${schedule.nightCount > 0 ? 'text-[#0F5147]' : 'text-stone-400'}`} aria-hidden="true" />
+              <div className="flex items-center justify-center gap-1.5 text-xs font-bold uppercase tracking-wider mb-1">
+                <MoonIcon
+                  size={18}
+                  className={schedule.nightCount > 0 ? 'text-[#0F5147]' : 'text-stone-400'}
+                />
                 <span>{t('hero.night', 'Night')}</span>
               </div>
               <p
-                className={`text-sm sm:text-base font-extrabold ${
-                  schedule.nightCount > 0 ? 'text-[#0F5147]' : 'text-stone-400 font-normal'
-                }`}
+                className={`text-sm sm:text-base font-extrabold ${schedule.nightCount > 0 ? 'text-[#0F5147]' : 'text-stone-400 font-normal'
+                  }`}
               >
                 {schedule.night}
               </p>
@@ -243,54 +268,51 @@ export const MedicineHeroCard: React.FC<MedicineHeroCardProps> = ({
         )}
       </div>
 
-      {/* 4. FOOTER ROW: Food Timing Chip + "For How Many Days" */}
+      {/* 4. FOOTER ROW: Food Timing & Duration as Plain Icon Lines (Not Pill Badges) */}
       <div className="pt-3 border-t border-stone-100 flex flex-wrap items-center justify-between gap-3 text-xs sm:text-sm">
-        {/* Food Timing Chip */}
-        <div>
+        {/* Plain Icon Line for Food Timing */}
+        <div className="flex items-center gap-2 text-stone-700">
           {schedule.foodTiming === 'before_food' ? (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold bg-[#E6F0EE] text-[#0F5147] border border-[#9DC1BB]">
-              <UtensilsCrossed className="w-3.5 h-3.5 text-[#0F5147]" aria-hidden="true" />
-              <span>{t('hero.before_food', 'Before food')}</span>
-            </span>
+            <>
+              <BeforeFoodIcon size={18} className="text-[#0F5147] shrink-0" />
+              <span className="font-semibold text-[#1C252E]">
+                {t('hero.before_food', 'Take before food')}
+              </span>
+            </>
           ) : schedule.foodTiming === 'after_food' ? (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold bg-[#ECFDF5] text-[#065F46] border border-[#A7F3D0]">
-              <UtensilsCrossed className="w-3.5 h-3.5 text-[#047857]" aria-hidden="true" />
-              <span>{t('hero.after_food', 'After food')}</span>
-            </span>
+            <>
+              <AfterFoodIcon size={18} className="text-[#0F5147] shrink-0" />
+              <span className="font-semibold text-[#1C252E]">
+                {t('hero.after_food', 'Take after food')}
+              </span>
+            </>
           ) : schedule.foodTiming === 'with_food' ? (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-bold bg-[#F4F2EC] text-[#1C252E] border border-stone-300">
-              <UtensilsCrossed className="w-3.5 h-3.5 text-stone-600" aria-hidden="true" />
-              <span>{t('hero.with_food', 'With food')}</span>
-            </span>
+            <>
+              <WithFoodIcon size={18} className="text-[#0F5147] shrink-0" />
+              <span className="font-semibold text-[#1C252E]">
+                {t('hero.with_food', 'Take with food / milk')}
+              </span>
+            </>
           ) : (
-            <span className="text-stone-500 italic text-xs">
-              Meal timing: Check with chemist
+            <span className="text-stone-500 italic">
+              Meal timing: Check with chemist or doctor
             </span>
           )}
         </div>
 
-        {/* Duration: Big Number + Days */}
-        <div className="flex items-center gap-1.5">
-          <span className="text-xs text-stone-500 uppercase font-bold tracking-wider">
-            {t('hero.for_days', 'For')}
+        {/* Plain Icon Line for Duration */}
+        <div className="flex items-center gap-2 text-stone-700">
+          <Clock className="w-4 h-4 text-stone-500 shrink-0" aria-hidden="true" />
+          <span className="text-stone-600">
+            {t('hero.for_days', 'For')}{' '}
+            <strong className="text-[#1C252E] font-bold">
+              {schedule.durationText || 'as directed by doctor'}
+            </strong>
           </span>
-          {schedule.durationDays ? (
-            <div className="flex items-baseline gap-1">
-              <span className="text-2xl font-extrabold text-[#0F5147] leading-none">
-                {schedule.durationDays}
-              </span>
-              <span className="text-xs font-bold text-stone-700">
-                {t('hero.days', 'days')}
-              </span>
-            </div>
-          ) : (
-            <span className="text-xs font-semibold text-stone-700 bg-[#F4F2EC] px-2 py-0.5 rounded">
-              {schedule.durationText || 'As prescribed'}
-            </span>
-          )}
         </div>
       </div>
     </article>
   );
 };
 
+export default MedicineHeroCard;

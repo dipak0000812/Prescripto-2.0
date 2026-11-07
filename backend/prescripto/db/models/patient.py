@@ -6,7 +6,7 @@ and doctor patient search/timeline tracking.
 import uuid
 from datetime import datetime
 from typing import Optional
-from sqlalchemy import String, Integer, DateTime, ForeignKey, Index
+from sqlalchemy import String, Integer, DateTime, ForeignKey, Index, Boolean
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID
 from prescripto.db.base import Base, utc_now
@@ -25,6 +25,9 @@ class Patient(Base):
     phone_number: Mapped[str] = mapped_column(
         String(50), unique=True, nullable=False, index=True
     )
+    email: Mapped[Optional[str]] = mapped_column(String(255), nullable=True, unique=True, index=True)
+    hashed_password: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    email_verified: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     age: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     gender: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
     blood_group: Mapped[Optional[str]] = mapped_column(String(10), nullable=True)
@@ -48,5 +51,5 @@ class Patient(Base):
     user = relationship("User", foreign_keys=[user_id])
 
     __table_args__ = (
-        Index("idx_patients_search", "name", "phone_number", "patient_id"),
+        Index("idx_patients_search", "name", "phone_number", "patient_id", "email"),
     )

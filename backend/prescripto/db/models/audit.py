@@ -4,7 +4,7 @@ Append-Only Audit Schema and Event Model.
 import uuid
 from datetime import datetime
 from typing import Any, Dict, Optional
-from sqlalchemy import BigInteger, String, DateTime, Index, JSON
+from sqlalchemy import BigInteger, Integer, String, DateTime, Index, JSON
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.dialects.postgresql import UUID, JSONB
 from prescripto.db.base import Base, utc_now
@@ -13,7 +13,7 @@ from prescripto.db.base import Base, utc_now
 class AuditEvent(Base):
     __tablename__ = "audit_events"
 
-    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, autoincrement=True)
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     event_type: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
     actor_id: Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), nullable=True)
     resource_type: Mapped[str] = mapped_column(String(100), nullable=False)

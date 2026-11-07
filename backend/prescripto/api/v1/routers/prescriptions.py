@@ -108,6 +108,9 @@ def list_prescriptions(
                 "uploaded_at": item.uploaded_at,
                 "status": item.status,
                 "latest_analysis_status": item.latest_analysis_status,
+                "latest_analysis_id": item.latest_analysis_id,
+                "patient_ref": item.patient_ref,
+                "patient_name": item.patient_name,
             }
             for item in items
         ],
@@ -144,6 +147,7 @@ def get_prescription(
         mime_type=detail.mime_type,
         file_size_bytes=detail.file_size_bytes,
         patient_ref=detail.patient_ref,
+        patient_name=detail.patient_name,
         image_url=detail.image_url,
         analyses=[
             {

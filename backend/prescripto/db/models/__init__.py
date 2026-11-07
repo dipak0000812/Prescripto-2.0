@@ -29,6 +29,9 @@ from prescripto.db.models.review import Review
 from prescripto.db.models.retention import DeletionJob, TokenBlocklist
 from prescripto.db.models.audit import AuditEvent
 from prescripto.db.models.idempotency import IdempotencyRecord
+from prescripto.db.models.reminder import ReminderPlan, ReminderEvent, PushSubscription
+from prescripto.db.models.doctor_patient import DoctorPatient
+from prescripto.db.models.otp import OTPCode, PasswordResetToken
 
 __all__ = [
     "Base",
@@ -64,5 +67,11 @@ __all__ = [
     "DeletionJob",
     "TokenBlocklist",
     "AuditEvent",
+    "ReminderPlan",
+    "ReminderEvent",
+    "PushSubscription",
+    "DoctorPatient",
+    "OTPCode",
+    "PasswordResetToken",
 ]
 

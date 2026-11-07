@@ -1,0 +1,280 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" width="1600" height="1000">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#06221D"/>
+      <stop offset="50%" stop-color="#0A3831"/>
+      <stop offset="100%" stop-color="#0F5147"/>
+    </linearGradient>
+    <linearGradient id="cardGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0.04"/>
+    </linearGradient>
+    <linearGradient id="emeraldGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#10B981"/>
+      <stop offset="100%" stop-color="#34D399"/>
+    </linearGradient>
+    <linearGradient id="amberGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#F59E0B"/>
+      <stop offset="100%" stop-color="#FBBF24"/>
+    </linearGradient>
+    <linearGradient id="blueGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#3B82F6"/>
+      <stop offset="100%" stop-color="#60A5FA"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="8" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="12" stdDeviation="16" flood-color="#000000" flood-opacity="0.45"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1600" height="1000" fill="url(#bg)"/>
+
+  <!-- Subtle Grid Pattern -->
+  <g opacity="0.06">
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#FFFFFF" stroke-width="1"/>
+    </pattern>
+    <rect width="1600" height="1000" fill="url(#grid)"/>
+  </g>
+
+  <!-- Header Banner -->
+  <g transform="translate(80, 50)">
+    <rect x="0" y="0" width="48" height="48" rx="14" fill="#10B981" filter="url(#glow)"/>
+    <path d="M24 14 L34 18 L34 26 C34 32 29 36 24 38 C19 36 14 32 14 26 L14 18 Z" fill="#0A3831"/>
+    <text x="64" y="28" font-family="Segoe UI, -apple-system, sans-serif" font-size="28" font-weight="900" fill="#FFFFFF" letter-spacing="-0.5">PRESCRIPTO AI 2.0</text>
+    <text x="64" y="46" font-family="Segoe UI, sans-serif" font-size="14" font-weight="600" fill="#6EE7B7" letter-spacing="1.5">END-TO-END SYSTEM ARCHITECTURE</text>
+    <rect x="1260" y="8" width="180" height="32" rx="16" fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.2)"/>
+    <circle cx="1278" cy="24" r="5" fill="#10B981"/>
+    <text x="1292" y="29" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#FFFFFF">LOCKED BASELINE v1.1</text>
+  </g>
+
+  <!-- 1. CLIENT TIER (LEFT) -->
+  <g transform="translate(80, 130)" filter="url(#shadow)">
+    <rect width="320" height="800" rx="20" fill="url(#cardGrad)" stroke="rgba(255,255,255,0.18)" stroke-width="1.5"/>
+    <rect width="320" height="52" rx="20" fill="rgba(16,185,129,0.15)"/>
+    <text x="24" y="32" font-family="Segoe UI, sans-serif" font-size="15" font-weight="800" fill="#34D399" letter-spacing="1">1. PRESENTATION TIER</text>
+    <text x="240" y="32" font-family="Segoe UI, sans-serif" font-size="11" font-weight="700" fill="#A7F3D0">SPA / PWA</text>
+
+    <!-- Patient App -->
+    <g transform="translate(20, 75)">
+      <rect width="280" height="330" rx="14" fill="rgba(0,0,0,0.3)" stroke="rgba(52,211,153,0.3)"/>
+      <circle cx="35" cy="35" r="15" fill="#10B981" opacity="0.2"/>
+      <text x="35" y="40" font-family="Segoe UI, sans-serif" font-size="14" text-anchor="middle" fill="#34D399">&#128241;</text>
+      <text x="60" y="34" font-family="Segoe UI, sans-serif" font-size="15" font-weight="700" fill="#FFFFFF">Patient Mobile App Shell</text>
+      <text x="60" y="50" font-family="Segoe UI, sans-serif" font-size="11" fill="#9CA3AF">Multilingual (EN, HI, GU, MR)</text>
+
+      <rect x="20" y="75" width="240" height="46" rx="8" fill="rgba(255,255,255,0.05)"/>
+      <text x="32" y="96" font-family="Segoe UI, sans-serif" font-size="12" font-weight="600" fill="#E5E7EB">&#128247; Camera &amp; Gallery Upload</text>
+      <text x="32" y="112" font-family="Segoe UI, sans-serif" font-size="10" fill="#9CA3AF">Frame alignment, DPDPA consent</text>
+
+      <rect x="20" y="130" width="240" height="46" rx="8" fill="rgba(255,255,255,0.05)"/>
+      <text x="32" y="151" font-family="Segoe UI, sans-serif" font-size="12" font-weight="600" fill="#E5E7EB">&#9728;&#65039; 3-Slot Schedule Cards</text>
+      <text x="32" y="167" font-family="Segoe UI, sans-serif" font-size="10" fill="#9CA3AF">Sunrise (Morning), Sun, Moon (Night)</text>
+
+      <rect x="20" y="185" width="240" height="46" rx="8" fill="rgba(255,255,255,0.05)"/>
+      <text x="32" y="206" font-family="Segoe UI, sans-serif" font-size="12" font-weight="600" fill="#E5E7EB">&#128266; Native Voice Readout</text>
+      <text x="32" y="222" font-family="Segoe UI, sans-serif" font-size="10" fill="#9CA3AF">Web Speech API speech synthesis</text>
+
+      <rect x="20" y="240" width="240" height="46" rx="8" fill="rgba(255,255,255,0.05)"/>
+      <text x="32" y="261" font-family="Segoe UI, sans-serif" font-size="12" font-weight="600" fill="#E5E7EB">&#128276; Medication Reminders</text>
+      <text x="32" y="277" font-family="Segoe UI, sans-serif" font-size="10" fill="#9CA3AF">Taken / Snooze / Skip (48px buttons)</text>
+
+      <rect x="20" y="295" width="240" height="24" rx="6" fill="#10B981" opacity="0.2"/>
+      <text x="140" y="311" font-family="Segoe UI, sans-serif" font-size="10" font-weight="700" text-anchor="middle" fill="#6EE7B7">10-Digit Phone + Auto-OTP Login</text>
+    </g>
+
+    <!-- Clinician Workspace -->
+    <g transform="translate(20, 425)">
+      <rect width="280" height="350" rx="14" fill="rgba(0,0,0,0.3)" stroke="rgba(96,165,250,0.3)"/>
+      <circle cx="35" cy="35" r="15" fill="#3B82F6" opacity="0.2"/>
+      <text x="35" y="40" font-family="Segoe UI, sans-serif" font-size="14" text-anchor="middle" fill="#60A5FA">&#129658;</text>
+      <text x="60" y="34" font-family="Segoe UI, sans-serif" font-size="15" font-weight="700" fill="#FFFFFF">Doctor / Reviewer Portal</text>
+      <text x="60" y="50" font-family="Segoe UI, sans-serif" font-size="11" fill="#9CA3AF">Desktop High-Speed Console</text>
+
+      <rect x="20" y="75" width="240" height="50" rx="8" fill="rgba(255,255,255,0.05)"/>
+      <text x="32" y="96" font-family="Segoe UI, sans-serif" font-size="12" font-weight="600" fill="#E5E7EB">&#128337; Clinical Review Queue</text>
+      <text x="32" y="112" font-family="Segoe UI, sans-serif" font-size="10" fill="#9CA3AF">Sorted by wait time &amp; ambiguity severity</text>
+
+      <rect x="20" y="135" width="240" height="50" rx="8" fill="rgba(255,255,255,0.05)"/>
+      <text x="32" y="156" font-family="Segoe UI, sans-serif" font-size="12" font-weight="600" fill="#E5E7EB">&#128269; Split-View Photo Verifier</text>
+      <text x="32" y="172" font-family="Segoe UI, sans-serif" font-size="10" fill="#9CA3AF">Zoom/pan/crop slip vs extracted lines</text>
+
+      <rect x="20" y="195" width="240" height="50" rx="8" fill="rgba(255,255,255,0.05)"/>
+      <text x="32" y="216" font-family="Segoe UI, sans-serif" font-size="12" font-weight="600" fill="#E5E7EB">&#9999;&#65039; Inline Dose / Form Editor</text>
+      <text x="32" y="232" font-family="Segoe UI, sans-serif" font-size="10" fill="#9CA3AF">Correct shorthand with audit logging</text>
+
+      <rect x="20" y="255" width="240" height="50" rx="8" fill="rgba(255,255,255,0.05)"/>
+      <text x="32" y="276" font-family="Segoe UI, sans-serif" font-size="12" font-weight="600" fill="#E5E7EB">&#128196; Patient Medical History</text>
+      <text x="32" y="292" font-family="Segoe UI, sans-serif" font-size="10" fill="#9CA3AF">Patient timeline dossier &amp; visits</text>
+
+      <rect x="20" y="315" width="240" height="24" rx="6" fill="#3B82F6" opacity="0.2"/>
+      <text x="140" y="331" font-family="Segoe UI, sans-serif" font-size="10" font-weight="700" text-anchor="middle" fill="#93C5FD">RS256 Staff JWT &amp; Role Check</text>
+    </g>
+  </g>
+
+  <!-- Connectors: Presentation -> Gateway -->
+  <g stroke="#34D399" stroke-width="2" stroke-dasharray="6,4" opacity="0.8">
+    <path d="M 400 300 L 460 300 L 460 380 L 510 380"/>
+    <path d="M 400 600 L 460 600 L 460 420 L 510 420"/>
+  </g>
+
+  <!-- 2. API GATEWAY & MODULAR MONOLITH (CENTER) -->
+  <g transform="translate(510, 130)" filter="url(#shadow)">
+    <rect width="360" height="800" rx="20" fill="url(#cardGrad)" stroke="rgba(255,255,255,0.18)" stroke-width="1.5"/>
+    <rect width="360" height="52" rx="20" fill="rgba(16,185,129,0.15)"/>
+    <text x="24" y="32" font-family="Segoe UI, sans-serif" font-size="15" font-weight="800" fill="#34D399" letter-spacing="1">2. FASTAPI MONOLITH</text>
+    <text x="260" y="32" font-family="Segoe UI, sans-serif" font-size="11" font-weight="700" fill="#A7F3D0">UVICORN / ASGI</text>
+
+    <!-- Middlewares -->
+    <g transform="translate(20, 70)">
+      <rect width="320" height="70" rx="10" fill="rgba(255,255,255,0.06)" stroke="rgba(255,255,255,0.1)"/>
+      <text x="16" y="24" font-family="Segoe UI, sans-serif" font-size="11" font-weight="700" fill="#34D399">HTTP MIDDLEWARE PIPELINE</text>
+      <text x="16" y="44" font-family="Segoe UI, sans-serif" font-size="11" fill="#E5E7EB">&#8226; X-Request-ID Correlation</text>
+      <text x="175" y="44" font-family="Segoe UI, sans-serif" font-size="11" fill="#E5E7EB">&#8226; CORS Whitelist</text>
+      <text x="16" y="60" font-family="Segoe UI, sans-serif" font-size="11" fill="#E5E7EB">&#8226; Zero-PHI Structured Logging</text>
+      <text x="175" y="60" font-family="Segoe UI, sans-serif" font-size="11" fill="#E5E7EB">&#8226; Idempotency-Key Gate</text>
+    </g>
+
+    <!-- Subsystem Routers -->
+    <g transform="translate(20, 155)">
+      <text x="4" y="16" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#9CA3AF">MODULAR ROUTERS (/api/v1)</text>
+
+      <rect x="0" y="26" width="320" height="52" rx="8" fill="rgba(0,0,0,0.3)" stroke="rgba(255,255,255,0.08)"/>
+      <text x="16" y="48" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#FFFFFF">POST /api/v1/prescriptions</text>
+      <text x="16" y="66" font-family="Segoe UI, sans-serif" font-size="10" fill="#A7F3D0">Multipart upload &#8594; 202 Accepted + SHA-256 Checksum</text>
+
+      <rect x="0" y="86" width="320" height="52" rx="8" fill="rgba(0,0,0,0.3)" stroke="rgba(255,255,255,0.08)"/>
+      <text x="16" y="108" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#FFFFFF">GET /api/v1/prescriptions</text>
+      <text x="16" y="126" font-family="Segoe UI, sans-serif" font-size="10" fill="#A7F3D0">Paginated list with patient_name &amp; patient_ref</text>
+
+      <rect x="0" y="146" width="320" height="52" rx="8" fill="rgba(0,0,0,0.3)" stroke="rgba(255,255,255,0.08)"/>
+      <text x="16" y="168" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#FFFFFF">GET /api/v1/analyses/{id}</text>
+      <text x="16" y="186" font-family="Segoe UI, sans-serif" font-size="10" fill="#A7F3D0">Gated status check + 60s signed image URL</text>
+
+      <rect x="0" y="206" width="320" height="52" rx="8" fill="rgba(0,0,0,0.3)" stroke="rgba(255,255,255,0.08)"/>
+      <text x="16" y="228" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#FFFFFF">POST /api/v1/analyses/{id}/review</text>
+      <text x="16" y="246" font-family="Segoe UI, sans-serif" font-size="10" fill="#A7F3D0">Clinician review submission &amp; status transition</text>
+
+      <rect x="0" y="266" width="320" height="52" rx="8" fill="rgba(0,0,0,0.3)" stroke="rgba(255,255,255,0.08)"/>
+      <text x="16" y="288" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#FFFFFF">/api/v1/patients &amp; /timeline</text>
+      <text x="16" y="306" font-family="Segoe UI, sans-serif" font-size="10" fill="#A7F3D0">Patient search &amp; full historical medical visits</text>
+
+      <rect x="0" y="326" width="320" height="52" rx="8" fill="rgba(0,0,0,0.3)" stroke="rgba(255,255,255,0.08)"/>
+      <text x="16" y="348" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#FFFFFF">/api/v1/reminders</text>
+      <text x="16" y="366" font-family="Segoe UI, sans-serif" font-size="10" fill="#A7F3D0">VAPID Web Push subscription &amp; dose logging</text>
+    </g>
+
+    <!-- Embedded Worker Daemon -->
+    <g transform="translate(20, 580)">
+      <rect width="320" height="190" rx="12" fill="rgba(16,185,129,0.12)" stroke="rgba(52,211,153,0.4)" stroke-width="1.5"/>
+      <text x="16" y="26" font-family="Segoe UI, sans-serif" font-size="13" font-weight="800" fill="#34D399">&#9881;&#65039; BACKGROUND WORKER THREAD</text>
+      <text x="16" y="44" font-family="Segoe UI, sans-serif" font-size="11" fill="#E5E7EB">Embedded WorkerRunner (poll_interval = 1.0s)</text>
+      <text x="16" y="66" font-family="Segoe UI, sans-serif" font-size="10" fill="#A7F3D0">&#10003; SELECT FOR UPDATE SKIP LOCKED</text>
+      <text x="16" y="82" font-family="Segoe UI, sans-serif" font-size="10" fill="#A7F3D0">&#10003; Generation Fencing Token &amp; Lease Renewal</text>
+      <text x="16" y="98" font-family="Segoe UI, sans-serif" font-size="10" fill="#A7F3D0">&#10003; Max 3 Retries before DEAD status</text>
+      <text x="16" y="114" font-family="Segoe UI, sans-serif" font-size="10" fill="#A7F3D0">&#10003; Zero-PHI Safe Logging Engine</text>
+
+      <rect x="16" y="130" width="288" height="42" rx="8" fill="rgba(0,0,0,0.3)"/>
+      <text x="28" y="148" font-family="Segoe UI, sans-serif" font-size="11" font-weight="700" fill="#FBBF24">&#9888; Safety Principle</text>
+      <text x="28" y="164" font-family="Segoe UI, sans-serif" font-size="10" fill="#E5E7EB">Upstream doubt never becomes downstream certainty</text>
+    </g>
+  </g>
+
+  <!-- Connectors: Gateway -> Persistence -->
+  <g stroke="#34D399" stroke-width="2" stroke-dasharray="6,4" opacity="0.8">
+    <path d="M 870 380 L 930 380 L 930 280 L 980 280"/>
+    <path d="M 870 500 L 980 500"/>
+    <path d="M 870 700 L 930 700 L 930 740 L 980 740"/>
+  </g>
+
+  <!-- 3. PERSISTENCE & ML LAYER (RIGHT) -->
+  <g transform="translate(980, 130)" filter="url(#shadow)">
+    <rect width="540" height="800" rx="20" fill="url(#cardGrad)" stroke="rgba(255,255,255,0.18)" stroke-width="1.5"/>
+    <rect width="540" height="52" rx="20" fill="rgba(16,185,129,0.15)"/>
+    <text x="24" y="32" font-family="Segoe UI, sans-serif" font-size="15" font-weight="800" fill="#34D399" letter-spacing="1">3. PERSISTENCE &amp; RECOGNITION TIER</text>
+    <text x="410" y="32" font-family="Segoe UI, sans-serif" font-size="11" font-weight="700" fill="#A7F3D0">STORAGE &amp; MODELS</text>
+
+    <!-- PostgreSQL / SQLite Database -->
+    <g transform="translate(20, 75)">
+      <rect width="500" height="210" rx="14" fill="rgba(0,0,0,0.3)" stroke="rgba(52,211,153,0.3)"/>
+      <circle cx="35" cy="35" r="15" fill="#10B981" opacity="0.2"/>
+      <text x="35" y="40" font-family="Segoe UI, sans-serif" font-size="14" text-anchor="middle" fill="#34D399">&#128452;</text>
+      <text x="60" y="34" font-family="Segoe UI, sans-serif" font-size="15" font-weight="700" fill="#FFFFFF">Relational Database (PostgreSQL 16+ / SQLite)</text>
+      <text x="60" y="50" font-family="Segoe UI, sans-serif" font-size="11" fill="#9CA3AF">ACID Transactions &amp; Strict Check Constraints</text>
+
+      <g transform="translate(20, 68)" font-family="Consolas, monospace" font-size="10.5" fill="#E5E7EB">
+        <rect width="220" height="26" rx="5" fill="rgba(255,255,255,0.06)"/>
+        <text x="10" y="17" fill="#6EE7B7">prescription_documents</text>
+
+        <rect x="235" y="0" width="225" height="26" rx="5" fill="rgba(255,255,255,0.06)"/>
+        <text x="245" y="17" fill="#6EE7B7">analyses &amp; analysis_jobs</text>
+
+        <rect y="34" width="220" height="26" rx="5" fill="rgba(255,255,255,0.06)"/>
+        <text x="10" y="51" fill="#6EE7B7">patients &amp; users</text>
+
+        <rect x="235" y="34" width="225" height="26" rx="5" fill="rgba(255,255,255,0.06)"/>
+        <text x="245" y="51" fill="#6EE7B7">medication_audit_trail</text>
+
+        <rect y="68" width="220" height="26" rx="5" fill="rgba(255,255,255,0.06)"/>
+        <text x="10" y="85" fill="#6EE7B7">medicine_reminders</text>
+
+        <rect x="235" y="68" width="225" height="26" rx="5" fill="rgba(255,255,255,0.06)"/>
+        <text x="245" y="85" fill="#6EE7B7">risk_findings &amp; reviews</text>
+
+        <rect y="102" width="460" height="26" rx="5" fill="rgba(255,255,255,0.06)"/>
+        <text x="10" y="119" fill="#FBBF24">CDSCO Canonical Master + RxNorm CUIs (Immutable)</text>
+      </g>
+    </g>
+
+    <!-- S3 / MinIO Object Storage -->
+    <g transform="translate(20, 305)">
+      <rect width="500" height="150" rx="14" fill="rgba(0,0,0,0.3)" stroke="rgba(245,158,11,0.3)"/>
+      <circle cx="35" cy="35" r="15" fill="#F59E0B" opacity="0.2"/>
+      <text x="35" y="40" font-family="Segoe UI, sans-serif" font-size="14" text-anchor="middle" fill="#FBBF24">&#129699;</text>
+      <text x="60" y="34" font-family="Segoe UI, sans-serif" font-size="15" font-weight="700" fill="#FFFFFF">Object Storage (MinIO / S3)</text>
+      <text x="60" y="50" font-family="Segoe UI, sans-serif" font-size="11" fill="#9CA3AF">60-Second Ephemeral Signed URLs · Local Directory Fallback</text>
+
+      <g transform="translate(20, 68)" font-family="Segoe UI, sans-serif" font-size="11" fill="#E5E7EB">
+        <rect width="460" height="32" rx="6" fill="rgba(255,255,255,0.06)"/>
+        <text x="12" y="21" font-weight="600">&#128193; Bucket "prescripto":</text>
+        <text x="145" y="21" fill="#9CA3AF" font-family="Consolas, monospace">/prescriptions/{id}/original.{ext} + line region crops</text>
+
+        <rect y="38" width="460" height="32" rx="6" fill="rgba(255,255,255,0.06)"/>
+        <text x="12" y="59" font-weight="600">&#128274; Bucket "retention-vault":</text>
+        <text x="180" y="59" fill="#9CA3AF" font-family="Consolas, monospace">DPDPA deletion manifests (Separately permissioned)</text>
+      </g>
+    </g>
+
+    <!-- Vision & Recognition Providers -->
+    <g transform="translate(20, 475)">
+      <rect width="500" height="300" rx="14" fill="rgba(0,0,0,0.3)" stroke="rgba(168,85,247,0.3)"/>
+      <circle cx="35" cy="35" r="15" fill="#A855F7" opacity="0.2"/>
+      <text x="35" y="40" font-family="Segoe UI, sans-serif" font-size="14" text-anchor="middle" fill="#C084FC">&#128065;</text>
+      <text x="60" y="34" font-family="Segoe UI, sans-serif" font-size="15" font-weight="700" fill="#FFFFFF">Recognition &amp; Normalization Providers</text>
+      <text x="60" y="50" font-family="Segoe UI, sans-serif" font-size="11" fill="#9CA3AF">Hybrid Vision Architecture with Local Offline Fallback</text>
+
+      <rect x="20" y="70" width="460" height="60" rx="10" fill="rgba(16,185,129,0.12)" stroke="rgba(52,211,153,0.3)"/>
+      <text x="34" y="93" font-family="Segoe UI, sans-serif" font-size="13" font-weight="700" fill="#34D399">&#10024; PRIMARY: Gemini Vision Provider</text>
+      <text x="34" y="112" font-family="Segoe UI, sans-serif" font-size="11" fill="#D1FAE5">gemini-3.5-flash (with gemini-3.6-flash fallback). Direct prescription image OCR.</text>
+
+      <rect x="20" y="140" width="460" height="60" rx="10" fill="rgba(59,130,246,0.12)" stroke="rgba(96,165,250,0.3)"/>
+      <text x="34" y="163" font-family="Segoe UI, sans-serif" font-size="13" font-weight="700" fill="#60A5FA">&#128421;&#65039; FALLBACK: Local RapidOCR / TrOCR</text>
+      <text x="34" y="182" font-family="Segoe UI, sans-serif" font-size="11" fill="#DBEAFE">Offline inference for auth failure, timeout, or rate-limit. Zero external network dependency.</text>
+
+      <rect x="20" y="210" width="460" height="70" rx="10" fill="rgba(245,158,11,0.12)" stroke="rgba(245,158,11,0.3)"/>
+      <text x="34" y="233" font-family="Segoe UI, sans-serif" font-size="13" font-weight="700" fill="#FBBF24">&#9878;&#65039; DETERMINISTIC REGEX &amp; CDSCO NORMALIZATION</text>
+      <text x="34" y="252" font-family="Segoe UI, sans-serif" font-size="11" fill="#FEF3C7">Deterministic parsing for dosage numbers &amp; timing (1-0-1, pc/ac, q6h).</text>
+      <text x="34" y="268" font-family="Segoe UI, sans-serif" font-size="10" fill="#FDE68A">Uncertainty state: CLEAR &#183; AMBIGUOUS &#183; UNREADABLE &#183; NOT_PRESENT</text>
+    </g>
+  </g>
+
+  <!-- Bottom Attribution Footer -->
+  <g transform="translate(80, 955)" font-family="Segoe UI, sans-serif" font-size="11" fill="#9CA3AF">
+    <text x="0" y="10">&#128737; DPDPA 2023 Compliant &#183; Zero-PHI in Operational Logs &#183; Human-In-The-Loop Review Mandatory</text>
+    <text x="1440" y="10" text-anchor="end">Prescripto AI 2.0 &#183; Production Architecture Blueprint</text>
+  </g>
+</svg>

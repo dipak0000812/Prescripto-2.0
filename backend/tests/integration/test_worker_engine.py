@@ -18,6 +18,7 @@ from prescripto.worker.coordinator import CANONICAL_STAGES
 from prescripto.worker.exceptions import WorkerFencedError
 from prescripto.worker.fence import commit_stage_result
 from prescripto.ml.runtime import MockModelRuntime
+from prescripto.config.settings import settings
 
 
 @pytest.fixture
@@ -201,13 +202,14 @@ def test_worker_fencing_race_condition(db_session: Session, seeded_worker_env):
         )
 
 
-def test_failed_job_rolls_back_partial_stages(db_session: Session, seeded_worker_env):
+def test_failed_job_rolls_back_partial_stages(db_session: Session, seeded_worker_env, monkeypatch):
     """
     B2 Regression Test:
     When a pipeline stage fails (e.g. OCR runtime crashes), any stages that
     were flushed prior to the failure (e.g. INGESTION, QUALITY_CHECK) must be
     rolled back by run_once(). Zero stage rows should persist for the failed attempt.
     """
+    monkeypatch.setattr(settings, "RECOGNITION_PROVIDER", "rapidocr")
     analysis = seeded_worker_env["analysis"]
     job = seeded_worker_env["job"]
 

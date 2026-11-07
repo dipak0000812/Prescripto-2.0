@@ -70,6 +70,13 @@ from prescripto.worker.exceptions import WorkerFencedError
 from prescripto.worker.fence import commit_stage_result
 from prescripto.worker.main import WorkerRunner
 from prescripto.worker.queue import QueuePoller
+from prescripto.config.settings import settings
+
+
+@pytest.fixture(autouse=True)
+def force_rapidocr_mode(monkeypatch):
+    """Ensure distributed ML pipeline tests execute against RemoteMLClient/mock service, not Gemini."""
+    monkeypatch.setattr(settings, "RECOGNITION_PROVIDER", "rapidocr")
 
 
 # ---------------------------------------------------------------------------

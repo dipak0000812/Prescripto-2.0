@@ -3,7 +3,7 @@ FastAPI Authentication and RBAC Security Dependencies.
 """
 import uuid
 from typing import Callable, Sequence
-from fastapi import Depends
+from fastapi import Depends, WebSocket, Query, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 import jwt
@@ -48,6 +48,44 @@ def get_current_user(
     user = db.query(User).filter(User.id == user_uuid, User.is_active == True).first()
     if not user:
         raise InvalidCredentialsException("User inactive or no longer exists")
+
+    return user
+
+
+async def get_current_user_ws(
+    websocket: WebSocket,
+    token: str = Query(..., description="JWT access token"),
+    db: Session = Depends(get_db),
+) -> User | None:
+    """Extracts and validates the current user from the RS256 Bearer JWT for WebSocket connections."""
+    try:
+        payload = decode_token(token)
+    except jwt.ExpiredSignatureError:
+        await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+        return None
+    except jwt.InvalidTokenError:
+        await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+        return None
+
+    if payload.get("type") != "access":
+        await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+        return None
+
+    user_id_str = payload.get("sub")
+    if not user_id_str:
+        await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+        return None
+
+    try:
+        user_uuid = uuid.UUID(user_id_str)
+    except ValueError:
+        await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+        return None
+
+    user = db.query(User).filter(User.id == user_uuid, User.is_active == True).first()
+    if not user:
+        await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+        return None
 
     return user
 

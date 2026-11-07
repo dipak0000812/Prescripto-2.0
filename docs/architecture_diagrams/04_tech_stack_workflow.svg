@@ -1,0 +1,220 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" width="1600" height="1000">
+  <defs>
+    <linearGradient id="bg4" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#090D16"/>
+      <stop offset="50%" stop-color="#0D1E1B"/>
+      <stop offset="100%" stop-color="#063328"/>
+    </linearGradient>
+    <filter id="shadow4" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000000" flood-opacity="0.4"/>
+    </filter>
+  </defs>
+
+  <rect width="1600" height="1000" fill="url(#bg4)"/>
+
+  <!-- Title Banner -->
+  <g transform="translate(80, 50)">
+    <rect x="0" y="0" width="48" height="48" rx="14" fill="#F59E0B"/>
+    <text x="24" y="32" font-family="Segoe UI, sans-serif" font-size="20" text-anchor="middle" fill="#000000">&#9889;</text>
+    <text x="64" y="28" font-family="Segoe UI, sans-serif" font-size="28" font-weight="900" fill="#FFFFFF">PRESCRIPTO AI 2.0</text>
+    <text x="64" y="46" font-family="Segoe UI, sans-serif" font-size="14" font-weight="600" fill="#FBBF24" letter-spacing="1.5">COMPLETE PRODUCTION TECHNOLOGY STACK &amp; WORKFLOW</text>
+  </g>
+
+  <!-- 4 Pillars -->
+  <!-- Pillar 1: Frontend -->
+  <g transform="translate(80, 130)" filter="url(#shadow4)">
+    <rect width="335" height="800" rx="18" fill="rgba(255,255,255,0.05)" stroke="rgba(56,189,248,0.3)" stroke-width="1.5"/>
+    <rect width="335" height="50" rx="18" fill="rgba(56,189,248,0.15)"/>
+    <text x="20" y="32" font-family="Segoe UI, sans-serif" font-size="14" font-weight="800" fill="#38BDF8">FRONTEND ARCHITECTURE</text>
+    <text x="240" y="32" font-family="Segoe UI, sans-serif" font-size="11" font-weight="700" fill="#BAE6FD">WEB SPA</text>
+
+    <!-- Stack Cards -->
+    <g transform="translate(20, 70)" font-family="Segoe UI, sans-serif">
+      <rect width="295" height="90" rx="10" fill="rgba(0,0,0,0.3)" stroke="rgba(255,255,255,0.08)"/>
+      <text x="16" y="26" font-size="14" font-weight="700" fill="#FFFFFF">React 19.3 + TypeScript 6</text>
+      <text x="16" y="46" font-size="11" fill="#9CA3AF">Strict type checking &#183; Zero runtime errors</text>
+      <text x="16" y="64" font-size="11" fill="#E2E8F0">React Router v7 (Patient vs Staff Shells)</text>
+      <text x="16" y="80" font-size="10" fill="#38BDF8">Fast concurrent rendering &amp; responsive state</text>
+
+      <rect y="105" width="295" height="90" rx="10" fill="rgba(0,0,0,0.3)" stroke="rgba(255,255,255,0.08)"/>
+      <text x="16" y="131" font-size="14" font-weight="700" fill="#FFFFFF">Vite 8.3 + Tailwind CSS 4.3</text>
+      <text x="16" y="151" font-size="11" fill="#9CA3AF">Bundled production bundle &lt; 500 kB</text>
+      <text x="16" y="169" font-size="11" fill="#E2E8F0">Hot Module Replacement (HMR &lt; 50ms)</text>
+      <text x="16" y="185" font-size="10" fill="#38BDF8">Custom clinic CSS design tokens in index.css</text>
+
+      <rect y="210" width="295" height="90" rx="10" fill="rgba(0,0,0,0.3)" stroke="rgba(255,255,255,0.08)"/>
+      <text x="16" y="236" font-size="14" font-weight="700" fill="#FFFFFF">Web Speech Synthesis API</text>
+      <text x="16" y="256" font-size="11" fill="#9CA3AF">Spoken dosage audio in 4 Indian languages:</text>
+      <text x="16" y="274" font-size="11" font-weight="600" fill="#6EE7B7">en-IN &#183; hi-IN (&#2361;&#2367;&#2344;&#2381;&#2342;&#2368;) &#183; gu-IN (&#2711;&#2753;&#2716;&#2736;&#2750;&#2724;&#2752;) &#183; mr-IN</text>
+      <text x="16" y="290" font-size="10" fill="#9CA3AF">Elder-friendly rate: 0.9x speed for clear intake</text>
+
+      <rect y="315" width="295" height="90" rx="10" fill="rgba(0,0,0,0.3)" stroke="rgba(255,255,255,0.08)"/>
+      <text x="16" y="341" font-size="14" font-weight="700" fill="#FFFFFF">Custom Healthcare SVG Set</text>
+      <text x="16" y="361" font-size="11" fill="#9CA3AF">1.75px bespoke medical line icons:</text>
+      <text x="16" y="379" font-size="11" fill="#E2E8F0">&#8226; Tablet, Capsule, Syrup, Inhaler, Drops</text>
+      <text x="16" y="395" font-size="10" fill="#38BDF8">&#8226; Sunrise, Midday Sun, Moon (3-slot daily schedule)</text>
+
+      <rect y="420" width="295" height="90" rx="10" fill="rgba(0,0,0,0.3)" stroke="rgba(255,255,255,0.08)"/>
+      <text x="16" y="446" font-size="14" font-weight="700" fill="#FFFFFF">Service Worker &amp; Web Push</text>
+      <text x="16" y="466" font-size="11" fill="#9CA3AF">VAPID Push Notifications API</text>
+      <text x="16" y="484" font-size="11" fill="#E2E8F0">Offline asset cache via public/sw.js</text>
+      <text x="16" y="500" font-size="10" fill="#38BDF8">PWA manifest with clinic icons</text>
+
+      <rect y="525" width="295" height="180" rx="10" fill="rgba(0,0,0,0.3)" stroke="rgba(255,255,255,0.08)"/>
+      <text x="16" y="551" font-size="14" font-weight="700" fill="#FFFFFF">Client Utilities &amp; Tests</text>
+      <text x="16" y="571" font-size="11" fill="#9CA3AF">&#8226; client-side image downscaling (&lt; 2500px)</text>
+      <text x="16" y="589" font-size="11" fill="#9CA3AF">&#8226; Base64 VAPID key converter</text>
+      <text x="16" y="607" font-size="11" fill="#9CA3AF">&#8226; Indian shorthand schedule parser</text>
+      <text x="16" y="625" font-size="11" fill="#9CA3AF">&#8226; Prescription image highlight projector</text>
+      <text x="16" y="650" font-size="12" font-weight="700" fill="#34D399">&#10003; 60/60 Unit Tests Green (Node Runner)</text>
+      <text x="16" y="668" font-size="11" font-weight="700" fill="#38BDF8">&#10003; TypeScript 0 Errors Passed</text>
+      <text x="16" y="686" font-size="10" fill="#E2E8F0">&#10003; Playwright E2E Accessible Selectors</text>
+    </g>
+  </g>
+
+  <!-- Pillar 2: Backend -->
+  <g transform="translate(445, 130)" filter="url(#shadow4)">
+    <rect width="335" height="800" rx="18" fill="rgba(255,255,255,0.05)" stroke="rgba(52,211,153,0.3)" stroke-width="1.5"/>
+    <rect width="335" height="50" rx="18" fill="rgba(16,185,129,0.15)"/>
+    <text x="20" y="32" font-family="Segoe UI, sans-serif" font-size="14" font-weight="800" fill="#34D399">BACKEND &amp; API RUNTIME</text>
+    <text x="220" y="32" font-family="Segoe UI, sans-serif" font-size="11" font-weight="700" fill="#A7F3D0">FASTAPI / PYTHON</text>
+
+    <g transform="translate(20, 70)" font-family="Segoe UI, sans-serif">
+      <rect width="295" height="90" rx="10" fill="rgba(0,0,0,0.3)" stroke="rgba(255,255,255,0.08)"/>
+      <text x="16" y="26" font-size="14" font-weight="700" fill="#FFFFFF">Python 3.12 + FastAPI 0.115</text>
+      <text x="16" y="46" font-size="11" fill="#9CA3AF">Asynchronous ASGI Architecture</text>
+      <text x="16" y="64" font-size="11" fill="#E2E8F0">Uvicorn 0.53 + Starlette</text>
+      <text x="16" y="80" font-size="10" fill="#34D399">Auto OpenAPI documentation at /docs</text>
+
+      <rect y="105" width="295" height="90" rx="10" fill="rgba(0,0,0,0.3)" stroke="rgba(255,255,255,0.08)"/>
+      <text x="16" y="131" font-size="14" font-weight="700" fill="#FFFFFF">Pydantic v2 Schema Engine</text>
+      <text x="16" y="151" font-size="11" fill="#9CA3AF">Strict input/output data validation</text>
+      <text x="16" y="169" font-size="11" fill="#E2E8F0">Parity with OPENAPI.yaml spec</text>
+      <text x="16" y="185" font-size="10" fill="#34D399">Custom serializers for patient metadata</text>
+
+      <rect y="210" width="295" height="90" rx="10" fill="rgba(0,0,0,0.3)" stroke="rgba(255,255,255,0.08)"/>
+      <text x="16" y="236" font-size="14" font-weight="700" fill="#FFFFFF">SQLAlchemy 2.0 ORM</text>
+      <text x="16" y="256" font-size="11" fill="#9CA3AF">Declarative ORM models &amp; relationships</text>
+      <text x="16" y="274" font-size="11" fill="#E2E8F0">Alembic schema versioning &amp; migrations</text>
+      <text x="16" y="290" font-size="10" fill="#34D399">Connection pool size = 10, max overflow = 20</text>
+
+      <rect y="315" width="295" height="90" rx="10" fill="rgba(0,0,0,0.3)" stroke="rgba(255,255,255,0.08)"/>
+      <text x="16" y="341" font-size="14" font-weight="700" fill="#FFFFFF">Asymmetric Auth (RS256 JWT)</text>
+      <text x="16" y="361" font-size="11" fill="#9CA3AF">2048-bit RSA Private/Public Keypair</text>
+      <text x="16" y="379" font-size="11" fill="#E2E8F0">Access Token TTL = 900s (15 min)</text>
+      <text x="16" y="395" font-size="10" fill="#34D399">Refresh Token TTL = 7 Days</text>
+
+      <rect y="420" width="295" height="90" rx="10" fill="rgba(0,0,0,0.3)" stroke="rgba(255,255,255,0.08)"/>
+      <text x="16" y="446" font-size="14" font-weight="700" fill="#FFFFFF">Storage Client (Boto3 S3)</text>
+      <text x="16" y="466" font-size="11" fill="#9CA3AF">HMAC-SHA256 signature generation</text>
+      <text x="16" y="484" font-size="11" fill="#E2E8F0">60-second expiring presigned URLs</text>
+      <text x="16" y="500" font-size="10" fill="#34D399">Safe local directory path traversal guard</text>
+
+      <rect y="525" width="295" height="180" rx="10" fill="rgba(0,0,0,0.3)" stroke="rgba(255,255,255,0.08)"/>
+      <text x="16" y="551" font-size="14" font-weight="700" fill="#FFFFFF">WorkerRunner Daemon</text>
+      <text x="16" y="571" font-size="11" fill="#9CA3AF">&#8226; Fenced queue engine with generation tokens</text>
+      <text x="16" y="589" font-size="11" fill="#9CA3AF">&#8226; Lease heartbeat renewal every 10 seconds</text>
+      <text x="16" y="607" font-size="11" fill="#9CA3AF">&#8226; Multi-stage pipeline execution manager</text>
+      <text x="16" y="625" font-size="11" fill="#9CA3AF">&#8226; Zero-PHI logging processor (scrubs PII)</text>
+      <text x="16" y="650" font-size="12" font-weight="700" fill="#34D399">&#10003; SQLite &amp; PostgreSQL Compatible</text>
+      <text x="16" y="668" font-size="11" font-weight="700" fill="#38BDF8">&#10003; 404-over-403 Security Model Enforced</text>
+      <text x="16" y="686" font-size="10" fill="#E2E8F0">&#10003; Full Alembic Migration Rollforward</text>
+    </g>
+  </g>
+
+  <!-- Pillar 3: AI & Vision -->
+  <g transform="translate(810, 130)" filter="url(#shadow4)">
+    <rect width="335" height="800" rx="18" fill="rgba(255,255,255,0.05)" stroke="rgba(168,85,247,0.3)" stroke-width="1.5"/>
+    <rect width="335" height="50" rx="18" fill="rgba(168,85,247,0.15)"/>
+    <text x="20" y="32" font-family="Segoe UI, sans-serif" font-size="14" font-weight="800" fill="#C084FC">AI &amp; DOCUMENT VISION</text>
+    <text x="235" y="32" font-family="Segoe UI, sans-serif" font-size="11" font-weight="700" fill="#E9D5FF">ML ENGINE</text>
+
+    <g transform="translate(20, 70)" font-family="Segoe UI, sans-serif">
+      <rect width="295" height="110" rx="10" fill="rgba(0,0,0,0.3)" stroke="rgba(255,255,255,0.08)"/>
+      <text x="16" y="26" font-size="14" font-weight="700" fill="#FFFFFF">Gemini Vision Provider</text>
+      <text x="16" y="46" font-size="11" fill="#9CA3AF">gemini-3.5-flash (primary vision model)</text>
+      <text x="16" y="64" font-size="11" fill="#E2E8F0">Structured handwriting line OCR</text>
+      <text x="16" y="82" font-size="11" fill="#C084FC">gemini-3.6-flash fallback provider</text>
+      <text x="16" y="98" font-size="10" fill="#A78BFA">Zero unverified clinical claims made</text>
+
+      <rect y="125" width="295" height="110" rx="10" fill="rgba(0,0,0,0.3)" stroke="rgba(255,255,255,0.08)"/>
+      <text x="16" y="151" font-size="14" font-weight="700" fill="#FFFFFF">Local RapidOCR / TrOCR</text>
+      <text x="16" y="171" font-size="11" fill="#9CA3AF">PyTorch + ONNX Runtime</text>
+      <text x="16" y="189" font-size="11" fill="#E2E8F0">Runs locally when network is absent</text>
+      <text x="16" y="207" font-size="11" fill="#C084FC">Automatic fallback on Gemini 429 quota</text>
+      <text x="16" y="223" font-size="10" fill="#A78BFA">Complete air-gapped clinic resilience</text>
+
+      <rect y="250" width="295" height="110" rx="10" fill="rgba(0,0,0,0.3)" stroke="rgba(255,255,255,0.08)"/>
+      <text x="16" y="276" font-size="14" font-weight="700" fill="#FFFFFF">Deterministic Regex Engine</text>
+      <text x="16" y="296" font-size="11" fill="#9CA3AF">Rule-based dosage and frequency extraction</text>
+      <text x="16" y="314" font-size="11" fill="#E2E8F0">OD, BD, TDS, QID, 1-0-1, 1-1-1, pc/ac</text>
+      <text x="16" y="332" font-size="11" fill="#C084FC">Interval timings: q4h, q6h, q8h, q12h</text>
+      <text x="16" y="348" font-size="10" fill="#A78BFA">Identical repeatable results every run</text>
+
+      <rect y="375" width="295" height="110" rx="10" fill="rgba(0,0,0,0.3)" stroke="rgba(255,255,255,0.08)"/>
+      <text x="16" y="401" font-size="14" font-weight="700" fill="#FFFFFF">CDSCO Drug Master</text>
+      <text x="16" y="421" font-size="11" fill="#9CA3AF">Official Indian regulatory medications</text>
+      <text x="16" y="439" font-size="11" fill="#E2E8F0">Brand alias cross-reference dictionary</text>
+      <text x="16" y="457" font-size="11" fill="#C084FC">RxNorm CUI mapping where available</text>
+      <text x="16" y="473" font-size="10" fill="#A78BFA">Preserved permanently during data deletions</text>
+
+      <rect y="500" width="295" height="205" rx="10" fill="rgba(0,0,0,0.3)" stroke="rgba(255,255,255,0.08)"/>
+      <text x="16" y="526" font-size="14" font-weight="700" fill="#FFFFFF">Clinical Safety Engine</text>
+      <text x="16" y="546" font-size="11" fill="#9CA3AF">&#8226; Independent of LLM (Zero hallucination)</text>
+      <text x="16" y="564" font-size="11" fill="#9CA3AF">&#8226; Duplicate active ingredient detector</text>
+      <text x="16" y="582" font-size="11" fill="#9CA3AF">&#8226; Maximum daily dosage safety thresholds</text>
+      <text x="16" y="600" font-size="11" fill="#9CA3AF">&#8226; Unusual frequency warning banners</text>
+      <text x="16" y="618" font-size="11" fill="#9CA3AF">&#8226; Uncertainty model propagates through layers</text>
+      <text x="16" y="642" font-size="12" font-weight="700" fill="#34D399">&#10003; 4-State Field Uncertainty Model</text>
+      <text x="16" y="660" font-size="11" font-weight="700" fill="#FBBF24">&#10003; NOT_EVALUATED != SAFE Standard</text>
+      <text x="16" y="678" font-size="10" fill="#E2E8F0">&#10003; Mandatory Human Review for Ambiguities</text>
+    </g>
+  </g>
+
+  <!-- Pillar 4: Storage & Infra -->
+  <g transform="translate(1175, 130)" filter="url(#shadow4)">
+    <rect width="345" height="800" rx="18" fill="rgba(255,255,255,0.05)" stroke="rgba(245,158,11,0.3)" stroke-width="1.5"/>
+    <rect width="345" height="50" rx="18" fill="rgba(245,158,11,0.15)"/>
+    <text x="20" y="32" font-family="Segoe UI, sans-serif" font-size="14" font-weight="800" fill="#FBBF24">DATA &amp; INFRASTRUCTURE</text>
+    <text x="235" y="32" font-family="Segoe UI, sans-serif" font-size="11" font-weight="700" fill="#FDE68A">PERSISTENCE</text>
+
+    <g transform="translate(20, 70)" font-family="Segoe UI, sans-serif">
+      <rect width="305" height="120" rx="10" fill="rgba(0,0,0,0.3)" stroke="rgba(255,255,255,0.08)"/>
+      <text x="16" y="26" font-size="14" font-weight="700" fill="#FFFFFF">PostgreSQL 16+ / SQLite</text>
+      <text x="16" y="46" font-size="11" fill="#9CA3AF">ACID Relational Storage</text>
+      <text x="16" y="64" font-size="11" fill="#E2E8F0">SELECT FOR UPDATE SKIP LOCKED</text>
+      <text x="16" y="82" font-size="11" fill="#FBBF24">Indexed by uploaded_at, patient_ref, status</text>
+      <text x="16" y="100" font-size="10" fill="#FDE68A">Strict foreign keys &amp; check constraints</text>
+
+      <rect y="135" width="305" height="120" rx="10" fill="rgba(0,0,0,0.3)" stroke="rgba(255,255,255,0.08)"/>
+      <text x="16" y="161" font-size="14" font-weight="700" fill="#FFFFFF">MinIO / S3 Object Store</text>
+      <text x="16" y="181" font-size="11" fill="#9CA3AF">Encrypted at rest (AES-256)</text>
+      <text x="16" y="199" font-size="11" fill="#E2E8F0">Bucket: prescripto</text>
+      <text x="16" y="217" font-size="11" fill="#FBBF24">Bucket: prescripto-retention (Vault)</text>
+      <text x="16" y="235" font-size="10" fill="#FDE68A">Local fallback: prescripto_storage/ directory</text>
+
+      <rect y="270" width="305" height="120" rx="10" fill="rgba(0,0,0,0.3)" stroke="rgba(255,255,255,0.08)"/>
+      <text x="16" y="296" font-size="14" font-weight="700" fill="#FFFFFF">DPDPA 2023 Compliance</text>
+      <text x="16" y="316" font-size="11" fill="#9CA3AF">Digital Personal Data Protection Act</text>
+      <text x="16" y="334" font-size="11" fill="#E2E8F0">Right to erasure &amp; deletion manifests</text>
+      <text x="16" y="352" font-size="11" fill="#FBBF24">Explicit user consent before camera upload</text>
+      <text x="16" y="370" font-size="10" fill="#FDE68A">Zero health data sharing with 3rd parties</text>
+
+      <rect y="405" width="305" height="120" rx="10" fill="rgba(0,0,0,0.3)" stroke="rgba(255,255,255,0.08)"/>
+      <text x="16" y="431" font-size="14" font-weight="700" fill="#FFFFFF">Docker Compose &amp; Deploy</text>
+      <text x="16" y="451" font-size="11" fill="#9CA3AF">Multi-stage Alpine Dockerfile</text>
+      <text x="16" y="469" font-size="11" fill="#E2E8F0">Zero-downtime single container deploy</text>
+      <text x="16" y="487" font-size="11" fill="#FBBF24">Render / Vercel deployment presets</text>
+      <text x="16" y="505" font-size="10" fill="#FDE68A">Environment variable security validation</text>
+
+      <rect y="540" width="305" height="165" rx="10" fill="rgba(0,0,0,0.3)" stroke="rgba(255,255,255,0.08)"/>
+      <text x="16" y="566" font-size="14" font-weight="700" fill="#FFFFFF">Security Safeguards</text>
+      <text x="16" y="586" font-size="11" fill="#9CA3AF">&#8226; Constant-time HMAC comparison</text>
+      <text x="16" y="604" font-size="11" fill="#9CA3AF">&#8226; Path traversal relative_to validation</text>
+      <text x="16" y="622" font-size="11" fill="#9CA3AF">&#8226; Magic-byte file format verification</text>
+      <text x="16" y="640" font-size="11" fill="#9CA3AF">&#8226; Maximum file upload capped at 20 MB</text>
+      <text x="16" y="662" font-size="11" font-weight="700" fill="#34D399">&#10003; 100% Zero-PHI Operational Logs</text>
+      <text x="16" y="680" font-size="10" fill="#E2E8F0">&#10003; Isolated Retention Vault Permissioning</text>
+    </g>
+  </g>
+</svg>

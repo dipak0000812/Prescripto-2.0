@@ -1,0 +1,244 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" width="1600" height="1000">
+  <defs>
+    <linearGradient id="bg3" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0F172A"/>
+      <stop offset="50%" stop-color="#1E293B"/>
+      <stop offset="100%" stop-color="#0F2D25"/>
+    </linearGradient>
+    <filter id="shadow3" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#000000" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+
+  <rect width="1600" height="1000" fill="url(#bg3)"/>
+
+  <!-- Title Banner -->
+  <g transform="translate(80, 50)">
+    <rect x="0" y="0" width="48" height="48" rx="14" fill="#10B981"/>
+    <text x="24" y="32" font-family="Segoe UI, sans-serif" font-size="20" text-anchor="middle" fill="#0A3831">&#128101;</text>
+    <text x="64" y="28" font-family="Segoe UI, sans-serif" font-size="28" font-weight="900" fill="#FFFFFF">PRESCRIPTO AI 2.0</text>
+    <text x="64" y="46" font-family="Segoe UI, sans-serif" font-size="14" font-weight="600" fill="#34D399" letter-spacing="1.5">END-TO-END PATIENT &amp; CLINICIAN WORKFLOW JOURNEY</text>
+  </g>
+
+  <!-- PATIENT WORKFLOW (UPPER HALF) -->
+  <g transform="translate(80, 130)" filter="url(#shadow3)">
+    <rect width="1440" height="380" rx="16" fill="rgba(255,255,255,0.05)" stroke="rgba(52,211,153,0.3)" stroke-width="1.5"/>
+    <rect width="1440" height="44" rx="16" fill="rgba(16,185,129,0.15)"/>
+    <text x="24" y="28" font-family="Segoe UI, sans-serif" font-size="15" font-weight="800" fill="#34D399">&#128104;&#8205;&#9877;&#65039; PATIENT &amp; CAREGIVER EXPERIENCE (MOBILE-FIRST &#183; MULTILINGUAL)</text>
+    <text x="1220" y="28" font-family="Segoe UI, sans-serif" font-size="11" font-weight="700" fill="#A7F3D0">CLASS 6 READING LEVEL &#183; 48px TARGETS</text>
+
+    <!-- 5 Patient Steps -->
+    <!-- Step 1 -->
+    <g transform="translate(30, 65)">
+      <rect width="250" height="280" rx="12" fill="rgba(0,0,0,0.3)" stroke="rgba(255,255,255,0.08)"/>
+      <circle cx="35" cy="35" r="15" fill="#10B981" opacity="0.2"/>
+      <text x="35" y="40" font-family="Segoe UI, sans-serif" font-size="14" font-weight="800" fill="#34D399" text-anchor="middle">1</text>
+      <text x="60" y="38" font-family="Segoe UI, sans-serif" font-size="14" font-weight="700" fill="#FFFFFF">Native Script Login</text>
+      <text x="20" y="75" font-family="Segoe UI, sans-serif" font-size="11" fill="#9CA3AF">Pick language with 1 tap:</text>
+
+      <rect x="20" y="88" width="100" height="28" rx="6" fill="#10B981" opacity="0.2"/>
+      <text x="70" y="106" font-family="Segoe UI, sans-serif" font-size="11" font-weight="700" fill="#6EE7B7" text-anchor="middle">English</text>
+
+      <rect x="130" y="88" width="100" height="28" rx="6" fill="#10B981" opacity="0.2"/>
+      <text x="180" y="106" font-family="Segoe UI, sans-serif" font-size="11" font-weight="700" fill="#6EE7B7" text-anchor="middle">&#2361;&#2367;&#2344;&#2381;&#2342;&#2368;</text>
+
+      <rect x="20" y="122" width="100" height="28" rx="6" fill="#10B981" opacity="0.2"/>
+      <text x="70" y="140" font-family="Segoe UI, sans-serif" font-size="11" font-weight="700" fill="#6EE7B7" text-anchor="middle">&#2711;&#2753;&#2716;&#2736;&#2750;&#2724;&#2752;</text>
+
+      <rect x="130" y="122" width="100" height="28" rx="6" fill="#10B981" opacity="0.2"/>
+      <text x="180" y="140" font-family="Segoe UI, sans-serif" font-size="11" font-weight="700" fill="#6EE7B7" text-anchor="middle">&#2350;&#2352;&#2368;&#2336;&#2368;</text>
+
+      <text x="20" y="180" font-family="Segoe UI, sans-serif" font-size="11" fill="#E5E7EB">&#8226; 10-Digit Mobile Number</text>
+      <text x="20" y="200" font-family="Segoe UI, sans-serif" font-size="11" fill="#E5E7EB">&#8226; 6 Auto-Advancing OTP boxes</text>
+      <text x="20" y="220" font-family="Segoe UI, sans-serif" font-size="11" fill="#E5E7EB">&#8226; 30s Resend countdown</text>
+
+      <rect x="20" y="240" width="210" height="26" rx="6" fill="rgba(16,185,129,0.15)"/>
+      <text x="125" y="257" font-family="Segoe UI, sans-serif" font-size="10" font-weight="700" fill="#A7F3D0" text-anchor="middle">No password needed</text>
+    </g>
+
+    <!-- Arrow -->
+    <path d="M 320 205 L 345 205" stroke="#34D399" stroke-width="3" fill="none" marker-end="url(#arrow)"/>
+
+    <!-- Step 2 -->
+    <g transform="translate(320, 65)">
+      <rect width="250" height="280" rx="12" fill="rgba(0,0,0,0.3)" stroke="rgba(255,255,255,0.08)"/>
+      <circle cx="35" cy="35" r="15" fill="#10B981" opacity="0.2"/>
+      <text x="35" y="40" font-family="Segoe UI, sans-serif" font-size="14" font-weight="800" fill="#34D399" text-anchor="middle">2</text>
+      <text x="60" y="38" font-family="Segoe UI, sans-serif" font-size="14" font-weight="700" fill="#FFFFFF">Intake Prescription</text>
+
+      <rect x="20" y="70" width="210" height="50" rx="8" fill="rgba(255,255,255,0.05)"/>
+      <text x="30" y="90" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#FFFFFF">&#128247; Take a Photo</text>
+      <text x="30" y="106" font-family="Segoe UI, sans-serif" font-size="10" fill="#9CA3AF">Live camera preview + alignment frame</text>
+
+      <rect x="20" y="130" width="210" height="50" rx="8" fill="rgba(255,255,255,0.05)"/>
+      <text x="30" y="150" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#FFFFFF">&#128193; Choose from Gallery</text>
+      <text x="30" y="166" font-family="Segoe UI, sans-serif" font-size="10" fill="#9CA3AF">JPEG / PNG / WebP &lt; 20 MB</text>
+
+      <text x="20" y="205" font-family="Segoe UI, sans-serif" font-size="11" fill="#E5E7EB">&#8226; Client-side downscale &gt;2500px</text>
+      <text x="20" y="225" font-family="Segoe UI, sans-serif" font-size="11" fill="#E5E7EB">&#8226; DPDPA explicit privacy consent</text>
+
+      <rect x="20" y="240" width="210" height="26" rx="6" fill="rgba(16,185,129,0.15)"/>
+      <text x="125" y="257" font-family="Segoe UI, sans-serif" font-size="10" font-weight="700" fill="#A7F3D0" text-anchor="middle">Step 1 of 3 Progress Bar</text>
+    </g>
+
+    <!-- Step 3 -->
+    <g transform="translate(610, 65)">
+      <rect width="250" height="280" rx="12" fill="rgba(0,0,0,0.3)" stroke="rgba(255,255,255,0.08)"/>
+      <circle cx="35" cy="35" r="15" fill="#10B981" opacity="0.2"/>
+      <text x="35" y="40" font-family="Segoe UI, sans-serif" font-size="14" font-weight="800" fill="#34D399" text-anchor="middle">3</text>
+      <text x="60" y="38" font-family="Segoe UI, sans-serif" font-size="14" font-weight="700" fill="#FFFFFF">Reading &amp; AI Analysis</text>
+
+      <rect x="20" y="70" width="210" height="80" rx="8" fill="rgba(255,255,255,0.05)"/>
+      <text x="30" y="92" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#34D399">&#8987; Honest Waiting Screen</text>
+      <text x="30" y="110" font-family="Segoe UI, sans-serif" font-size="10" fill="#E5E7EB">"Reading your prescription..."</text>
+      <text x="30" y="126" font-family="Segoe UI, sans-serif" font-size="10" fill="#9CA3AF">Honest time expectation: 5-10s</text>
+      <text x="30" y="140" font-family="Segoe UI, sans-serif" font-size="9" fill="#6EE7B7">Exponential backoff poll (1s, 2s, 3s)</text>
+
+      <text x="20" y="175" font-family="Segoe UI, sans-serif" font-size="11" fill="#E5E7EB">&#8226; Line-by-line OCR Detection</text>
+      <text x="20" y="195" font-family="Segoe UI, sans-serif" font-size="11" fill="#E5E7EB">&#8226; CDSCO Drug Master Verification</text>
+      <text x="20" y="215" font-family="Segoe UI, sans-serif" font-size="11" fill="#E5E7EB">&#8226; Duplicate Safety Screening</text>
+
+      <rect x="20" y="240" width="210" height="26" rx="6" fill="rgba(245,158,11,0.2)"/>
+      <text x="125" y="257" font-family="Segoe UI, sans-serif" font-size="10" font-weight="700" fill="#FBBF24" text-anchor="middle">Zero Fake Progress Bars</text>
+    </g>
+
+    <!-- Step 4 -->
+    <g transform="translate(900, 65)">
+      <rect width="250" height="280" rx="12" fill="rgba(0,0,0,0.3)" stroke="rgba(255,255,255,0.08)"/>
+      <circle cx="35" cy="35" r="15" fill="#10B981" opacity="0.2"/>
+      <text x="35" y="40" font-family="Segoe UI, sans-serif" font-size="14" font-weight="800" fill="#34D399" text-anchor="middle">4</text>
+      <text x="60" y="38" font-family="Segoe UI, sans-serif" font-size="14" font-weight="700" fill="#FFFFFF">Result Screen Hero</text>
+
+      <rect x="20" y="70" width="210" height="42" rx="6" fill="rgba(255,255,255,0.05)"/>
+      <text x="28" y="88" font-family="Segoe UI, sans-serif" font-size="11" font-weight="700" fill="#FFFFFF">Human Doctor Header</text>
+      <text x="28" y="102" font-family="Segoe UI, sans-serif" font-size="9" fill="#9CA3AF">Dr. Sharma &#183; City Clinic (No raw UUIDs)</text>
+
+      <rect x="20" y="118" width="210" height="52" rx="6" fill="rgba(16,185,129,0.1)"/>
+      <text x="28" y="136" font-family="Segoe UI, sans-serif" font-size="11" font-weight="700" fill="#34D399">&#127749; Sunrise / Sun / Moon</text>
+      <text x="28" y="150" font-family="Segoe UI, sans-serif" font-size="10" fill="#E5E7EB">Morning 1 Tab &#183; Afternoon &#8212; &#183; Night 1</text>
+      <text x="28" y="162" font-family="Segoe UI, sans-serif" font-size="9" fill="#9CA3AF">pc (After food) &#183; 5 Days countdown</text>
+
+      <text x="20" y="192" font-family="Segoe UI, sans-serif" font-size="11" fill="#E5E7EB">&#8226; Amber border for unconfirmed items</text>
+      <text x="20" y="210" font-family="Segoe UI, sans-serif" font-size="11" fill="#E5E7EB">&#8226; "Show on photo" bounding overlay</text>
+      <text x="20" y="228" font-family="Segoe UI, sans-serif" font-size="11" fill="#E5E7EB">&#8226; Severity-sorted safety findings</text>
+
+      <rect x="20" y="240" width="210" height="26" rx="6" fill="#10B981" opacity="0.2"/>
+      <text x="125" y="257" font-family="Segoe UI, sans-serif" font-size="10" font-weight="700" fill="#6EE7B7" text-anchor="middle">&#128266; Listen Button per card</text>
+    </g>
+
+    <!-- Step 5 -->
+    <g transform="translate(1190, 65)">
+      <rect width="220" height="280" rx="12" fill="rgba(0,0,0,0.3)" stroke="rgba(255,255,255,0.08)"/>
+      <circle cx="35" cy="35" r="15" fill="#10B981" opacity="0.2"/>
+      <text x="35" y="40" font-family="Segoe UI, sans-serif" font-size="14" font-weight="800" fill="#34D399" text-anchor="middle">5</text>
+      <text x="60" y="38" font-family="Segoe UI, sans-serif" font-size="14" font-weight="700" fill="#FFFFFF">Daily Routine</text>
+
+      <rect x="16" y="70" width="188" height="65" rx="8" fill="rgba(255,255,255,0.05)"/>
+      <text x="24" y="90" font-family="Segoe UI, sans-serif" font-size="11" font-weight="700" fill="#FFFFFF">&#128337; Today Timeline</text>
+      <text x="24" y="106" font-family="Segoe UI, sans-serif" font-size="10" fill="#34D399">"Next dose in 45 mins"</text>
+      <text x="24" y="122" font-family="Segoe UI, sans-serif" font-size="9" fill="#9CA3AF">Morning (8am), Lunch (1pm), Night (9pm)</text>
+
+      <rect x="16" y="145" width="188" height="42" rx="6" fill="rgba(16,185,129,0.15)"/>
+      <text x="24" y="163" font-family="Segoe UI, sans-serif" font-size="10" font-weight="700" fill="#6EE7B7">&#10003; Taken (audio chime)</text>
+      <text x="24" y="177" font-family="Segoe UI, sans-serif" font-size="9" fill="#E5E7EB">Snooze (15m) &#183; Skip dose</text>
+
+      <text x="16" y="208" font-family="Segoe UI, sans-serif" font-size="10" fill="#E5E7EB">&#8226; Share to family on WhatsApp</text>
+      <text x="16" y="225" font-family="Segoe UI, sans-serif" font-size="10" fill="#E5E7EB">&#8226; Offline fallback cache</text>
+
+      <rect x="16" y="240" width="188" height="26" rx="6" fill="#10B981" opacity="0.2"/>
+      <text x="110" y="257" font-family="Segoe UI, sans-serif" font-size="10" font-weight="700" fill="#A7F3D0" text-anchor="middle">VAPID Push Reminders</text>
+    </g>
+  </g>
+
+  <!-- CLINICIAN WORKFLOW (LOWER HALF) -->
+  <g transform="translate(80, 550)" filter="url(#shadow3)">
+    <rect width="1440" height="380" rx="16" fill="rgba(255,255,255,0.05)" stroke="rgba(96,165,250,0.3)" stroke-width="1.5"/>
+    <rect width="1440" height="44" rx="16" fill="rgba(59,130,246,0.15)"/>
+    <text x="24" y="28" font-family="Segoe UI, sans-serif" font-size="15" font-weight="800" fill="#60A5FA">&#129658; CLINICAL REVIEW WORKSPACE (DOCTOR &#183; PHARMACIST &#183; ADMIN)</text>
+    <text x="1220" y="28" font-family="Segoe UI, sans-serif" font-size="11" font-weight="700" fill="#93C5FD">SAFETY DECISION SUPPORT ONLY</text>
+
+    <!-- 4 Doctor Steps -->
+    <!-- Step 1: Login -->
+    <g transform="translate(30, 65)">
+      <rect width="320" height="280" rx="12" fill="rgba(0,0,0,0.3)" stroke="rgba(255,255,255,0.08)"/>
+      <circle cx="35" cy="35" r="15" fill="#3B82F6" opacity="0.2"/>
+      <text x="35" y="40" font-family="Segoe UI, sans-serif" font-size="14" font-weight="800" fill="#60A5FA" text-anchor="middle">1</text>
+      <text x="60" y="38" font-family="Segoe UI, sans-serif" font-size="14" font-weight="700" fill="#FFFFFF">Clinical Authentication</text>
+
+      <rect x="20" y="70" width="280" height="50" rx="8" fill="rgba(255,255,255,0.05)"/>
+      <text x="32" y="90" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#FFFFFF">Staff Email &amp; Password</text>
+      <text x="32" y="106" font-family="Segoe UI, sans-serif" font-size="10" fill="#9CA3AF">doctor@prescripto.local (PBKDF2 SHA-256)</text>
+
+      <text x="20" y="145" font-family="Segoe UI, sans-serif" font-size="11" fill="#E5E7EB">&#8226; Role-Based Access Control (RBAC):</text>
+      <text x="32" y="165" font-family="Segoe UI, sans-serif" font-size="10" fill="#60A5FA">&#9656; REVIEWER: Sign-off &amp; override authority</text>
+      <text x="32" y="185" font-family="Segoe UI, sans-serif" font-size="10" fill="#34D399">&#9656; OPERATOR: Ingestion &amp; triage intake</text>
+      <text x="32" y="205" font-family="Segoe UI, sans-serif" font-size="10" fill="#FBBF24">&#9656; ADMIN: Audit logs, deletion vault &amp; health</text>
+
+      <rect x="20" y="235" width="280" height="30" rx="6" fill="#3B82F6" opacity="0.2"/>
+      <text x="160" y="254" font-family="Segoe UI, sans-serif" font-size="11" font-weight="700" fill="#93C5FD" text-anchor="middle">RS256 Asymmetric JWT Session</text>
+    </g>
+
+    <!-- Step 2: Queue -->
+    <g transform="translate(390, 65)">
+      <rect width="320" height="280" rx="12" fill="rgba(0,0,0,0.3)" stroke="rgba(255,255,255,0.08)"/>
+      <circle cx="35" cy="35" r="15" fill="#3B82F6" opacity="0.2"/>
+      <text x="35" y="40" font-family="Segoe UI, sans-serif" font-size="14" font-weight="800" fill="#60A5FA" text-anchor="middle">2</text>
+      <text x="60" y="38" font-family="Segoe UI, sans-serif" font-size="14" font-weight="700" fill="#FFFFFF">Prioritized Review Queue</text>
+
+      <rect x="20" y="70" width="280" height="50" rx="8" fill="rgba(245,158,11,0.15)"/>
+      <text x="32" y="90" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#FBBF24">Real Patient Names Displayed</text>
+      <text x="32" y="106" font-family="Segoe UI, sans-serif" font-size="10" fill="#E5E7EB">Rahul Verma (PAT-1001) &#183; Waiting 15m</text>
+
+      <text x="20" y="145" font-family="Segoe UI, sans-serif" font-size="11" fill="#E5E7EB">&#8226; Min-w-0 constrained responsive cards</text>
+      <text x="20" y="165" font-family="Segoe UI, sans-serif" font-size="11" fill="#E5E7EB">&#8226; Eliminates horizontal overflow on 13" laptops</text>
+      <text x="20" y="185" font-family="Segoe UI, sans-serif" font-size="11" fill="#E5E7EB">&#8226; Live badge count of pending scripts</text>
+      <text x="20" y="205" font-family="Segoe UI, sans-serif" font-size="11" fill="#E5E7EB">&#8226; Filter by status: All / Urgent / Flagged</text>
+
+      <rect x="20" y="235" width="280" height="30" rx="6" fill="rgba(255,255,255,0.06)"/>
+      <text x="160" y="254" font-family="Segoe UI, sans-serif" font-size="11" font-weight="700" fill="#60A5FA" text-anchor="middle">Sorted by longest wait time</text>
+    </g>
+
+    <!-- Step 3: Split-View -->
+    <g transform="translate(750, 65)">
+      <rect width="320" height="280" rx="12" fill="rgba(0,0,0,0.3)" stroke="rgba(255,255,255,0.08)"/>
+      <circle cx="35" cy="35" r="15" fill="#3B82F6" opacity="0.2"/>
+      <text x="35" y="40" font-family="Segoe UI, sans-serif" font-size="14" font-weight="800" fill="#60A5FA" text-anchor="middle">3</text>
+      <text x="60" y="38" font-family="Segoe UI, sans-serif" font-size="14" font-weight="700" fill="#FFFFFF">Split-Screen Verification</text>
+
+      <rect x="20" y="70" width="280" height="50" rx="8" fill="rgba(255,255,255,0.05)"/>
+      <text x="32" y="90" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#FFFFFF">Left: High-Res Prescription Photo</text>
+      <text x="32" y="106" font-family="Segoe UI, sans-serif" font-size="10" fill="#9CA3AF">Pan, zoom, rotate, highlight bounding boxes</text>
+
+      <rect x="20" y="130" width="280" height="50" rx="8" fill="rgba(255,255,255,0.05)"/>
+      <text x="32" y="150" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#FFFFFF">Right: Extracted Clinical Form</text>
+      <text x="32" y="166" font-family="Segoe UI, sans-serif" font-size="10" fill="#9CA3AF">Inline dose stepper (- / +), frequency, timing</text>
+
+      <text x="20" y="205" font-family="Segoe UI, sans-serif" font-size="11" fill="#E5E7EB">&#8226; Inline validation prevents malformed saves</text>
+      <text x="20" y="222" font-family="Segoe UI, sans-serif" font-size="11" fill="#E5E7EB">&#8226; Pre-populates CDSCO canonical salt</text>
+
+      <rect x="20" y="235" width="280" height="30" rx="6" fill="#10B981" opacity="0.2"/>
+      <text x="160" y="254" font-family="Segoe UI, sans-serif" font-size="11" font-weight="700" fill="#A7F3D0" text-anchor="middle">Average review time &lt; 30 seconds</text>
+    </g>
+
+    <!-- Step 4: Sign-off -->
+    <g transform="translate(1110, 65)">
+      <rect width="300" height="280" rx="12" fill="rgba(0,0,0,0.3)" stroke="rgba(255,255,255,0.08)"/>
+      <circle cx="35" cy="35" r="15" fill="#3B82F6" opacity="0.2"/>
+      <text x="35" y="40" font-family="Segoe UI, sans-serif" font-size="14" font-weight="800" fill="#60A5FA" text-anchor="middle">4</text>
+      <text x="60" y="38" font-family="Segoe UI, sans-serif" font-size="14" font-weight="700" fill="#FFFFFF">Clinical Sign-Off &amp; Dossier</text>
+
+      <rect x="20" y="70" width="260" height="60" rx="8" fill="rgba(16,185,129,0.15)"/>
+      <text x="32" y="92" font-family="Segoe UI, sans-serif" font-size="12" font-weight="700" fill="#34D399">&#10003; Signs Off Record</text>
+      <text x="32" y="108" font-family="Segoe UI, sans-serif" font-size="10" fill="#E5E7EB">Status &#8594; COMPLETED / REVIEWED</text>
+      <text x="32" y="120" font-family="Segoe UI, sans-serif" font-size="9" fill="#A7F3D0">Instant update to patient mobile portal</text>
+
+      <text x="20" y="150" font-family="Segoe UI, sans-serif" font-size="11" fill="#E5E7EB">&#8226; Appends to Patient History Timeline</text>
+      <text x="20" y="170" font-family="Segoe UI, sans-serif" font-size="11" fill="#E5E7EB">&#8226; Tracks cumulative drug history</text>
+      <text x="20" y="190" font-family="Segoe UI, sans-serif" font-size="11" fill="#E5E7EB">&#8226; Flags chronic medication interactions</text>
+
+      <rect x="20" y="215" width="260" height="50" rx="8" fill="rgba(255,255,255,0.05)"/>
+      <text x="32" y="235" font-family="Segoe UI, sans-serif" font-size="11" font-weight="700" fill="#FFFFFF">Immutable Audit Stamp</text>
+      <text x="32" y="251" font-family="Segoe UI, sans-serif" font-size="9" fill="#9CA3AF">Reviewer ID + Timestamp + Override diff</text>
+    </g>
+  </g>
+</svg>

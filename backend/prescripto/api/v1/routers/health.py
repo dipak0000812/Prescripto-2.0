@@ -31,26 +31,48 @@ def get_health(response: Response, db: Session = Depends(get_db)) -> HealthStatu
     except Exception:
         db_status = "down"
 
-    # 2. Object Storage Probe (Fast non-blocking probe with 0.5s timeout, with resilient local disk fallback)
+    # 2. Object Storage Probe (Fast non-blocking probe with socket pre-check and resilient local disk fallback)
     s3_status = "ok"
+    import socket
+    from urllib.parse import urlparse
+    from pathlib import Path
+
+    is_port_open = False
     try:
-        fast_config = Config(
-            connect_timeout=0.5,
-            read_timeout=0.5,
-            retries={"max_attempts": 0},
-        )
-        s3_client = boto3.client(
-            "s3",
-            endpoint_url=settings.S3_ENDPOINT,
-            aws_access_key_id=settings.S3_ACCESS_KEY,
-            aws_secret_access_key=settings.S3_SECRET_KEY,
-            region_name=settings.S3_REGION,
-            config=fast_config,
-        )
-        s3_client.list_buckets()
+        parsed_url = urlparse(settings.S3_ENDPOINT)
+        host = parsed_url.hostname or "127.0.0.1"
+        if host == "localhost":
+            host = "127.0.0.1"
+        port = parsed_url.port or 9000
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(0.05)
+        res = sock.connect_ex((host, port))
+        sock.close()
+        is_port_open = (res == 0)
     except Exception:
+        is_port_open = False
+
+    if is_port_open:
+        try:
+            fast_config = Config(
+                connect_timeout=0.5,
+                read_timeout=0.5,
+                retries={"max_attempts": 0},
+            )
+            s3_client = boto3.client(
+                "s3",
+                endpoint_url=settings.S3_ENDPOINT,
+                aws_access_key_id=settings.S3_ACCESS_KEY,
+                aws_secret_access_key=settings.S3_SECRET_KEY,
+                region_name=settings.S3_REGION,
+                config=fast_config,
+            )
+            s3_client.list_buckets()
+        except Exception:
+            is_port_open = False
+
+    if not is_port_open:
         # Fallback to local disk storage directory verification
-        from pathlib import Path
         local_dir = Path("prescripto_storage")
         try:
             local_dir.mkdir(parents=True, exist_ok=True)

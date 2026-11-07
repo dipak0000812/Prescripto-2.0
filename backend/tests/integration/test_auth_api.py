@@ -2,13 +2,13 @@
 Integration tests for /auth endpoints and RBAC guards.
 """
 from fastapi import Depends
-from prescripto.api.main import app
+from prescripto.api.v1.routers.auth import router as auth_router
 from prescripto.auth.dependencies import require_role
 from prescripto.db.models.enums import Role
 from prescripto.db.models.users import User
 
-# Register a temporary test route to test require_role
-@app.get("/test/reviewer-only")
+# Register a temporary test route on auth_router to test require_role
+@auth_router.get("/test/reviewer-only")
 def reviewer_only_endpoint(user: User = Depends(require_role(Role.REVIEWER))):
     return {"message": f"Welcome reviewer {user.username}"}
 
@@ -75,7 +75,7 @@ def test_rbac_guard_blocks_unauthorized_role(client, seeded_users):
 
     # Operator hits reviewer-only route -> 403 INSUFFICIENT_ROLE
     resp = client.get(
-        "/test/reviewer-only",
+        "/api/v1/auth/test/reviewer-only",
         headers={"Authorization": f"Bearer {op_token}"},
     )
     assert resp.status_code == 403
@@ -90,7 +90,7 @@ def test_rbac_guard_blocks_unauthorized_role(client, seeded_users):
 
     # Reviewer hits reviewer-only route -> 200 OK
     resp_ok = client.get(
-        "/test/reviewer-only",
+        "/api/v1/auth/test/reviewer-only",
         headers={"Authorization": f"Bearer {rev_token}"},
     )
     assert resp_ok.status_code == 200

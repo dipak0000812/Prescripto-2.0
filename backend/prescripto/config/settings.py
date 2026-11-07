@@ -85,6 +85,11 @@ class Settings(BaseSettings):
     WORKER_HEARTBEAT_SECONDS: int = Field(default=30)
     WORKER_MAX_RETRIES: int = Field(default=3)
 
+    # Medicine Reminder & Web Push Configuration
+    VAPID_PUBLIC_KEY: Optional[str] = Field(default="BDl_YAEOzR10rX2jQCS2WSR8ZlXFKyuuag_9upyqZXi_rhpaFfde9KvYh94O_GzT4Q3zPKofsXgMlkD7s7CM6B4")
+    VAPID_PRIVATE_KEY: Optional[str] = Field(default=None)
+    VAPID_CLAIMS_SUB: str = Field(default="mailto:support@prescripto.local")
+
     @property
     def knowledge_providers_list(self) -> List[str]:
         return [p.strip() for p in self.ENABLED_KNOWLEDGE_PROVIDERS.split(",") if p.strip()]
